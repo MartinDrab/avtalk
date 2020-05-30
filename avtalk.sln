@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfcap", "mfcap\mfcap.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfcap-dll", "mfcap-dll\mfcap-dll.vcxproj", "{E8D23EAF-17B0-48F8-A740-B9ECABC6035A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfcapc", "mfcapc\mfcapc.vcxproj", "{BDEE46BC-4E55-4B91-9B9C-E34DCAB67895}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{E8D23EAF-17B0-48F8-A740-B9ECABC6035A}.Release|x64.Build.0 = Release|x64
 		{E8D23EAF-17B0-48F8-A740-B9ECABC6035A}.Release|x86.ActiveCfg = Release|Win32
 		{E8D23EAF-17B0-48F8-A740-B9ECABC6035A}.Release|x86.Build.0 = Release|Win32
+		{BDEE46BC-4E55-4B91-9B9C-E34DCAB67895}.Debug|x64.ActiveCfg = Debug|x64
+		{BDEE46BC-4E55-4B91-9B9C-E34DCAB67895}.Debug|x64.Build.0 = Debug|x64
+		{BDEE46BC-4E55-4B91-9B9C-E34DCAB67895}.Debug|x86.ActiveCfg = Debug|Win32
+		{BDEE46BC-4E55-4B91-9B9C-E34DCAB67895}.Debug|x86.Build.0 = Debug|Win32
+		{BDEE46BC-4E55-4B91-9B9C-E34DCAB67895}.Release|x64.ActiveCfg = Release|x64
+		{BDEE46BC-4E55-4B91-9B9C-E34DCAB67895}.Release|x64.Build.0 = Release|x64
+		{BDEE46BC-4E55-4B91-9B9C-E34DCAB67895}.Release|x86.ActiveCfg = Release|Win32
+		{BDEE46BC-4E55-4B91-9B9C-E34DCAB67895}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

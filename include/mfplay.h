@@ -35,6 +35,9 @@ HRESULT MFPlay_EnumDevices(PMFPLAY_DEVICE_INFO* Devices, uint32_t* Count);
 void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Count);
 HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Formats, DWORD* Count, DWORD* StreamCount);
 
+HRESULT MFPlay_NewInstance(DWORD Index, PMFPLAY_DEVICE * Device);
+void MFPlay_FreeInstance(PMFPLAY_DEVICE Device);
+
 #ifdef __cplusplus
 }
 #endif

@@ -24,3 +24,5 @@ EXPORTS
 	MFPlay_EnumDevices
 	MFPlay_FreeDeviceEnum
 	MFPlay_EnumFormats
+	MFPlay_NewInstance
+	MFPlay_FreeInstance

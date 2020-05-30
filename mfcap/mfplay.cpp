@@ -261,3 +261,63 @@ extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Form
 
 	return ret;
 }
+
+
+extern "C" HRESULT MFPlay_NewInstance(DWORD Index, PMFPLAY_DEVICE * Device)
+{
+	uint32_t diCount = 0;
+	IMFAttributes* attrs = NULL;
+	HRESULT ret = S_OK;
+	PMFPLAY_DEVICE_INFO di = NULL;
+	PMFPLAY_DEVICE d = NULL;
+
+	ret = MFPlay_EnumDevices(&di, &diCount);
+	if (SUCCEEDED(ret)) {
+		if (Index < diCount) {
+			d = (PMFPLAY_DEVICE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFPLAY_DEVICE));
+			if (d == NULL)
+				ret = E_OUTOFMEMORY;
+
+			if (SUCCEEDED(ret))
+				ret = MFCreateAttributes(&attrs, 2);
+
+			if (SUCCEEDED(ret))
+				ret = attrs->SetString(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, di[Index].EndpointId);
+
+			if (SUCCEEDED(ret))
+				ret = attrs->SetUINT32(MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS, MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS_CROSSPROCESS);
+
+			if (SUCCEEDED(ret))
+				ret = MFCreateAudioRenderer(attrs, &d->Sink);
+
+			if (SUCCEEDED(ret))
+				ret = d->Sink->GetCharacteristics(&d->Characteristics);
+
+			if (SUCCEEDED(ret))
+				d->Sink->AddRef();
+
+			if (d->Sink != NULL)
+				d->Sink->Release();
+
+			if (attrs != NULL)
+				attrs->Release();
+		} else ret = E_INVALIDARG;
+
+		MFPlay_FreeDeviceEnum(di, diCount);
+		if (SUCCEEDED(ret))
+			*Device = d;
+	}
+
+
+	return ret;
+}
+
+
+extern "C" void MFPlay_FreeInstance(PMFPLAY_DEVICE Device)
+{
+	Device->Sink->Shutdown();
+	Device->Sink->Release();
+	HeapFree(GetProcessHeap(), 0, Device);
+
+	return;
+}
