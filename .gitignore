@@ -31,6 +31,9 @@
 *.out
 *.app
 
+# MSVS
+*.user
+
 # Delphi
 *.local
 *.identcache
