@@ -288,7 +288,7 @@ void MFCap_QueryCharacteristics(PMFCAP_DEVICE Device, PMFCAP_DEVICE_CHARACTERIST
 }
 
 
-HRESULT MFCap_EnumDevices(PMFCAP_DEVICE_INFO* Devices, PUINT32 Count)
+HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* Devices, PUINT32 Count)
 {
 	HRESULT ret = S_OK;
 	std::vector<MFCAP_DEVICE_INFO> ds;
@@ -308,6 +308,9 @@ HRESULT MFCap_EnumDevices(PMFCAP_DEVICE_INFO* Devices, PUINT32 Count)
 
 	for (UINT32 i = 0; i < sizeof(deviceTypes) / sizeof(deviceTypes[0]); ++i) {
 		dt = deviceTypes[i];
+		if (Type != mcftUnknown && dt != Type)
+			continue;
+
 		switch (dt) {
 			case mcftVideo:
 				captureGuid = MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID;

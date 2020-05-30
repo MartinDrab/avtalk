@@ -100,7 +100,7 @@ typedef struct _MFCAP_DEVICE_INFO {
 #define MFCAP_CALLBACK_ERROR				4
 
 
-HRESULT MFCap_EnumDevices(PMFCAP_DEVICE_INFO *Devices, PUINT32 Count);
+HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* Devices, PUINT32 Count);
 void MFCap_FreeDeviceEnumeration(PMFCAP_DEVICE_INFO Devices, UINT32 Count);
 HRESULT MFCap_GetDeviceCount(EMFCapFormatType Type, UINT32* aCount);
 HRESULT MFCap_GetProperties(EMFCapFormatType Type, UINT32 Index, GUID** Guids, PROPVARIANT** Values, UINT32* Count);
