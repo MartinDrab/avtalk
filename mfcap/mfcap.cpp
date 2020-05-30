@@ -76,7 +76,7 @@ HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFCAP_FORMAT *Types, UINT32 
 				}
 			}
 			
-			format.StreamIndex = streamIndex + 1;
+			format.StreamIndex = streamIndex;
 			format.Selected = (Device->StreamSelectionMask & (1 << format.StreamIndex)) != 0;
 			format.Index = index;
 			if (format.TypeGuid == MFMediaType_Video) {
