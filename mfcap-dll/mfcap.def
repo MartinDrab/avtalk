@@ -20,3 +20,7 @@ EXPORTS
 	MFCap_QueryCharacteristics
 	MFCap_EnumDevices
 	MFCap_FreeDeviceEnumeration
+
+	MFPlay_EnumDevices
+	MFPlay_FreeDeviceEnum
+	MFPlay_EnumFormats

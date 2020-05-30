@@ -19,6 +19,7 @@
 #pragma comment(lib, "Mfreadwrite.lib")
 #pragma comment(lib, "Mf.lib")
 #pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "Propsys.lib")
 
 
 

@@ -1,4 +1,5 @@
 
+#include <vector>
 #include <cstdint>
 #include <windows.h>
 #include <objbase.h>
@@ -6,13 +7,14 @@
 #include <mfapi.h>
 #include <propvarutil.h>
 #include <Functiondiscoverykeys_devpkey.h>
+#include "mfcap.h"
 #include "mfplay.h"
 
 
 
 
 
-HRESULT MFPlay_EnumDevices(PMFPLAY_DEVICE_INFO* Devices, uint32_t* Count)
+extern "C" HRESULT MFPlay_EnumDevices(PMFPLAY_DEVICE_INFO* Devices, uint32_t* Count)
 {
 	HRESULT ret = S_OK;
 	const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
@@ -112,8 +114,7 @@ HRESULT MFPlay_EnumDevices(PMFPLAY_DEVICE_INFO* Devices, uint32_t* Count)
 }
 
 
-
-void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Count)
+extern "C" void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Count)
 {
 	if (Count > 0) {
 		for (size_t i = 0; i < Count; ++i) {
@@ -126,4 +127,137 @@ void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Count)
 	}
 
 	return;
+}
+
+
+extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Formats, DWORD* Count, DWORD *StreamCount)
+{
+	HRESULT ret = S_OK;
+	DWORD streamCount = 0;
+	DWORD mtCount = 0;
+	std::vector<MFCAP_FORMAT> formats;
+	IMFStreamSink* ss = NULL;
+	IMFMediaTypeHandler* mth = NULL;
+	IMFMediaType* mt = NULL;
+	MFCAP_FORMAT format;
+	GUID formatGuids[] = {
+		MFVideoFormat_NV12,
+		MFVideoFormat_YUY2,
+		MFVideoFormat_YV12,
+		MFVideoFormat_YVU9,
+		MFVideoFormat_MJPG,
+		MFAudioFormat_PCM,
+		MFAudioFormat_Float,
+	};
+	const wchar_t* formatNames[] = {
+		L"NV12",
+		L"YUV2",
+		L"YV12",
+		L"YVU9",
+		L"MJPG",
+		L"PCM",
+		L"Float"
+	};
+	PMFCAP_FORMAT tmpFormats = NULL;
+
+	ret = Device->Sink->GetStreamSinkCount(&streamCount);
+	if (SUCCEEDED(ret)) {
+		for (DWORD i = 0; i < streamCount; ++i) {
+			ss = NULL;
+			mth = NULL;
+			ret = Device->Sink->GetStreamSinkByIndex(i, &ss);
+			if (SUCCEEDED(ret))
+				ret = ss->GetMediaTypeHandler(&mth);
+
+			if (SUCCEEDED(ret))
+				ret = mth->GetMediaTypeCount(&mtCount);
+
+			if (SUCCEEDED(ret)) {
+				for (DWORD j = 0; j < mtCount; ++j) {
+					mt = NULL;
+					ret = mth->GetMediaTypeByIndex(j, &mt);
+					if (SUCCEEDED(ret))
+						ret = mt->GetGUID(MF_MT_MAJOR_TYPE, &format.TypeGuid);
+
+					if (SUCCEEDED(ret))
+						ret = mt->GetGUID(MF_MT_SUBTYPE, &format.SubtypeGuid);
+
+					if (SUCCEEDED(ret)) {
+						wcscpy(format.FriendlyName, L"UNKNOWN");
+						for (size_t k = 0; k < sizeof(formatGuids) / sizeof(formatGuids[0]); ++k) {
+							if (formatGuids[k] == format.SubtypeGuid) {
+								wcscpy(format.FriendlyName, formatNames[k]);
+								break;
+							}
+						}
+
+						format.StreamIndex = i + 1;
+						format.Index = j;
+						if (format.TypeGuid == MFMediaType_Video) {
+							format.Type = mcftVideo;
+							MFGetAttributeSize(mt, MF_MT_FRAME_SIZE, &format.Video.Width, &format.Video.Height);
+							mt->GetUINT32(MF_MT_AVG_BITRATE, &format.Video.BitRate);
+							mt->GetUINT32(MF_MT_FRAME_RATE, &format.Video.Framerate);
+						}
+						else if (format.TypeGuid == MFMediaType_Audio) {
+							format.Type = mcftAudio;
+							mt->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &format.Audio.BitsPerSample);
+							mt->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &format.Audio.ChannelCount);
+							mt->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &format.Audio.SamplesPerSecond);
+						}
+						else format.Type = mcftUnknown;
+
+						format.MediaType = mt;
+						mt->AddRef();
+						formats.push_back(format);
+					}
+
+					if (mt != NULL)
+						mt->Release();
+
+					if (FAILED(ret))
+						break;
+				}
+			}
+
+			if (mth != NULL)
+				mth->Release();
+
+			if (ss != NULL)
+				ss->Release();
+
+			if (FAILED(ret))
+				break;
+		}
+
+		if (ret == MF_E_INVALIDSTREAMNUMBER)
+			ret = S_OK;
+
+		if (SUCCEEDED(ret)) {
+			*StreamCount = streamCount;
+			*Count = (UINT32)formats.size();
+			*Formats = NULL;
+			if (formats.size() > 0) {
+				tmpFormats = (PMFCAP_FORMAT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, formats.size() * sizeof(tmpFormats[0]));
+				if (tmpFormats == NULL)
+					ret = E_OUTOFMEMORY;
+
+				if (SUCCEEDED(ret)) {
+					for (size_t i = 0; i < formats.size(); ++i) {
+						tmpFormats[i] = formats[i];
+						tmpFormats[i].MediaType->AddRef();
+					}
+
+					*Formats = tmpFormats;
+				}
+			}
+		}
+
+		for (auto& mt : formats)
+			mt.MediaType->Release();
+
+		formats.clear();
+	}
+
+	return ret;
 }

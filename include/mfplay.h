@@ -7,6 +7,7 @@
 #include <objbase.h>
 #include <mfidl.h>
 #include <mfobjects.h>
+#include "mfcap.h"
 
 
 
@@ -20,15 +21,23 @@ typedef struct _MFPLAY_DEVICE_INFO {
 
 
 typedef struct _MFPLAY_DEVICE {
-	IMFActivate* Object;
+	DWORD Characteristics;
 	IMFMediaSink* Sink;
 } MFPLAY_DEVICE, *PMFPLAY_DEVICE;
 
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 HRESULT MFPlay_EnumDevices(PMFPLAY_DEVICE_INFO* Devices, uint32_t* Count);
 void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Count);
+HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Formats, DWORD* Count, DWORD* StreamCount);
 
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
