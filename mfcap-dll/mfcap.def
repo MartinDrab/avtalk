@@ -1,0 +1,22 @@
+LIBRARY mfcap-dll
+EXPORTS
+	MFCap_GetDeviceCount
+	MFCap_NewInstance
+	MFCap_FreeInstance
+	MFCap_SetFormat
+	MFCap_EnumMediaTypes
+	MFCap_FreeMediaTypes
+	MFCap_SelectStream
+	MFCap_GetProperties
+	MFCap_GetFormatProperties
+	MFCap_FreeProperties
+	MFCap_StringFromGuid
+	MFCap_StringFree
+	MFCap_Init
+	MFCap_Finit
+	MFCap_Start
+	MFCap_Stop
+	MFCap_QueryStreamSelection
+	MFCap_QueryCharacteristics
+	MFCap_EnumDevices
+	MFCap_FreeDeviceEnumeration
