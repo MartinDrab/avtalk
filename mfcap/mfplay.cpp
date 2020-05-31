@@ -318,3 +318,59 @@ extern "C" void MFPlay_FreeInstance(PMFPLAY_DEVICE Device)
 
 	return;
 }
+
+
+extern "C" HRESULT MFPlay_CreateNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count)
+{
+	HRESULT ret = S_OK;
+	DWORD tmpCount = 0;
+	IMFStreamSink* s = NULL;
+	IMFTopologyNode* node = NULL;
+	IMFTopologyNode** tmpNodes = NULL;
+
+	ret = Device->Sink->GetStreamSinkCount(&tmpCount);
+	if (SUCCEEDED(ret) && tmpCount > 0) {
+		tmpNodes = (IMFTopologyNode**)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, tmpCount*sizeof(IMFTopologyNode *));
+		if (tmpNodes == NULL)
+			ret = E_OUTOFMEMORY;
+
+		if (SUCCEEDED(ret)) {
+			for (DWORD i = 0; i < tmpCount; ++i) {
+				ret = Device->Sink->GetStreamSinkByIndex(i, &s);
+				if (SUCCEEDED(ret))
+					ret = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
+
+				if (SUCCEEDED(ret))
+					ret = node->SetObject(s);
+
+				if (SUCCEEDED(ret)) {
+					node->AddRef();
+					tmpNodes[i] = node;
+				}
+
+				if (node != NULL)
+					node->Release();
+
+				if (s != NULL)
+					s->Release();
+
+				if (FAILED(ret)) {
+					for (DWORD j = 0; j < i; ++j)
+						tmpNodes[j]->Release();
+					
+					break;
+				}
+			}
+
+			if (FAILED(ret))
+				HeapFree(GetProcessHeap(), 0, tmpNodes);
+		}
+	}
+	
+	if (SUCCEEDED(ret)) {
+		*Nodes = tmpNodes;
+		*Count = tmpCount;
+	}
+
+	return ret;
+}
