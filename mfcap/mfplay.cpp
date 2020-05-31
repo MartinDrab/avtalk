@@ -341,6 +341,9 @@ extern "C" HRESULT MFPlay_CreateNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** 
 					ret = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
 
 				if (SUCCEEDED(ret))
+					ret = node->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, TRUE);
+
+				if (SUCCEEDED(ret))
 					ret = node->SetObject(s);
 
 				if (SUCCEEDED(ret)) {
