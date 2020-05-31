@@ -583,7 +583,6 @@ extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP
 	UINT32 deviceCount = 0;
 	IMFActivate** devices = NULL;
 	IMFAttributes* attributes = NULL;
-	IMFActivate* d = NULL;
 	IMFMediaSource* ms = NULL;
 	PMFCAP_DEVICE  cam = NULL;
 	GUID captureGuid;
@@ -610,26 +609,20 @@ extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP
 		hr = MFEnumDeviceSources(attributes, &devices, &deviceCount);
 
 	if (SUCCEEDED(hr)) {
-		d = devices[Index];
-		d->AddRef();
-		for (UINT32 i = 0; i < deviceCount; ++i)
-			devices[i]->Release();
-
-		CoTaskMemFree(devices);
-		hr = d->ActivateObject(__uuidof(IMFMediaSource), (void**)&ms);
+		hr = devices[Index]->ActivateObject(__uuidof(IMFMediaSource), (void**)&ms);
 		if (SUCCEEDED(hr)) {
 			cam = (PMFCAP_DEVICE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFCAP_DEVICE));
 			if (cam == NULL)
 				hr = E_OUTOFMEMORY;
+		}
 
-			if (SUCCEEDED(hr)) {
-				cam->Type = Type;
-				cam->MediaSource = ms;
-				cam->StreamSelectionMask = 0xffffffff;
-				hr = ms->GetCharacteristics(&cam->Characteristics.Value);
-				if (SUCCEEDED(hr))
-					hr = ms->CreatePresentationDescriptor(&cam->PresentationDescriptor);
-			}
+		if (SUCCEEDED(hr)) {
+			cam->Type = Type;
+			cam->MediaSource = ms;
+			cam->StreamSelectionMask = 0xffffffff;
+			hr = ms->GetCharacteristics(&cam->Characteristics.Value);
+			if (SUCCEEDED(hr))
+				hr = ms->CreatePresentationDescriptor(&cam->PresentationDescriptor);
 		}
 
 		if (SUCCEEDED(hr)) {
@@ -643,6 +636,11 @@ extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP
 
 		if (ms != NULL)
 			ms->Release();
+
+		for (UINT32 i = 0; i < deviceCount; ++i)
+			devices[i]->Release();
+
+		CoTaskMemFree(devices);
 	}
 
 	if (attributes != NULL)
@@ -655,7 +653,7 @@ extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP
 extern "C" void MFCap_FreeInstance(PMFCAP_DEVICE Instance)
 {
 	Instance->PresentationDescriptor->Release();
-	Instance->MediaSource->Shutdown();
+//	Instance->MediaSource->Shutdown();
 	Instance->MediaSource->Release();
 	HeapFree(GetProcessHeap(), 0, Instance);
 
