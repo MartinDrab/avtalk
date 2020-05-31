@@ -180,6 +180,7 @@ extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Form
 
 			if (SUCCEEDED(ret)) {
 				for (DWORD j = 0; j < mtCount; ++j) {
+					memset(&format, 0, sizeof(format));
 					mt = NULL;
 					ret = mth->GetMediaTypeByIndex(j, &mt);
 					if (SUCCEEDED(ret))
@@ -197,15 +198,14 @@ extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Form
 							}
 						}
 
-						format.StreamIndex = i + 1;
+						format.StreamIndex = i;
 						format.Index = j;
 						if (format.TypeGuid == MFMediaType_Video) {
 							format.Type = mcftVideo;
 							MFGetAttributeSize(mt, MF_MT_FRAME_SIZE, &format.Video.Width, &format.Video.Height);
 							mt->GetUINT32(MF_MT_AVG_BITRATE, &format.Video.BitRate);
 							mt->GetUINT32(MF_MT_FRAME_RATE, &format.Video.Framerate);
-						}
-						else if (format.TypeGuid == MFMediaType_Audio) {
+						} else if (format.TypeGuid == MFMediaType_Audio) {
 							format.Type = mcftAudio;
 							mt->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &format.Audio.BitsPerSample);
 							mt->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &format.Audio.ChannelCount);

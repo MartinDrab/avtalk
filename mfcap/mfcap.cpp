@@ -726,7 +726,14 @@ static GUID_STRING _guidMap [] = {
 	{MF_MT_VIDEO_PRIMARIES, L"Primaries"},
 	{MF_MT_AVG_BITRATE, L"Avg bitrate"},
 	{MF_MT_AVG_BIT_ERROR_RATE, L"Bit error rate"},
-	{},
+	{MF_MT_FRAME_RATE_RANGE_MIN, L"Min framerate"},
+	{MF_MT_FRAME_RATE_RANGE_MAX, L"Max framerate"},
+	{MF_MT_SAMPLE_SIZE, L"Sample size"},
+	{MF_MT_DEFAULT_STRIDE, L"Default stride"},
+	{MF_MT_FIXED_SIZE_SAMPLES, L"Fixed size samples"},
+	{MF_MT_AM_FORMAT_TYPE, L"Format type"},
+//	EA031A62-8BBB-43C5-B5C4-572D2D231C18
+//	{MF_MT_FSSourceTypeDecoded, L"Decoded"},
 	// Audio parameters
 	{MF_MT_AUDIO_AVG_BYTES_PER_SECOND, L"Avg bytes per second"},
 	{MF_MT_AUDIO_FLOAT_SAMPLES_PER_SECOND, L"Float samples per second"},
@@ -737,9 +744,12 @@ static GUID_STRING _guidMap [] = {
 	{MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, L"Valid bits per sample"},
 	{MF_MT_AUDIO_SAMPLES_PER_BLOCK, L"Samples per block"},
 	{MF_MT_AUDIO_CHANNEL_MASK, L"Channel mask"},
+	{MF_MT_ALL_SAMPLES_INDEPENDENT, L"Idependent"},
+	{MF_MT_AUDIO_PREFER_WAVEFORMATEX, L"Prefer WaveEx"},
 	// Audio formats
 	{MFAudioFormat_Float, L"Float"},
 	{MFAudioFormat_PCM, L"PCM"},
+	{MFAudioFormat_Float_SpatialObjects, L"FloatSpatial"},
 	// Audio device attributes
 	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ENDPOINT_ID, L"Endpoint ID"},
 	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ROLE, L"Role"},

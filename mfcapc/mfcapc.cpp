@@ -142,11 +142,11 @@ HRESULT ProcessDeviceType(void)
 		for (UINT32 j = 0; j < deviceCount; ++j) {
 			ret = MFCap_GetProperties(Type, j, &guids, &values, &valueCount);
 			if (FAILED(ret)) {
-				fprintf(stderr, "%u: MFCap_GetProperties: 0x%x\n", Type, ret);
+				fprintf(stderr, "MFCap_GetProperties: 0x%x\n", ret);
 				continue;
 			}
 			
-			fprintf(stdout, "%u: Device #%u\n", Type, j);
+			fprintf(stdout, "Device #%u\n", j);
 			ret = ProcessProperties<Type>(guids, values, valueCount);
 			MFCap_FreeProperties(guids, values, valueCount);
 			if (SUCCEEDED(ret)) {
@@ -165,19 +165,19 @@ HRESULT ProcessDeviceType(void)
 				deviceAttrs.HardwareTransforms = TRUE;
 				ret = MFCap_NewInstance(Type, j, &deviceAttrs, &d);
 				if (FAILED(ret)) {
-					fprintf(stderr, "%u: MFCap_NewInstance: 0x%x\n", Type, ret);
+					fprintf(stderr, "MFCap_NewInstance: 0x%x\n", ret);
 					continue;
 				}
 
 				ret = MFCap_EnumMediaTypes(d, &formats, &formatCount, &streamCount);
 				if (FAILED(ret)) {
 					MFCap_FreeInstance(d);
-					fprintf(stderr, "%u: MFCap_EnumMediaTypes: 0x%x\n", Type, ret);
+					fprintf(stderr, "MFCap_EnumMediaTypes: 0x%x\n", ret);
 					continue;
 				}
 
-				fprintf(stdout, "%u:  Total number of formats: %u\n", Type, formatCount);
-				fprintf(stdout, "%u:  Stream count: %u\n", Type, streamCount);
+				fprintf(stdout, "  Total number of formats: %u\n", formatCount);
+				fprintf(stdout, "  Stream count: %u\n", streamCount);
 				ret = ProcessMediaFormats<Type>(formats, formatCount);
 				MFCap_FreeMediaTypes(formats, formatCount);
 				MFCap_FreeInstance(d);
@@ -252,13 +252,13 @@ int wmain(int argc, wchar_t* argv[])
 		goto Exit;
 	}
 
-//	ret = ProcessDeviceType<mcftVideo>();
+	ret = ProcessDeviceType<mcftVideo>();
 	if (FAILED(ret)) {
 		fprintf(stderr, "ProcessDeviceType: 0x%x\n", ret);
 		goto FInitMFCap;
 	}
 
-//	ret = ProcessDeviceType<mcftAudio>();
+	ret = ProcessDeviceType<mcftAudio>();
 	if (FAILED(ret)) {
 		fprintf(stderr, "ProcessDeviceType: 0x%x\n", ret);
 		goto FInitMFCap;
