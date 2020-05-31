@@ -157,13 +157,8 @@ HRESULT ProcessDeviceType(void)
 				UINT32 streamCount;
 				PWCHAR typeGuidString = NULL;
 				PWCHAR subtypeGuidString = NULL;
-				MFCAP_DEVICE_ATTRIBUTES deviceAttrs;
 
-				memset(&deviceAttrs, 0, sizeof(deviceAttrs));
-				deviceAttrs.DisableConverters = FALSE;
-				deviceAttrs.ExtraSoftwareProcessing = TRUE;
-				deviceAttrs.HardwareTransforms = TRUE;
-				ret = MFCap_NewInstance(Type, j, &deviceAttrs, &d);
+				ret = MFCap_NewInstance(Type, j, &d);
 				if (FAILED(ret)) {
 					fprintf(stderr, "MFCap_NewInstance: 0x%x\n", ret);
 					continue;

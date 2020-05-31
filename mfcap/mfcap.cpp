@@ -23,11 +23,9 @@
 
 
 
-HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFCAP_FORMAT *Types, UINT32 *Count, UINT32 *StreamCount)
+extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFCAP_FORMAT *Types, UINT32 *Count, UINT32 *StreamCount)
 {
 	HRESULT hr = S_OK;
-	UINT32 index = 0;
-	UINT32 streamIndex = 0;
 	MFCAP_FORMAT format;
 	IMFMediaType* nativeType = NULL;
 	std::vector<MFCAP_FORMAT> types;
@@ -50,67 +48,75 @@ HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFCAP_FORMAT *Types, UINT32 
 		L"PCM",
 		L"Float"
 	};
+	IMFPresentationDescriptor* pd = NULL;
+	DWORD streamCount = 0;
+	DWORD typeCount = 0;
+	BOOL selected = FALSE;
 
-	do {
-		hr = S_OK;
-		index = 0;
-		while (hr == S_OK) {
+	pd = Device->PresentationDescriptor;
+	hr = pd->GetStreamDescriptorCount(&streamCount);
+	for (DWORD i = 0; i < streamCount; ++i) {
+		IMFStreamDescriptor* sd = NULL;
+		IMFMediaTypeHandler* mth = NULL;
+
+		hr = pd->GetStreamDescriptorByIndex(i, &selected, &sd);
+		if (SUCCEEDED(hr))
+			hr = sd->GetMediaTypeHandler(&mth);
+
+		if (SUCCEEDED(hr))
+			hr = mth->GetMediaTypeCount(&typeCount);
+
+		for (DWORD j = 0; j < typeCount; ++j) {
 			memset(&format, 0, sizeof(format));
-			hr = Device->MediaSourceReader->GetNativeMediaType(streamIndex, index, &nativeType);
+			hr = mth->GetMediaTypeByIndex(j, &nativeType);
 			if (FAILED(hr))
 				break;
 
 			hr = nativeType->GetGUID(MF_MT_MAJOR_TYPE, &format.TypeGuid);
-			if (FAILED(hr))
-				break;
+			if (SUCCEEDED(hr))
+				hr = nativeType->GetGUID(MF_MT_SUBTYPE, &format.SubtypeGuid);
 
-			hr = nativeType->GetGUID(MF_MT_SUBTYPE, &format.SubtypeGuid);
-			if (FAILED(hr))
-				break;
-
-			wcscpy(format.FriendlyName, L"UNKNOWN");
-			for (size_t i = 0; i < sizeof(formatGuids) / sizeof(formatGuids[0]); ++i) {
-				if (formatGuids[i] == format.SubtypeGuid) {
-					wcscpy(format.FriendlyName, formatNames[i]);
-					break;
+			if (SUCCEEDED(hr)) {
+				wcscpy(format.FriendlyName, L"UNKNOWN");
+				for (size_t i = 0; i < sizeof(formatGuids) / sizeof(formatGuids[0]); ++i) {
+					if (formatGuids[i] == format.SubtypeGuid) {
+						wcscpy(format.FriendlyName, formatNames[i]);
+						break;
+					}
 				}
+
+				format.StreamIndex = i;
+				format.Selected = (Device->StreamSelectionMask & (1 << format.StreamIndex)) != 0;
+				format.Index = j;
+				if (format.TypeGuid == MFMediaType_Video) {
+					format.Type = mcftVideo;
+					MFGetAttributeSize(nativeType, MF_MT_FRAME_SIZE, &format.Video.Width, &format.Video.Height);
+					nativeType->GetUINT32(MF_MT_AVG_BITRATE, &format.Video.BitRate);
+					nativeType->GetUINT32(MF_MT_FRAME_RATE, &format.Video.Framerate);
+				} else if (format.TypeGuid == MFMediaType_Audio) {
+					format.Type = mcftAudio;
+					nativeType->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &format.Audio.BitsPerSample);
+					nativeType->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &format.Audio.ChannelCount);
+					nativeType->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &format.Audio.SamplesPerSecond);
+				} else format.Type = mcftUnknown;
+
+				format.MediaType = nativeType;
+				types.push_back(format);
 			}
-			
-			format.StreamIndex = streamIndex;
-			format.Selected = (Device->StreamSelectionMask & (1 << format.StreamIndex)) != 0;
-			format.Index = index;
-			if (format.TypeGuid == MFMediaType_Video) {
-				format.Type = mcftVideo;
-				hr = MFGetAttributeSize(nativeType, MF_MT_FRAME_SIZE, &format.Video.Width, &format.Video.Height);
-				if (FAILED(hr))
-					break;
-
-				nativeType->GetUINT32(MF_MT_AVG_BITRATE, &format.Video.BitRate);
-				nativeType->GetUINT32(MF_MT_FRAME_RATE, &format.Video.Framerate);
-			} else if (format.TypeGuid == MFMediaType_Audio) {
-				format.Type = mcftAudio;
-				nativeType->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &format.Audio.BitsPerSample);
-				nativeType->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &format.Audio.ChannelCount);
-				nativeType->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &format.Audio.SamplesPerSecond);
-			} else format.Type = mcftUnknown;
-
-			format.MediaType = nativeType;
-			types.push_back(format);
-			index++;
-			nativeType = NULL;
 		}
 
-		if (FAILED(hr) && hr != MF_E_NO_MORE_TYPES)
+		if (mth != NULL)
+			mth->Release();
+
+		if (sd != NULL)
+			sd->Release();
+
+		if (FAILED(hr))
 			break;
-
-		++streamIndex;
-	} while (hr == MF_E_NO_MORE_TYPES);
-
-	if (hr == MF_E_INVALIDSTREAMNUMBER)
-		hr = S_OK;
+	}
 
 	if (SUCCEEDED(hr)) {
-		*StreamCount = streamIndex;
+		*StreamCount = streamCount;
 		*Count = (UINT32)types.size();
 		*Types = NULL;
 		if (types.size() > 0) {
@@ -140,7 +146,7 @@ HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFCAP_FORMAT *Types, UINT32 
 }
 
 
-void MFCap_FreeMediaTypes(PMFCAP_FORMAT Formats, UINT32 Count)
+extern "C" void MFCap_FreeMediaTypes(PMFCAP_FORMAT Formats, UINT32 Count)
 {
 	if (Count > 0) {
 		for (UINT32 i = 0; i < Count; ++i)
@@ -153,7 +159,7 @@ void MFCap_FreeMediaTypes(PMFCAP_FORMAT Formats, UINT32 Count)
 }
 
 
-HRESULT MFCap_SelectStream(PMFCAP_DEVICE Device, UINT32 StreamIndex, BOOL Select)
+extern "C" HRESULT MFCap_SelectStream(PMFCAP_DEVICE Device, UINT32 StreamIndex, BOOL Select)
 {
 	HRESULT hr = S_OK;
 	UINT32 bitValue = 0;
@@ -228,43 +234,72 @@ static DWORD WINAPI _SamplingThreadRoutine(PVOID Context)
 #define __HRESULT_FROM_WIN32(x) ((HRESULT)(x) <= 0 ? ((HRESULT)(x)) : ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
 
 
-HRESULT MFCap_Start(PMFCAP_DEVICE Device, MFCAP_SAMPLE_CALLBACK* Callback, void* Context)
+extern "C" HRESULT MFCap_Start(PMFCAP_DEVICE Device, MFCAP_SAMPLE_CALLBACK* Callback, void* Context)
 {
 	HRESULT ret = S_OK;
+	IMFAttributes* msAttributes = NULL;
 
-	Device->SamplingCallback = Callback;
-	Device->SamplingContext = Context;
-	for (UINT32 i = 0; i < 31; ++i) {
-		if ((Device->StreamSelectionMask & (1 << i)) != 0)
-			ret = Device->MediaSourceReader->SetStreamSelection(i, TRUE);
-		
-		if (FAILED(ret)) {
-			Device->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
-			Device->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
-			break;
+	ret = MFCreateAttributes(&msAttributes, 1);
+	if (SUCCEEDED(ret))
+		ret = msAttributes->SetUINT32(MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, TRUE);
+	
+	if (SUCCEEDED(ret))
+		ret = MFCreateSourceReaderFromMediaSource(Device->MediaSource, msAttributes, &Device->MediaSourceReader);
+
+	if (SUCCEEDED(ret))
+		ret = Device->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+
+	if (SUCCEEDED(ret))
+		ret = Device->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
+
+	if (SUCCEEDED(ret)) {
+		Device->SamplingCallback = Callback;
+		Device->SamplingContext = Context;
+		for (UINT32 i = 0; i < 31; ++i) {
+			if ((Device->StreamSelectionMask & (1 << i)) != 0)
+				ret = Device->MediaSourceReader->SetStreamSelection(i, TRUE);
+
+			if (FAILED(ret)) {
+				Device->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+				Device->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
+				break;
+			}
 		}
 	}
 
 	if (SUCCEEDED(ret)) {
+		Device->MediaSourceReader->AddRef();
 		Device->SamplingThread = CreateThread(NULL, 0, _SamplingThreadRoutine, Device, 0, NULL);
 		if (Device->SamplingThread == NULL) {
 			ret = __HRESULT_FROM_WIN32(GetLastError());
 			Device->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
 			Device->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
+			Device->MediaSourceReader->Release();
 		}
 	}
+
+	if (Device->MediaSourceReader != NULL) {
+		Device->MediaSourceReader->Release();
+		if (FAILED(ret))
+			Device->MediaSourceReader = NULL;
+	}
+
+	if (msAttributes != NULL)
+		msAttributes->Release();
 
 	return ret;
 }
 
 
-void MFCap_Stop(PMFCAP_DEVICE Device)
+extern "C" void MFCap_Stop(PMFCAP_DEVICE Device)
 {
 	Device->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
 	Device->SamplingTerminated = TRUE;
 	Device->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
 	WaitForSingleObject(Device->SamplingThread, INFINITE);
 	CloseHandle(Device->SamplingThread);
+	Device->MediaSourceReader->Release();
+	Device->MediaSourceReader = NULL;
 	Device->SamplingThread = NULL;
 	Device->SamplingTerminated = FALSE;
 
@@ -272,7 +307,7 @@ void MFCap_Stop(PMFCAP_DEVICE Device)
 }
 
 
-void MFCap_QueryStreamSelection(PMFCAP_DEVICE Device, PUINT32 StreamMask)
+extern "C" void MFCap_QueryStreamSelection(PMFCAP_DEVICE Device, PUINT32 StreamMask)
 {
 	*StreamMask = Device->StreamSelectionMask;
 
@@ -280,7 +315,7 @@ void MFCap_QueryStreamSelection(PMFCAP_DEVICE Device, PUINT32 StreamMask)
 }
 
 
-void MFCap_QueryCharacteristics(PMFCAP_DEVICE Device, PMFCAP_DEVICE_CHARACTERISTICS Characteristics)
+extern "C" void MFCap_QueryCharacteristics(PMFCAP_DEVICE Device, PMFCAP_DEVICE_CHARACTERISTICS Characteristics)
 {
 	*Characteristics = Device->Characteristics;
 
@@ -288,7 +323,95 @@ void MFCap_QueryCharacteristics(PMFCAP_DEVICE Device, PMFCAP_DEVICE_CHARACTERIST
 }
 
 
-HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* Devices, PUINT32 Count)
+extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count)
+{
+	HRESULT ret = S_OK;
+	DWORD sdCount = 0;
+	IMFStreamDescriptor* sd = NULL;
+	IMFPresentationDescriptor* pd = NULL;
+	IMFTopologyNode** tmpNodes = NULL;
+	BOOL selected = FALSE;
+	UINT32 nodeIndex = 0;
+	IMFTopologyNode* tmpNode = NULL;
+
+	pd = Device->PresentationDescriptor;
+	ret = pd->GetStreamDescriptorCount(&sdCount);
+	if (SUCCEEDED(ret) && sdCount > 0) {
+		tmpNodes = (IMFTopologyNode**)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sdCount*sizeof(IMFTopologyNode*));
+		if (tmpNodes == NULL)
+			ret = E_OUTOFMEMORY;
+
+		if (tmpNodes != NULL) {
+			for (UINT32 i = 0; i < sdCount; ++i) {
+				sd = NULL;
+				tmpNode = NULL;
+				if ((Device->StreamSelectionMask & (1 << i)) != 0)
+					ret = pd->SelectStream(i);
+				else ret = pd->DeselectStream(i);
+				
+				if (SUCCEEDED(ret))
+					ret = pd->GetStreamDescriptorByIndex(i, &selected, &sd);
+				
+				if (SUCCEEDED(ret) && selected) {
+					ret = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &tmpNode);
+					if (SUCCEEDED(ret))
+						ret = tmpNode->SetUnknown(MF_TOPONODE_SOURCE, Device->MediaSource);
+
+					if (SUCCEEDED(ret))
+						ret = tmpNode->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, pd);
+
+					if (SUCCEEDED(ret))
+						ret = tmpNode->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, sd);
+
+					if (SUCCEEDED(ret)) {
+						tmpNode->AddRef();
+						tmpNodes[nodeIndex] = tmpNode;
+						++nodeIndex;
+					}
+				}
+
+				if (tmpNode != NULL)
+					tmpNode->Release();
+
+				if (sd = NULL)
+					sd->Release();
+
+				if (FAILED(ret)) {
+					for (UINT32 j = 0; j < nodeIndex; ++j)
+						tmpNodes[i]->Release();
+					
+					break;
+				}
+			}
+
+			if (FAILED(ret))
+				HeapFree(GetProcessHeap(), 0, tmpNodes);
+		}
+	}
+
+	if (SUCCEEDED(ret)) {
+		*Nodes = tmpNodes;
+		*Count = nodeIndex;
+	}
+
+	return ret;
+}
+
+
+extern "C" void MFCap_FreeStreamNodes(IMFTopologyNode** Nodes, UINT32 Count)
+{
+	if (Count > 0) {
+		for (UINT32 i = 0; i < Count; ++i)
+			Nodes[i]->Release();
+
+		HeapFree(GetProcessHeap(), 0, Nodes);
+	}
+
+	return;
+}
+
+
+extern "C" HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* Devices, PUINT32 Count)
 {
 	HRESULT ret = S_OK;
 	std::vector<MFCAP_DEVICE_INFO> ds;
@@ -395,7 +518,7 @@ HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* Devices, PU
 }
 
 
-void MFCap_FreeDeviceEnumeration(PMFCAP_DEVICE_INFO Devices, UINT32 Count)
+extern "C" void MFCap_FreeDeviceEnumeration(PMFCAP_DEVICE_INFO Devices, UINT32 Count)
 {
 	if (Count > 0) {
 		for (UINT32 i = 0; i < Count; ++i) {
@@ -410,7 +533,7 @@ void MFCap_FreeDeviceEnumeration(PMFCAP_DEVICE_INFO Devices, UINT32 Count)
 }
 
 
-HRESULT MFCap_GetDeviceCount(EMFCapFormatType Type, UINT32 *aCount)
+extern "C" HRESULT MFCap_GetDeviceCount(EMFCapFormatType Type, UINT32 *aCount)
 {
 	HRESULT hr = S_OK;
 	IMFAttributes *attributes = NULL;
@@ -454,7 +577,7 @@ HRESULT MFCap_GetDeviceCount(EMFCapFormatType Type, UINT32 *aCount)
 }
 
 
-HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP_DEVICE_ATTRIBUTES Attributes, PMFCAP_DEVICE* aInstance)
+extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP_DEVICE* aInstance)
 {
 	HRESULT hr = S_OK;
 	UINT32 deviceCount = 0;
@@ -500,40 +623,12 @@ HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP_DEVICE_ATT
 				hr = E_OUTOFMEMORY;
 
 			if (SUCCEEDED(hr)) {
-				IMFAttributes *msAttributes = NULL;
-				
 				cam->Type = Type;
 				cam->MediaSource = ms;
 				cam->StreamSelectionMask = 0xffffffff;
-				if (Attributes != NULL) {
-					hr = MFCreateAttributes(&msAttributes, 4);
-					if (SUCCEEDED(hr))
-						hr = msAttributes->SetUINT32(MF_LOW_LATENCY, Attributes->LowLatencyDelay);
-					
-					if (SUCCEEDED(hr))
-						hr = msAttributes->SetUINT32(MF_READWRITE_DISABLE_CONVERTERS, Attributes->DisableConverters);
-					
-					if (SUCCEEDED(hr))
-						hr = msAttributes->SetUINT32(MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, Attributes->HardwareTransforms);
-					
-					if (SUCCEEDED(hr))
-						hr = msAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, Attributes->ExtraSoftwareProcessing);
-				}
-
+				hr = ms->GetCharacteristics(&cam->Characteristics.Value);
 				if (SUCCEEDED(hr))
-					hr = ms->GetCharacteristics(&cam->Characteristics.Value);
-				
-				if (SUCCEEDED(hr))
-					hr = MFCreateSourceReaderFromMediaSource(cam->MediaSource, msAttributes, &cam->MediaSourceReader);			
-			
-				if (SUCCEEDED(hr))
-					hr = cam->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
-				
-				if (SUCCEEDED(hr))
-					hr = cam->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
-
-				if (msAttributes != NULL)
-					msAttributes->Release();
+					hr = ms->CreatePresentationDescriptor(&cam->PresentationDescriptor);
 			}
 		}
 
@@ -557,9 +652,10 @@ HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP_DEVICE_ATT
 }
 
 
-void MFCap_FreeInstance(PMFCAP_DEVICE Instance)
+extern "C" void MFCap_FreeInstance(PMFCAP_DEVICE Instance)
 {
-	Instance->MediaSourceReader->Release();
+	Instance->PresentationDescriptor->Release();
+	Instance->MediaSource->Shutdown();
 	Instance->MediaSource->Release();
 	HeapFree(GetProcessHeap(), 0, Instance);
 
@@ -611,7 +707,7 @@ static HRESULT _GetProperties(IMFAttributes* Attributes, GUID** Guids, PROPVARIA
 }
 
 
-HRESULT MFCap_GetProperties(EMFCapFormatType Type, UINT32 Index, GUID** Guids, PROPVARIANT** Values, UINT32* Count)
+extern "C" HRESULT MFCap_GetProperties(EMFCapFormatType Type, UINT32 Index, GUID** Guids, PROPVARIANT** Values, UINT32* Count)
 {
 	HRESULT hr = S_OK;
 	UINT32 deviceCount = 0;
@@ -663,7 +759,7 @@ HRESULT MFCap_GetProperties(EMFCapFormatType Type, UINT32 Index, GUID** Guids, P
 }
 
 
-HRESULT MFCap_GetFormatProperties(MFCAP_FORMAT *Format, GUID** Guids, PROPVARIANT** Values, UINT32* Count)
+extern "C" HRESULT MFCap_GetFormatProperties(MFCAP_FORMAT *Format, GUID** Guids, PROPVARIANT** Values, UINT32* Count)
 {
 	HRESULT hr = S_OK;
 
@@ -672,7 +768,7 @@ HRESULT MFCap_GetFormatProperties(MFCAP_FORMAT *Format, GUID** Guids, PROPVARIAN
 	return hr;
 }
 
-void MFCap_FreeProperties(GUID *Guids, PROPVARIANT* Values, UINT32 Count)
+extern "C" void MFCap_FreeProperties(GUID *Guids, PROPVARIANT* Values, UINT32 Count)
 {
 	if (Count > 0) {
 		for (UINT32 i = 0; i < Count; ++i)
@@ -685,11 +781,32 @@ void MFCap_FreeProperties(GUID *Guids, PROPVARIANT* Values, UINT32 Count)
 }
 
 
-HRESULT MFCap_SetFormat(PMFCAP_DEVICE Device, UINT32 Stream, IMFMediaType *Format)
+extern "C" HRESULT MFCap_SetFormat(PMFCAP_DEVICE Device, UINT32 Stream, IMFMediaType *Format)
 {
 	HRESULT hr = S_OK;
+	IMFPresentationDescriptor* pd = NULL;
+	IMFStreamDescriptor* sd = NULL;
+	IMFMediaTypeHandler* mth = NULL;
+	BOOL selected = FALSE;
 
-	hr = Device->MediaSourceReader->SetCurrentMediaType(Stream, NULL, Format);
+	hr = Device->MediaSource->CreatePresentationDescriptor(&pd);
+	if (SUCCEEDED(hr))
+		hr = pd->GetStreamDescriptorByIndex(Stream, &selected, &sd);
+
+	if (SUCCEEDED(hr))
+		hr = sd->GetMediaTypeHandler(&mth);
+
+	if (SUCCEEDED(hr))
+		hr = mth->SetCurrentMediaType(Format);
+
+	if (mth != NULL)
+		mth->Release();
+
+	if (sd != NULL)
+		sd->Release();
+
+	if (pd != NULL)
+		pd->Release();
 
 	return hr;
 }
@@ -774,7 +891,7 @@ static GUID_STRING _guidMap [] = {
 };
 
 
-HRESULT MFCap_StringFromGuid(GUID* Guid, PWCHAR *String)
+extern "C" HRESULT MFCap_StringFromGuid(GUID* Guid, PWCHAR *String)
 {
 	HRESULT hr = S_OK;
 	wchar_t* tmp = NULL;
@@ -800,7 +917,7 @@ HRESULT MFCap_StringFromGuid(GUID* Guid, PWCHAR *String)
 }
 
 
-void MFCap_StringFree(PWCHAR String)
+extern "C" void MFCap_StringFree(PWCHAR String)
 {
 	CoTaskMemFree(String);
 
@@ -808,7 +925,7 @@ void MFCap_StringFree(PWCHAR String)
 }
 
 
-HRESULT MFCap_Init(void)
+extern "C" HRESULT MFCap_Init(void)
 {
 	HRESULT hr = S_OK;
 
@@ -823,7 +940,7 @@ HRESULT MFCap_Init(void)
 }
 
 
-void MFCap_Finit(void)
+extern "C" void MFCap_Finit(void)
 {
 	MFShutdown();
 	CoUninitialize();
