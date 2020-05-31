@@ -22,23 +22,23 @@ HRESULT ProcessProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count)
 		
 		ret = MFCap_StringFromGuid(Guids + k, &guidString);
 		if (FAILED(ret)) {
-			fprintf(stderr, "%u: MFCap_StringFree: 0x%x\n", Type, ret);
+			fprintf(stderr, "MFCap_StringFree: 0x%x\n", ret);
 			continue;
 		}
 
-		fprintf(stdout, "%u:   %ls\t%u\t", Type, guidString, Values[k].vt);
+		fprintf(stdout, "   %ls\t%u\t", guidString, Values[k].vt);
 		MFCap_StringFree(guidString);
 		switch (Values[k].vt) {
 			case VT_CLSID:
 				ret = PropVariantToCLSID(Values[k], &g);
 				if (FAILED(ret)) {
-					fprintf(stderr, "\n%u: PropVariantToCLSID: 0x%x\n", Type, ret);
+					fprintf(stderr, "\nPropVariantToCLSID: 0x%x\n", ret);
 					continue;
 				}
 
 				ret = MFCap_StringFromGuid(&g, &guidString);
 				if (FAILED(ret)) {
-					fprintf(stderr, "\n%u: MFCap_StringFromGuid: 0x%x\n", Type, ret);
+					fprintf(stderr, "\nMFCap_StringFromGuid: 0x%x\n", ret);
 					continue;
 				}
 
@@ -48,7 +48,7 @@ HRESULT ProcessProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count)
 			default:
 				ret = PropVariantChangeType(&tmp, Values[k], 0, VT_LPWSTR);
 				if (FAILED(ret)) {
-					fprintf(stderr, "\n%u: PropVariantChangeType: 0x%x\n", Type, ret);
+					fprintf(stderr, "\nPropVariantChangeType: 0x%x\n", ret);
 					continue;
 				}
 
@@ -56,6 +56,70 @@ HRESULT ProcessProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count)
 				PropVariantClear(&tmp);
 				break;
 		}
+	}
+
+	return ret;
+}
+
+
+template <EMFCapFormatType Type>
+HRESULT ProcessMediaFormats(PMFCAP_FORMAT Formats, DWORD FormatCount)
+{
+	HRESULT ret = S_OK;
+	PMFCAP_FORMAT tmpFormat = NULL;
+
+	tmpFormat = Formats;
+	for (UINT32 k = 0; k < FormatCount; ++k) {
+		PWCHAR typeGuidString = NULL;
+		PWCHAR subtypeGuidString = NULL;
+		GUID* guids;
+		PROPVARIANT* values;
+		UINT32 valueCount = 0;
+
+		ret = MFCap_StringFromGuid(&tmpFormat->TypeGuid, &typeGuidString);
+		if (FAILED(ret)) {
+			fprintf(stderr, "MFCap_StringFromGuid: 0x%x\n", ret);
+			continue;
+		}
+
+		ret = MFCap_StringFromGuid(&tmpFormat->SubtypeGuid, &subtypeGuidString);
+		if (FAILED(ret)) {
+			fprintf(stderr, "MFCap_StringFromGuid: 0x%x\n", ret);
+			continue;
+		}
+
+		fprintf(stdout, "    Stream index: %u\n", tmpFormat->StreamIndex);
+		fprintf(stdout, "    Index: %u\n", tmpFormat->Index);
+		fprintf(stdout, "    Selected: %u\n", tmpFormat->Selected);
+		fprintf(stdout, "    Type: %u\n", tmpFormat->Type);
+		fprintf(stdout, "    Type GUID: %ls\n", typeGuidString);
+		fprintf(stdout, "    Subtype GUID: %ls\n", subtypeGuidString);
+		MFCap_StringFree(subtypeGuidString);
+		MFCap_StringFree(typeGuidString);
+		switch (tmpFormat->Type) {
+			case mcftVideo:
+				fprintf(stdout, "    Width: %u\n", tmpFormat->Video.Width);
+				fprintf(stdout, "    Height: %u\n", tmpFormat->Video.Height);
+				fprintf(stdout, "    Framerate: %u\n", tmpFormat->Video.Framerate);
+				fprintf(stdout, "    Bitrate: %u\n", tmpFormat->Video.BitRate);
+				break;
+			case mcftAudio:
+				fprintf(stdout, "    Channels: %u\n", tmpFormat->Audio.ChannelCount);
+				fprintf(stdout, "    Bits per sample: %u\n", tmpFormat->Audio.BitsPerSample);
+				fprintf(stdout, "    Samples per second: %u\n", tmpFormat->Audio.SamplesPerSecond);
+				break;
+		}
+
+		ret = MFCap_GetFormatProperties(tmpFormat, &guids, &values, &valueCount);
+		if (FAILED(ret)) {
+			fprintf(stderr, "MFCap_GetFormatProperties: 0x%x\n", ret);
+			continue;
+		}
+
+		ProcessProperties<mcftAudio>(guids, values, valueCount);
+		MFCap_FreeProperties(guids, values, valueCount);
+		fprintf(stdout, "\n");
+		++tmpFormat;
 	}
 
 	return ret;
@@ -114,58 +178,63 @@ HRESULT ProcessDeviceType(void)
 
 				fprintf(stdout, "%u:  Total number of formats: %u\n", Type, formatCount);
 				fprintf(stdout, "%u:  Stream count: %u\n", Type, streamCount);
-				tmpFormat = formats;
-				for (UINT32 k = 0; k < formatCount; ++k) {
-					ret = MFCap_StringFromGuid(&tmpFormat->TypeGuid, &typeGuidString);
-					if (FAILED(ret)) {
-						fprintf(stderr, "%u: MFCap_StringFromGuid: 0x%x\n", Type, ret);
-						continue;
-					}
-
-					ret = MFCap_StringFromGuid(&tmpFormat->SubtypeGuid, &subtypeGuidString);
-					if (FAILED(ret)) {
-						fprintf(stderr, "%u: MFCap_StringFromGuid: 0x%x\n", Type, ret);
-						continue;
-					}
-
-					fprintf(stdout, "%u:    Stream index: %u\n", Type, tmpFormat->StreamIndex);
-					fprintf(stdout, "%u:    Index: %u\n", Type, tmpFormat->Index);
-					fprintf(stdout, "%u:    Selected: %u\n", Type, tmpFormat->Selected);
-					fprintf(stdout, "%u:    Type: %u\n", Type, tmpFormat->Type);
-					fprintf(stdout, "%u:    Type GUID: %ls\n", Type, typeGuidString);
-					fprintf(stdout, "%u:    Subtype GUID: %ls\n", Type, subtypeGuidString);
-					MFCap_StringFree(subtypeGuidString);
-					MFCap_StringFree(typeGuidString);
-					switch (tmpFormat->Type) {
-						case mcftVideo:
-							fprintf(stdout, "%u:    Width: %u\n", Type, tmpFormat->Video.Width);
-							fprintf(stdout, "%u:    Height: %u\n", Type, tmpFormat->Video.Height);
-							fprintf(stdout, "%u:    Framerate: %u\n", Type, tmpFormat->Video.Framerate);
-							fprintf(stdout, "%u:    Bitrate: %u\n", Type, tmpFormat->Video.BitRate);
-							break;
-						case mcftAudio:
-							fprintf(stdout, "%u:    Channels: %u\n", Type, tmpFormat->Audio.ChannelCount);
-							fprintf(stdout, "%u:    Bits per sample: %u\n", Type, tmpFormat->Audio.BitsPerSample);
-							fprintf(stdout, "%u:    Samples per second: %u\n", Type, tmpFormat->Audio.SamplesPerSecond);
-							break;
-					}
-
-					ret = MFCap_GetFormatProperties(tmpFormat, &guids, &values, &valueCount);
-					if (FAILED(ret)) {
-						fprintf(stderr, "%u: MFCap_GetFormatProperties: 0x%x\n", Type, ret);
-						continue;
-					}
-
-					ProcessProperties<Type>(guids, values, streamCount);
-					MFCap_FreeProperties(guids, values, streamCount);
-					fprintf(stdout, "%u:\n", Type);
-					++tmpFormat;
-				}
-
+				ret = ProcessMediaFormats<Type>(formats, formatCount);
 				MFCap_FreeMediaTypes(formats, formatCount);
 				MFCap_FreeInstance(d);
 			}
 		}
+	}
+
+	return ret;
+}
+
+
+HRESULT ProcessAudoOoutput(void)
+{
+	uint32_t count = 0;
+	HRESULT ret = S_OK;
+	PMFPLAY_DEVICE_INFO devices = NULL;
+	PMFPLAY_DEVICE_INFO tmp = NULL;
+	MFPLAY_DEVICE_STATE_MASK stateMask;
+	PMFPLAY_DEVICE instance = NULL;
+	PMFCAP_FORMAT formats = NULL;
+	DWORD formatCount = 0;
+	DWORD streamCount = 0;
+
+	stateMask.Value = 0;
+	stateMask.Active = 1;
+	ret = MFPlay_EnumDevices(stateMask, &devices, &count);
+	if (SUCCEEDED(ret)) {
+		tmp = devices;
+		for (uint32_t i = 0; i < count; ++i) {
+			fprintf(stdout, "Output device #%u\n", i);
+			fprintf(stdout, "  Name:\t%ls\n", tmp->Name);
+			fprintf(stdout, "  Description:\t%ls\n", tmp->Description);
+			fprintf(stdout, "  EndpointId:\t%ls\n", tmp->EndpointId);
+			fprintf(stdout, "  State:\t0x%x\n", tmp->State);
+			fprintf(stdout, "\n");
+			++tmp;
+			ret = MFPlay_NewInstance(tmp - 1, &instance);
+			if (FAILED(ret)) {
+				fprintf(stderr, "MFPlay_NewInstance: 0x%x", ret);
+				continue;
+			}
+			
+			ret = MFPlay_EnumFormats(instance, &formats, &formatCount, &streamCount);
+			if (FAILED(ret)) {
+				fprintf(stderr, "MFPlay_EnumFormats: 0x%x", ret);
+				MFPlay_FreeInstance(instance);
+				continue;
+			}
+
+			fprintf(stdout, "  Total number of formats: %u\n", formatCount);
+			fprintf(stdout, "  Stream count: %u\n", streamCount);
+			ProcessMediaFormats<mcftAudio>(formats, formatCount);
+			MFCap_FreeMediaTypes(formats, formatCount);
+			MFPlay_FreeInstance(instance);
+		}
+
+		MFPlay_FreeDeviceEnum(devices, count);
 	}
 
 	return ret;
@@ -183,15 +252,21 @@ int wmain(int argc, wchar_t* argv[])
 		goto Exit;
 	}
 
-	ret = ProcessDeviceType<mcftVideo>();
+//	ret = ProcessDeviceType<mcftVideo>();
 	if (FAILED(ret)) {
 		fprintf(stderr, "ProcessDeviceType: 0x%x\n", ret);
 		goto FInitMFCap;
 	}
 
-	ret = ProcessDeviceType<mcftAudio>();
+//	ret = ProcessDeviceType<mcftAudio>();
 	if (FAILED(ret)) {
 		fprintf(stderr, "ProcessDeviceType: 0x%x\n", ret);
+		goto FInitMFCap;
+	}
+
+	ret = ProcessAudoOoutput();
+	if (FAILED(ret)) {
+		fprintf(stderr, "ProcessAUdoOoutput: 0x%x\n", ret);
 		goto FInitMFCap;
 	}
 
