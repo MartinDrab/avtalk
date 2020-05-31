@@ -19,6 +19,17 @@ typedef struct _MFPLAY_DEVICE_INFO {
 	DWORD Characteristics;
 } MFPLAY_DEVICE_INFO, *PMFPLAY_DEVICE_INFO;
 
+typedef struct _MFPLAY_DEVICE_STATE_MASK {
+	union {
+		struct {
+			int Active : 1;
+			int Disabled : 1;
+			int NotPresent : 1;
+			int Unplugged : 1;
+		};
+		int Value;
+	};
+} MFPLAY_DEVICE_STATE_MASK, *PMFPLAY_DEVICE_STATE_MASK;
 
 typedef struct _MFPLAY_DEVICE {
 	DWORD Characteristics;
@@ -31,11 +42,11 @@ typedef struct _MFPLAY_DEVICE {
 extern "C" {
 #endif
 
-HRESULT MFPlay_EnumDevices(PMFPLAY_DEVICE_INFO* Devices, uint32_t* Count);
+HRESULT MFPlay_EnumDevices(MFPLAY_DEVICE_STATE_MASK StateMask, PMFPLAY_DEVICE_INFO* Devices, uint32_t* Count);
 void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Count);
 HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Formats, DWORD* Count, DWORD* StreamCount);
 
-HRESULT MFPlay_NewInstance(DWORD Index, PMFPLAY_DEVICE * Device);
+HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO * DeviceInfo, PMFPLAY_DEVICE * Device);
 void MFPlay_FreeInstance(PMFPLAY_DEVICE Device);
 
 #ifdef __cplusplus
