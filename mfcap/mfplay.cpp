@@ -67,6 +67,7 @@ extern "C" HRESULT MFPlay_EnumDevices(PMFPLAY_DEVICE_INFO* Devices, uint32_t* Co
 					}
 
 					PropVariantClear(&varName);
+					ret = S_OK;
 				}
 
 				if (SUCCEEDED(ret)) {
@@ -76,8 +77,8 @@ extern "C" HRESULT MFPlay_EnumDevices(PMFPLAY_DEVICE_INFO* Devices, uint32_t* Co
 						ret = PropVariantToString(varDesc, tmp, sizeof(tmp) / sizeof(wchar_t));
 
 					if (SUCCEEDED(ret)) {
-						tmpDevices[i].Name = (wchar_t *)CoTaskMemAlloc((wcslen(tmp) + 1) * sizeof(wchar_t));
-						if (tmpDevices[i].Name == NULL)
+						tmpDevices[i].Description = (wchar_t *)CoTaskMemAlloc((wcslen(tmp) + 1) * sizeof(wchar_t));
+						if (tmpDevices[i].Description == NULL)
 							ret = E_OUTOFMEMORY;
 
 						if (SUCCEEDED(ret))
@@ -118,9 +119,14 @@ extern "C" void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Coun
 {
 	if (Count > 0) {
 		for (size_t i = 0; i < Count; ++i) {
-			CoTaskMemFree(Devices[i].Description);
-			CoTaskMemFree(Devices[i].Name);
-			CoTaskMemFree(Devices[i].EndpointId);
+			if (Devices[i].Description != NULL)
+				CoTaskMemFree(Devices[i].Description);
+			
+			if (Devices[i].Name != NULL)
+				CoTaskMemFree(Devices[i].Name);
+			
+			if (Devices[i].EndpointId != NULL)
+				CoTaskMemFree(Devices[i].EndpointId);
 		}
 
 		HeapFree(GetProcessHeap(), 0, Devices);
