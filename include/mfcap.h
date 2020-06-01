@@ -36,7 +36,6 @@ typedef BOOL(MFCAP_SAMPLE_CALLBACK)(struct _MFCAP_DEVICE *Device, UINT32 StreamI
 
 typedef struct _MFCAP_DEVICE {
 	IMFMediaSource* MediaSource;
-	IMFSourceReader* MediaSourceReader;
 	IMFPresentationDescriptor* PresentationDescriptor;
 	_MFCAP_DEVICE_CHARACTERISTICS Characteristics;
 	EMFCapFormatType Type;

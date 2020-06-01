@@ -23,6 +23,80 @@
 
 
 
+typedef struct _SAMPLING_THREAD_CONTEXT {
+	PMFCAP_DEVICE Device;
+	IMFSourceReader* MediaSourceReader;
+} SAMPLING_THREAD_CONTEXT, * PSAMPLING_THREAD_CONTEXT;
+
+
+static DWORD WINAPI _SamplingThreadRoutine(PVOID Context)
+{
+	HRESULT ret = S_OK;
+	PSAMPLING_THREAD_CONTEXT ctx = (PSAMPLING_THREAD_CONTEXT)Context;
+	LONGLONG timeStamp = 0;
+	DWORD streamIndex = 0;
+	IMFSample* sample = NULL;
+	DWORD streamFlags = 0;
+	UINT32 callbackFlags = 0;
+	IMFMediaBuffer* buffer = NULL;
+	void* data = NULL;
+	DWORD len = 0;
+	PMFCAP_DEVICE device = ctx->Device;
+
+	ret = CoInitialize(NULL);
+	if (SUCCEEDED(ret)) {
+		while (SUCCEEDED(ret) && !device->SamplingTerminated) {
+			timeStamp = 0;
+			streamIndex = 0;
+			streamFlags = 0;
+			callbackFlags = 0;
+			sample = NULL;
+			data = NULL;
+			len = 0;
+			ret = ctx->MediaSourceReader->ReadSample(MF_SOURCE_READER_ANY_STREAM, 0, &streamIndex, &streamFlags, &timeStamp, &sample);
+			if (SUCCEEDED(ret)) {
+				if (streamFlags & MF_SOURCE_READERF_ERROR)
+					callbackFlags |= MFCAP_CALLBACK_ERROR;
+
+				if (streamFlags & MF_SOURCE_READERF_ENDOFSTREAM)
+					callbackFlags |= MFCAP_CALLBACK_ENDOFSTREAM;
+
+				if (streamFlags & MF_SOURCE_READERF_STREAMTICK)
+					callbackFlags |= MFCAP_CALLBACK_STREAMTICK;
+
+				if (sample != NULL) {
+					ret = sample->ConvertToContiguousBuffer(&buffer);
+					if (SUCCEEDED(ret))
+						ret = buffer->Lock((PBYTE*)&data, NULL, &len);
+				}
+
+				if (SUCCEEDED(ret))
+					device->SamplingCallback(device, streamIndex, data, len, timeStamp, callbackFlags, device->SamplingContext);
+
+				if (buffer != NULL) {
+					if (data != NULL)
+						buffer->Unlock();
+
+					buffer->Release();
+				}
+			} else {
+				callbackFlags = MFCAP_CALLBACK_ERROR;
+				device->SamplingCallback(device, streamIndex, data, len, timeStamp, callbackFlags, device->SamplingContext);
+			}
+		}
+
+		ctx->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+		ctx->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
+		ctx->MediaSourceReader->Release();
+		CoUninitialize();
+	}
+
+	HeapFree(GetProcessHeap(), 0, ctx);
+
+	return ret;
+}
+
+
 extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT *Types, UINT32 *Count, UINT32 *StreamCount)
 {
 	HRESULT hr = S_OK;
@@ -115,63 +189,6 @@ extern "C" HRESULT MFCap_SelectStream(PMFCAP_DEVICE Device, UINT32 StreamIndex, 
 }
 
 
-static DWORD WINAPI _SamplingThreadRoutine(PVOID Context)
-{
-	HRESULT ret = S_OK;
-	PMFCAP_DEVICE device = (PMFCAP_DEVICE)Context;
-	LONGLONG timeStamp = 0;
-	DWORD streamIndex = 0;
-	IMFSample* sample = NULL;
-	DWORD streamFlags = 0;
-	UINT32 callbackFlags = 0;
-	IMFMediaBuffer* buffer = NULL;
-	void* data = NULL;
-	DWORD len = 0;
-
-	while (SUCCEEDED(ret) && !device->SamplingTerminated) {
-		timeStamp = 0;
-		streamIndex = 0;
-		streamFlags = 0;
-		callbackFlags = 0;
-		sample = NULL;
-		data = NULL;
-		len = 0;
-		ret = device->MediaSourceReader->ReadSample(MF_SOURCE_READER_ANY_STREAM, 0, &streamIndex, &streamFlags, &timeStamp, &sample);
-		if (SUCCEEDED(ret)) {
-			if (streamFlags & MF_SOURCE_READERF_ERROR)
-				callbackFlags |= MFCAP_CALLBACK_ERROR;
-		
-			if (streamFlags & MF_SOURCE_READERF_ENDOFSTREAM)
-				callbackFlags |= MFCAP_CALLBACK_ENDOFSTREAM;
-			
-			if (streamFlags & MF_SOURCE_READERF_STREAMTICK)
-				callbackFlags |= MFCAP_CALLBACK_STREAMTICK;
-
-			if (sample != NULL) {
-				ret = sample->ConvertToContiguousBuffer(&buffer);
-				if (SUCCEEDED(ret))
-					ret = buffer->Lock((PBYTE *)&data, NULL, &len);
-			}
-
-			if (SUCCEEDED(ret))
-				device->SamplingCallback(device, streamIndex, data, len, timeStamp, callbackFlags, device->SamplingContext);
-			
-			if (buffer != NULL) {
-				if (data != NULL)
-					buffer->Unlock();
-
-				buffer->Release();
-			}
-		} else {
-			callbackFlags = MFCAP_CALLBACK_ERROR;
-			device->SamplingCallback(device, streamIndex, data, len, timeStamp, callbackFlags, device->SamplingContext);
-		}
-	}
-
-	return ret;
-}
-
-
 
 #define __HRESULT_FROM_WIN32(x) ((HRESULT)(x) <= 0 ? ((HRESULT)(x)) : ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
 
@@ -180,54 +197,61 @@ extern "C" HRESULT MFCap_Start(PMFCAP_DEVICE Device, MFCAP_SAMPLE_CALLBACK* Call
 {
 	HRESULT ret = S_OK;
 	IMFAttributes* msAttributes = NULL;
+	IMFSourceReader *msr = NULL;
+	PSAMPLING_THREAD_CONTEXT ctx = NULL;
 
 	ret = MFCreateAttributes(&msAttributes, 1);
 	if (SUCCEEDED(ret))
 		ret = msAttributes->SetUINT32(MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, TRUE);
 	
 	if (SUCCEEDED(ret))
-		ret = MFCreateSourceReaderFromMediaSource(Device->MediaSource, msAttributes, &Device->MediaSourceReader);
+		ret = MFCreateSourceReaderFromMediaSource(Device->MediaSource, msAttributes, &msr);
 
 	if (SUCCEEDED(ret))
-		ret = Device->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+		ret = msr->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
 
 	if (SUCCEEDED(ret))
-		ret = Device->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
+		ret = msr->Flush(MF_SOURCE_READER_ALL_STREAMS);
 
 	if (SUCCEEDED(ret)) {
 		Device->SamplingCallback = Callback;
 		Device->SamplingContext = Context;
 		for (UINT32 i = 0; i < 31; ++i) {
 			if ((Device->StreamSelectionMask & (1 << i)) != 0)
-				ret = Device->MediaSourceReader->SetStreamSelection(i, TRUE);
+				ret = msr->SetStreamSelection(i, TRUE);
 
 			if (FAILED(ret)) {
-				Device->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
-				Device->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
+				msr->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+				msr->Flush(MF_SOURCE_READER_ALL_STREAMS);
 				break;
 			}
 		}
 	}
 
 	if (SUCCEEDED(ret)) {
-		Device->MediaSourceReader->AddRef();
-		Device->SamplingThread = CreateThread(NULL, 0, _SamplingThreadRoutine, Device, 0, NULL);
-		if (Device->SamplingThread == NULL) {
-			ret = __HRESULT_FROM_WIN32(GetLastError());
-			Device->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
-			Device->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
-			Device->MediaSourceReader->Release();
+		ctx = (PSAMPLING_THREAD_CONTEXT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SAMPLING_THREAD_CONTEXT));
+		if (ctx == NULL)
+			ret = E_OUTOFMEMORY;
+
+		if (SUCCEEDED(ret)) {
+			msr->AddRef();
+			ctx->MediaSourceReader = msr;
+			ctx->Device = Device;
+			Device->SamplingThread = CreateThread(NULL, 0, _SamplingThreadRoutine, ctx, 0, NULL);
+			if (Device->SamplingThread == NULL) {
+				ret = __HRESULT_FROM_WIN32(GetLastError());
+				msr->Release();
+			}
+		}
+
+		if (FAILED(ret)) {
+			msr->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+			msr->Flush(MF_SOURCE_READER_ALL_STREAMS);
 		}
 	}
 
-	if (Device->MediaSourceReader != NULL) {
-		Device->MediaSourceReader->Release();
-		if (FAILED(ret))
-			Device->MediaSourceReader = NULL;
-	}
-
-	if (msAttributes != NULL)
-		msAttributes->Release();
+	MFGen_SafeRelease(msr);
+	MFGen_SafeRelease(msAttributes);
 
 	return ret;
 }
@@ -235,13 +259,9 @@ extern "C" HRESULT MFCap_Start(PMFCAP_DEVICE Device, MFCAP_SAMPLE_CALLBACK* Call
 
 extern "C" void MFCap_Stop(PMFCAP_DEVICE Device)
 {
-	Device->MediaSourceReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
 	Device->SamplingTerminated = TRUE;
-	Device->MediaSourceReader->Flush(MF_SOURCE_READER_ALL_STREAMS);
 	WaitForSingleObject(Device->SamplingThread, INFINITE);
 	CloseHandle(Device->SamplingThread);
-	Device->MediaSourceReader->Release();
-	Device->MediaSourceReader = NULL;
 	Device->SamplingThread = NULL;
 	Device->SamplingTerminated = FALSE;
 
