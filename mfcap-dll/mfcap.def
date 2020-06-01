@@ -2,13 +2,12 @@ LIBRARY mfcap-dll
 EXPORTS
 	MFCap_GetDeviceCount
 	MFCap_NewInstance
+	MFCap_NewInstanceFromURL
 	MFCap_FreeInstance
 	MFCap_SetFormat
 	MFCap_EnumMediaTypes
 	MFCap_SelectStream
 	MFCap_GetProperties
-	MFCap_Init
-	MFCap_Finit
 	MFCap_Start
 	MFCap_Stop
 	MFCap_QueryStreamSelection
@@ -30,3 +29,6 @@ EXPORTS
 	MFGen_MediaTypeToFormat
 	MFGen_FreeFormats
 	MFGen_SafeRelease
+
+	MFCap_Init
+	MFCap_Finit

@@ -71,6 +71,7 @@ void MFGen_FreeProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count);
 
 HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT* Types, UINT32* Count, UINT32* StreamCount);
 HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP_DEVICE* aInstance);
+HRESULT MFCap_NewInstanceFromURL(PWCHAR URL, PMFCAP_DEVICE* Device);
 void MFCap_FreeInstance(PMFCAP_DEVICE Instance);
 HRESULT MFCap_SetFormat(PMFCAP_DEVICE Device, UINT32 Stream, IMFMediaType* Format);
 HRESULT MFCap_SelectStream(PMFCAP_DEVICE Device, UINT32 StreamIndex, BOOL Select);

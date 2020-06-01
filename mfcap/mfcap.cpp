@@ -612,6 +612,43 @@ extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP
 }
 
 
+extern "C" HRESULT MFCap_NewInstanceFromURL(PWCHAR URL, PMFCAP_DEVICE* Device)
+{
+	HRESULT ret = S_OK;
+	PMFCAP_DEVICE d = NULL;
+	IMFSourceResolver* r = NULL;
+	MF_OBJECT_TYPE objectType;
+
+	d = (PMFCAP_DEVICE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFCAP_DEVICE));
+	if (d != NULL)
+		ret = E_OUTOFMEMORY;
+
+	if (SUCCEEDED(ret)) {
+		ret = MFCreateSourceResolver(&r);
+		if (SUCCEEDED(ret))
+			ret = r->CreateObjectFromURL(URL, MF_RESOLUTION_MEDIASOURCE, NULL, &objectType, (IUnknown **)&d->MediaSource);
+
+		if (SUCCEEDED(ret))
+			ret = d->MediaSource->GetCharacteristics(&d->Characteristics.Value);
+
+		if (SUCCEEDED(ret))
+			ret = d->MediaSource->CreatePresentationDescriptor(&d->PresentationDescriptor);
+
+		if (SUCCEEDED(ret)) {
+			d->MediaSource->AddRef();
+			*Device = d;
+		}
+
+		MFGen_SafeRelease(d->MediaSource);
+		MFGen_SafeRelease(r);
+		if (FAILED(ret))
+			HeapFree(GetProcessHeap(), 0, d);
+	}
+
+	return ret;
+}
+
+
 extern "C" void MFCap_FreeInstance(PMFCAP_DEVICE Instance)
 {
 	Instance->PresentationDescriptor->Release();
