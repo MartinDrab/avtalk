@@ -175,7 +175,7 @@ HRESULT ProcessDeviceType(void)
 				fprintf(stdout, "  Total number of formats: %u\n", formatCount);
 				fprintf(stdout, "  Stream count: %u\n", streamCount);
 				ret = ProcessMediaFormats<Type>(formats, formatCount);
-				MFCap_FreeMediaTypes(formats, formatCount);
+				MFGen_FreeFormats(formats, formatCount);
 				MFCap_FreeInstance(d);
 			}
 		}
@@ -226,7 +226,7 @@ HRESULT ProcessAudoOoutput(void)
 			fprintf(stdout, "  Total number of formats: %u\n", formatCount);
 			fprintf(stdout, "  Stream count: %u\n", streamCount);
 			ProcessMediaFormats<mcftAudio>(formats, formatCount);
-			MFCap_FreeMediaTypes(formats, formatCount);
+			MFGen_FreeFormats(formats, formatCount);
 			MFPlay_FreeInstance(instance);
 		}
 

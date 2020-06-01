@@ -101,19 +101,6 @@ extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT *Typ
 }
 
 
-extern "C" void MFCap_FreeMediaTypes(PMFGEN_FORMAT Formats, UINT32 Count)
-{
-	if (Count > 0) {
-		for (UINT32 i = 0; i < Count; ++i)
-			Formats[i].MediaType->Release();
-
-		HeapFree(GetProcessHeap(), 0, Formats);
-	}
-
-	return;
-}
-
-
 extern "C" HRESULT MFCap_SelectStream(PMFCAP_DEVICE Device, UINT32 StreamIndex, BOOL Select)
 {
 	HRESULT hr = S_OK;

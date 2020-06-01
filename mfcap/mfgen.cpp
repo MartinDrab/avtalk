@@ -260,3 +260,16 @@ extern "C" HRESULT MFGen_MediaTypeToFormat(IMFMediaType* MediaType, PMFGEN_FORMA
 
 	return ret;
 }
+
+
+extern "C" void MFGen_FreeFormats(PMFGEN_FORMAT Formats, UINT32 Count)
+{
+	if (Count > 0) {
+		for (UINT32 i = 0; i < Count; ++i)
+			Formats[i].MediaType->Release();
+
+		HeapFree(GetProcessHeap(), 0, Formats);
+	}
+
+	return;
+}

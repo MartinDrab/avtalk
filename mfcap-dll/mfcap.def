@@ -5,7 +5,6 @@ EXPORTS
 	MFCap_FreeInstance
 	MFCap_SetFormat
 	MFCap_EnumMediaTypes
-	MFCap_FreeMediaTypes
 	MFCap_SelectStream
 	MFCap_GetProperties
 	MFCap_Init
@@ -28,3 +27,6 @@ EXPORTS
 	MFGen_GetFormatProperties
 	MFGen_GetProperties
 	MFGen_FreeProperties
+	MFGen_MediaTypeToFormat
+	MFGen_FreeFormats
+	MFGen_SafeRelease

@@ -71,7 +71,6 @@ HRESULT MFGen_GetFormatProperties(MFGEN_FORMAT* Format, GUID** Guids, PROPVARIAN
 void MFGen_FreeProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count);
 
 HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT* Types, UINT32* Count, UINT32* StreamCount);
-void MFCap_FreeMediaTypes(PMFGEN_FORMAT Formats, UINT32 Count);
 HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP_DEVICE* aInstance);
 void MFCap_FreeInstance(PMFCAP_DEVICE Instance);
 HRESULT MFCap_SetFormat(PMFCAP_DEVICE Device, UINT32 Stream, IMFMediaType* Format);
