@@ -30,24 +30,6 @@ extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT *Typ
 	IMFMediaType* nativeType = NULL;
 	std::vector<MFGEN_FORMAT> types;
 	PMFGEN_FORMAT tmpFormats = NULL;
-	GUID formatGuids[] = {
-		MFVideoFormat_NV12,
-		MFVideoFormat_YUY2,
-		MFVideoFormat_YV12,
-		MFVideoFormat_YVU9,
-		MFVideoFormat_MJPG,
-		MFAudioFormat_PCM,
-		MFAudioFormat_Float,
-	};
-	const wchar_t* formatNames[] = {
-		L"NV12",
-		L"YUV2",
-		L"YV12",
-		L"YVU9",
-		L"MJPG",
-		L"PCM",
-		L"Float"
-	};
 	IMFPresentationDescriptor* pd = NULL;
 	DWORD streamCount = 0;
 	DWORD typeCount = 0;
@@ -67,50 +49,25 @@ extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT *Typ
 			hr = mth->GetMediaTypeCount(&typeCount);
 
 		for (DWORD j = 0; j < typeCount; ++j) {
-			memset(&format, 0, sizeof(format));
+			nativeType = NULL;
 			hr = mth->GetMediaTypeByIndex(j, &nativeType);
-			if (FAILED(hr))
-				break;
-
-			hr = nativeType->GetGUID(MF_MT_MAJOR_TYPE, &format.TypeGuid);
 			if (SUCCEEDED(hr))
-				hr = nativeType->GetGUID(MF_MT_SUBTYPE, &format.SubtypeGuid);
+				hr = MFGen_MediaTypeToFormat(nativeType, &format);
 
 			if (SUCCEEDED(hr)) {
-				wcscpy(format.FriendlyName, L"UNKNOWN");
-				for (size_t i = 0; i < sizeof(formatGuids) / sizeof(formatGuids[0]); ++i) {
-					if (formatGuids[i] == format.SubtypeGuid) {
-						wcscpy(format.FriendlyName, formatNames[i]);
-						break;
-					}
-				}
-
 				format.StreamIndex = i;
 				format.Selected = (Device->StreamSelectionMask & (1 << format.StreamIndex)) != 0;
 				format.Index = j;
-				if (format.TypeGuid == MFMediaType_Video) {
-					format.Type = mcftVideo;
-					MFGetAttributeSize(nativeType, MF_MT_FRAME_SIZE, &format.Video.Width, &format.Video.Height);
-					nativeType->GetUINT32(MF_MT_AVG_BITRATE, &format.Video.BitRate);
-					nativeType->GetUINT32(MF_MT_FRAME_RATE, &format.Video.Framerate);
-				} else if (format.TypeGuid == MFMediaType_Audio) {
-					format.Type = mcftAudio;
-					nativeType->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &format.Audio.BitsPerSample);
-					nativeType->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &format.Audio.ChannelCount);
-					nativeType->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &format.Audio.SamplesPerSecond);
-				} else format.Type = mcftUnknown;
-
-				format.MediaType = nativeType;
 				types.push_back(format);
 			}
+
+			MFGen_SafeRelease(nativeType);
+			if (FAILED(hr))
+				break;
 		}
 
-		if (mth != NULL)
-			mth->Release();
-
-		if (sd != NULL)
-			sd->Release();
-
+		MFGen_SafeRelease(mth);
+		MFGen_SafeRelease(sd);
 		if (FAILED(hr))
 			break;
 	}
@@ -139,8 +96,6 @@ extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT *Typ
 		mt.MediaType->Release();
 
 	types.clear();
-	if (nativeType != NULL)
-		nativeType->Release();
 
 	return hr;
 }

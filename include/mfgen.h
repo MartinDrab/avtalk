@@ -54,6 +54,9 @@ void MFGen_StringFree(PWCHAR String);
 HRESULT MFGen_GetFormatProperties(MFGEN_FORMAT* Format, GUID** Guids, PROPVARIANT** Values, UINT32* Count);
 HRESULT MFGen_GetProperties(IMFAttributes * Attributes, GUID * *Guids, PROPVARIANT * *Values, UINT32 * Count);
 void MFGen_FreeProperties(GUID * Guids, PROPVARIANT * Values, UINT32 Count);
+void MFGen_SafeRelease(IUnknown * Object);
+HRESULT MFGen_MediaTypeToFormat(IMFMediaType* MediaType, PMFGEN_FORMAT Format);
+
 
 #ifdef __cplusplus
 }

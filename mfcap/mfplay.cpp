@@ -146,24 +146,6 @@ extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFGEN_FORMAT* Form
 	IMFMediaTypeHandler* mth = NULL;
 	IMFMediaType* mt = NULL;
 	MFGEN_FORMAT format;
-	GUID formatGuids[] = {
-		MFVideoFormat_NV12,
-		MFVideoFormat_YUY2,
-		MFVideoFormat_YV12,
-		MFVideoFormat_YVU9,
-		MFVideoFormat_MJPG,
-		MFAudioFormat_PCM,
-		MFAudioFormat_Float,
-	};
-	const wchar_t* formatNames[] = {
-		L"NV12",
-		L"YUV2",
-		L"YV12",
-		L"YVU9",
-		L"MJPG",
-		L"PCM",
-		L"Float"
-	};
 	PMFGEN_FORMAT tmpFormats = NULL;
 
 	ret = Device->Sink->GetStreamSinkCount(&streamCount);
@@ -180,64 +162,28 @@ extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFGEN_FORMAT* Form
 
 			if (SUCCEEDED(ret)) {
 				for (DWORD j = 0; j < mtCount; ++j) {
-					memset(&format, 0, sizeof(format));
 					mt = NULL;
 					ret = mth->GetMediaTypeByIndex(j, &mt);
 					if (SUCCEEDED(ret))
-						ret = mt->GetGUID(MF_MT_MAJOR_TYPE, &format.TypeGuid);
-
-					if (SUCCEEDED(ret))
-						ret = mt->GetGUID(MF_MT_SUBTYPE, &format.SubtypeGuid);
+						ret = MFGen_MediaTypeToFormat(mt, &format);
 
 					if (SUCCEEDED(ret)) {
-						wcscpy(format.FriendlyName, L"UNKNOWN");
-						for (size_t k = 0; k < sizeof(formatGuids) / sizeof(formatGuids[0]); ++k) {
-							if (formatGuids[k] == format.SubtypeGuid) {
-								wcscpy(format.FriendlyName, formatNames[k]);
-								break;
-							}
-						}
-
 						format.StreamIndex = i;
 						format.Index = j;
-						if (format.TypeGuid == MFMediaType_Video) {
-							format.Type = mcftVideo;
-							MFGetAttributeSize(mt, MF_MT_FRAME_SIZE, &format.Video.Width, &format.Video.Height);
-							mt->GetUINT32(MF_MT_AVG_BITRATE, &format.Video.BitRate);
-							mt->GetUINT32(MF_MT_FRAME_RATE, &format.Video.Framerate);
-						} else if (format.TypeGuid == MFMediaType_Audio) {
-							format.Type = mcftAudio;
-							mt->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &format.Audio.BitsPerSample);
-							mt->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &format.Audio.ChannelCount);
-							mt->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &format.Audio.SamplesPerSecond);
-						}
-						else format.Type = mcftUnknown;
-
-						format.MediaType = mt;
-						mt->AddRef();
 						formats.push_back(format);
 					}
 
-					if (mt != NULL)
-						mt->Release();
-
+					MFGen_SafeRelease(mt);
 					if (FAILED(ret))
 						break;
 				}
 			}
 
-			if (mth != NULL)
-				mth->Release();
-
-			if (ss != NULL)
-				ss->Release();
-
+			MFGen_SafeRelease(mth);
+			MFGen_SafeRelease(ss);
 			if (FAILED(ret))
 				break;
 		}
-
-		if (ret == MF_E_INVALIDSTREAMNUMBER)
-			ret = S_OK;
 
 		if (SUCCEEDED(ret)) {
 			*StreamCount = streamCount;

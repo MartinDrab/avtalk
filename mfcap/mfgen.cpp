@@ -55,43 +55,43 @@ static GUID_STRING _guidMap[] = {
 	{MF_MT_AM_FORMAT_TYPE, L"Format type"},
 	//	EA031A62-8BBB-43C5-B5C4-572D2D231C18
 	//	{MF_MT_FSSourceTypeDecoded, L"Decoded"},
-		// Audio parameters
-		{MF_MT_AUDIO_AVG_BYTES_PER_SECOND, L"Avg bytes per second"},
-		{MF_MT_AUDIO_FLOAT_SAMPLES_PER_SECOND, L"Float samples per second"},
-		{MF_MT_AUDIO_SAMPLES_PER_SECOND, L"Samples per second"},
-		{MF_MT_AUDIO_NUM_CHANNELS, L"Channels"},
-		{MF_MT_AUDIO_BLOCK_ALIGNMENT, L"Block align"},
-		{MF_MT_AUDIO_BITS_PER_SAMPLE, L"Bits per sample"},
-		{MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, L"Valid bits per sample"},
-		{MF_MT_AUDIO_SAMPLES_PER_BLOCK, L"Samples per block"},
-		{MF_MT_AUDIO_CHANNEL_MASK, L"Channel mask"},
-		{MF_MT_ALL_SAMPLES_INDEPENDENT, L"Idependent"},
-		{MF_MT_AUDIO_PREFER_WAVEFORMATEX, L"Prefer WaveEx"},
-		// Audio formats
-		{MFAudioFormat_Float, L"Float"},
-		{MFAudioFormat_PCM, L"PCM"},
-		{MFAudioFormat_Float_SpatialObjects, L"FloatSpatial"},
-		// Audio device attributes
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ENDPOINT_ID, L"Endpoint ID"},
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ROLE, L"Role"},
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, L"Source type"},
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_HW_SOURCE, L"HW source"},
-		{MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, L"Friendly name"},
-		{MF_DEVSOURCE_ATTRIBUTE_MEDIA_TYPE, L"Media type"},
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, L"Link"},
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK, L"Link"},
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_MAX_BUFFERS, L"Max buffers"},
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID, L"AudioCap"},
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID, L"VideoCap"},
-		{MEDIATYPE_Audio, L"Audio"},
-		{MEDIATYPE_Video, L"Video"},
-		{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_CATEGORY, L"Category"},
-		{KSCATEGORY_VIDEO_CAMERA, L"Camera"},
-		{MF_MT_YUV_MATRIX, L"YUV Matrix"},
-		{MF_MT_VIDEO_LIGHTING, L"Lightning"},
-		{MF_MT_VIDEO_NOMINAL_RANGE, L"Nominal range"},
-		{MF_MT_GEOMETRIC_APERTURE, L"Geometric aperture"},
-		{MF_MT_MINIMUM_DISPLAY_APERTURE, L"Display apperture"},
+	// Audio parameters
+	{MF_MT_AUDIO_AVG_BYTES_PER_SECOND, L"Avg bytes per second"},
+	{MF_MT_AUDIO_FLOAT_SAMPLES_PER_SECOND, L"Float samples per second"},
+	{MF_MT_AUDIO_SAMPLES_PER_SECOND, L"Samples per second"},
+	{MF_MT_AUDIO_NUM_CHANNELS, L"Channels"},
+	{MF_MT_AUDIO_BLOCK_ALIGNMENT, L"Block align"},
+	{MF_MT_AUDIO_BITS_PER_SAMPLE, L"Bits per sample"},
+	{MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, L"Valid bits per sample"},
+	{MF_MT_AUDIO_SAMPLES_PER_BLOCK, L"Samples per block"},
+	{MF_MT_AUDIO_CHANNEL_MASK, L"Channel mask"},
+	{MF_MT_ALL_SAMPLES_INDEPENDENT, L"Idependent"},
+	{MF_MT_AUDIO_PREFER_WAVEFORMATEX, L"Prefer WaveEx"},
+	// Audio formats
+	{MFAudioFormat_Float, L"Float"},
+	{MFAudioFormat_PCM, L"PCM"},
+	{MFAudioFormat_Float_SpatialObjects, L"FloatSpatial"},
+	// Audio device attributes
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ENDPOINT_ID, L"Endpoint ID"},
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ROLE, L"Role"},
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, L"Source type"},
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_HW_SOURCE, L"HW source"},
+	{MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, L"Friendly name"},
+	{MF_DEVSOURCE_ATTRIBUTE_MEDIA_TYPE, L"Media type"},
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, L"Link"},
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK, L"Link"},
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_MAX_BUFFERS, L"Max buffers"},
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID, L"AudioCap"},
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID, L"VideoCap"},
+	{MEDIATYPE_Audio, L"Audio"},
+	{MEDIATYPE_Video, L"Video"},
+	{MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_CATEGORY, L"Category"},
+	{KSCATEGORY_VIDEO_CAMERA, L"Camera"},
+	{MF_MT_YUV_MATRIX, L"YUV Matrix"},
+	{MF_MT_VIDEO_LIGHTING, L"Lightning"},
+	{MF_MT_VIDEO_NOMINAL_RANGE, L"Nominal range"},
+	{MF_MT_GEOMETRIC_APERTURE, L"Geometric aperture"},
+	{MF_MT_MINIMUM_DISPLAY_APERTURE, L"Display apperture"},
 };
 
 
@@ -194,4 +194,69 @@ extern "C" HRESULT MFGen_GetProperties(IMFAttributes* Attributes, GUID** Guids, 
 	}
 
 	return hr;
+}
+
+
+extern "C" void MFGen_SafeRelease(IUnknown* Object)
+{
+	if (Object != NULL)
+		Object->Release();
+
+	return;
+}
+
+
+extern "C" HRESULT MFGen_MediaTypeToFormat(IMFMediaType* MediaType, PMFGEN_FORMAT Format)
+{
+	HRESULT ret = S_OK;
+	GUID formatGuids[] = {
+		MFVideoFormat_NV12,
+		MFVideoFormat_YUY2,
+		MFVideoFormat_YV12,
+		MFVideoFormat_YVU9,
+		MFVideoFormat_MJPG,
+		MFAudioFormat_PCM,
+		MFAudioFormat_Float,
+	};
+	const wchar_t* formatNames[] = {
+		L"NV12",
+		L"YUV2",
+		L"YV12",
+		L"YVU9",
+		L"MJPG",
+		L"PCM",
+		L"Float"
+	};
+
+	memset(Format, 0, sizeof(MFGEN_FORMAT));
+	ret = MediaType->GetGUID(MF_MT_MAJOR_TYPE, &Format->TypeGuid);
+	if (SUCCEEDED(ret))
+		ret = MediaType->GetGUID(MF_MT_SUBTYPE, &Format->SubtypeGuid);
+
+	if (SUCCEEDED(ret)) {
+		wcscpy(Format->FriendlyName, L"UNKNOWN");
+		for (size_t k = 0; k < sizeof(formatGuids) / sizeof(formatGuids[0]); ++k) {
+			if (formatGuids[k] == Format->SubtypeGuid) {
+				wcscpy(Format->FriendlyName, formatNames[k]);
+				break;
+			}
+		}
+
+		if (Format->TypeGuid == MFMediaType_Video) {
+			Format->Type = mcftVideo;
+			MFGetAttributeSize(MediaType, MF_MT_FRAME_SIZE, &Format->Video.Width, &Format->Video.Height);
+			MediaType->GetUINT32(MF_MT_AVG_BITRATE, &Format->Video.BitRate);
+			MediaType->GetUINT32(MF_MT_FRAME_RATE, &Format->Video.Framerate);
+		} else if (Format->TypeGuid == MFMediaType_Audio) {
+			Format->Type = mcftAudio;
+			MediaType->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &Format->Audio.BitsPerSample);
+			MediaType->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &Format->Audio.ChannelCount);
+			MediaType->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &Format->Audio.SamplesPerSecond);
+		} else Format->Type = mcftUnknown;
+
+		Format->MediaType = MediaType;
+		MediaType->AddRef();
+	}
+
+	return ret;
 }
