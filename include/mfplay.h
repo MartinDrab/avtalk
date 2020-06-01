@@ -33,6 +33,7 @@ typedef struct _MFPLAY_DEVICE_STATE_MASK {
 
 typedef struct _MFPLAY_DEVICE {
 	DWORD Characteristics;
+	HWND Window;
 	IMFMediaSink* Sink;
 } MFPLAY_DEVICE, *PMFPLAY_DEVICE;
 
@@ -47,6 +48,7 @@ void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Count);
 HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFGEN_FORMAT* Formats, DWORD* Count, DWORD* StreamCount);
 
 HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO * DeviceInfo, PMFPLAY_DEVICE * Device);
+HRESULT MFPlay_NewInstanceForWindow(HWND Window, PMFPLAY_DEVICE* Device);
 void MFPlay_FreeInstance(PMFPLAY_DEVICE Device);
 HRESULT MFPlay_CreateNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count);
 

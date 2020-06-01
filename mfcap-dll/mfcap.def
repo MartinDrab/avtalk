@@ -19,6 +19,7 @@ EXPORTS
 	MFPlay_FreeDeviceEnum
 	MFPlay_EnumFormats
 	MFPlay_NewInstance
+	MFPlay_NewInstanceForWindow
 	MFPlay_FreeInstance
 
 	MFGen_StringFromGuid

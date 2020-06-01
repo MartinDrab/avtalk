@@ -220,6 +220,7 @@ extern "C" HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO *DeviceInfo, PMFP
 	HRESULT ret = S_OK;
 	PMFPLAY_DEVICE d = NULL;
 	IMFAttributes* attrs = NULL;
+	IMFMediaSink* s = NULL;
 
 	d = (PMFPLAY_DEVICE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFPLAY_DEVICE));
 	if (d == NULL)
@@ -235,22 +236,58 @@ extern "C" HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO *DeviceInfo, PMFP
 		ret = attrs->SetUINT32(MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS, MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS_CROSSPROCESS);
 
 	if (SUCCEEDED(ret))
-		ret = MFCreateAudioRenderer(attrs, &d->Sink);
+		ret = MFCreateAudioRenderer(attrs, &s);
 
 	if (SUCCEEDED(ret))
-		ret = d->Sink->GetCharacteristics(&d->Characteristics);
+		ret = s->GetCharacteristics(&d->Characteristics);
 
-	if (SUCCEEDED(ret))
-		d->Sink->AddRef();
-
-	if (d->Sink != NULL)
-		d->Sink->Release();
-
-	if (SUCCEEDED(ret))
+	if (SUCCEEDED(ret)) {
+		s->AddRef();
+		d->Sink = s;
 		*Device = d;
+	}
 
-	if (attrs != NULL)
-		attrs->Release();
+	MFGen_SafeRelease(s);
+	MFGen_SafeRelease(attrs);
+	if (FAILED(ret) && d != NULL)
+		HeapFree(GetProcessHeap(), 0, d);
+
+	return ret;
+}
+
+
+extern "C" HRESULT MFPlay_NewInstanceForWindow(HWND Window, PMFPLAY_DEVICE* Device)
+{
+	HRESULT ret = S_OK;
+	IMFActivate* a = NULL;
+	PMFPLAY_DEVICE d = NULL;
+	IMFMediaSink* s = NULL;
+
+	d = (PMFPLAY_DEVICE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFPLAY_DEVICE));
+	if (d == NULL)
+		ret = E_OUTOFMEMORY;
+
+	if (SUCCEEDED(ret)) {
+		d->Window = Window;
+		ret = MFCreateVideoRendererActivate(Window, &a);
+	}
+
+	if (SUCCEEDED(ret))
+		ret = a->ActivateObject(__uuidof(s), (void **)&s);
+
+	if (SUCCEEDED(ret))
+		ret = s->GetCharacteristics(&d->Characteristics);
+
+	if (SUCCEEDED(ret)) {
+		s->AddRef();
+		d->Sink = s;
+		*Device = d;
+	}
+
+	MFGen_SafeRelease(s);
+	MFGen_SafeRelease(a);
+	if (FAILED(ret) && d != NULL)
+		HeapFree(GetProcessHeap(), 0, d);
 
 	return ret;
 }

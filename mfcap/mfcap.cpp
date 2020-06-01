@@ -626,7 +626,7 @@ extern "C" HRESULT MFCap_NewInstanceFromURL(PWCHAR URL, PMFCAP_DEVICE* Device)
 	if (SUCCEEDED(ret)) {
 		ret = MFCreateSourceResolver(&r);
 		if (SUCCEEDED(ret))
-			ret = r->CreateObjectFromURL(URL, MF_RESOLUTION_MEDIASOURCE, NULL, &objectType, (IUnknown **)&d->MediaSource);
+			ret = r->CreateObjectFromURL(URL, MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE | MF_RESOLUTION_READ, NULL, &objectType, (IUnknown **)&d->MediaSource);
 
 		if (SUCCEEDED(ret))
 			ret = d->MediaSource->GetCharacteristics(&d->Characteristics.Value);
