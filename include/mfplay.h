@@ -44,7 +44,7 @@ extern "C" {
 
 HRESULT MFPlay_EnumDevices(MFPLAY_DEVICE_STATE_MASK StateMask, PMFPLAY_DEVICE_INFO* Devices, uint32_t* Count);
 void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Count);
-HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Formats, DWORD* Count, DWORD* StreamCount);
+HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFGEN_FORMAT* Formats, DWORD* Count, DWORD* StreamCount);
 
 HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO * DeviceInfo, PMFPLAY_DEVICE * Device);
 void MFPlay_FreeInstance(PMFPLAY_DEVICE Device);

@@ -20,10 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\mfcap.h" />
+    <ClInclude Include="..\include\mfgen.h" />
     <ClInclude Include="..\include\mfplay.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mfcap.cpp" />
+    <ClCompile Include="mfgen.cpp" />
     <ClCompile Include="mfplay.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

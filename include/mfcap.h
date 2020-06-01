@@ -10,38 +10,9 @@
 #include <mfidl.h>
 #include <mfreadwrite.h>
 #include <mferror.h>
+#include "mfgen.h"
 
 
-typedef enum _EMFCapFormatType {
-	mcftUnknown,
-	mcftVideo,
-	mcftAudio,
-	mcftMax,
-} EMFCapFormatType, * PEMFCapFormatType;
-
-typedef struct _MFCAP_FORMAT {
-	GUID TypeGuid;
-	GUID SubtypeGuid;
-	IMFMediaType* MediaType;
-	UINT32 StreamIndex;
-	UINT32 Index;
-	BOOL Selected;
-	wchar_t FriendlyName[8];
-	EMFCapFormatType Type;
-	union {
-		struct {
-			UINT32 Width;
-			UINT32 Height;
-			UINT32 BitRate;
-			UINT32 Framerate;
-		} Video;
-		struct {
-			UINT32 ChannelCount;
-			UINT32 SamplesPerSecond;
-			UINT32 BitsPerSample;
-		} Audio;
-	};
-} MFCAP_FORMAT, * PMFCAP_FORMAT;
 
 typedef struct _MFCAP_DEVICE_CHARACTERISTICS {
 	union {
@@ -96,11 +67,11 @@ HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* Devices, PU
 void MFCap_FreeDeviceEnumeration(PMFCAP_DEVICE_INFO Devices, UINT32 Count);
 HRESULT MFCap_GetDeviceCount(EMFCapFormatType Type, UINT32* aCount);
 HRESULT MFCap_GetProperties(EMFCapFormatType Type, UINT32 Index, GUID** Guids, PROPVARIANT** Values, UINT32* Count);
-HRESULT MFCap_GetFormatProperties(MFCAP_FORMAT* Format, GUID** Guids, PROPVARIANT** Values, UINT32* Count);
-void MFCap_FreeProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count);
+HRESULT MFGen_GetFormatProperties(MFGEN_FORMAT* Format, GUID** Guids, PROPVARIANT** Values, UINT32* Count);
+void MFGen_FreeProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count);
 
-HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFCAP_FORMAT* Types, UINT32* Count, UINT32* StreamCount);
-void MFCap_FreeMediaTypes(PMFCAP_FORMAT Formats, UINT32 Count);
+HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT* Types, UINT32* Count, UINT32* StreamCount);
+void MFCap_FreeMediaTypes(PMFGEN_FORMAT Formats, UINT32 Count);
 HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP_DEVICE* aInstance);
 void MFCap_FreeInstance(PMFCAP_DEVICE Instance);
 HRESULT MFCap_SetFormat(PMFCAP_DEVICE Device, UINT32 Stream, IMFMediaType* Format);
@@ -112,9 +83,6 @@ void MFCap_QueryCharacteristics(PMFCAP_DEVICE Device, PMFCAP_DEVICE_CHARACTERIST
 
 HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, IMFTopologyNode * **Nodes, DWORD * Count);
 void MFCap_FreeStreamNodes(IMFTopologyNode** Nodes, UINT32 Count);
-
-HRESULT MFCap_StringFromGuid(GUID* Guid, PWCHAR* String);
-void MFCap_StringFree(PWCHAR String);
 
 HRESULT MFCap_Init(void);
 void MFCap_Finit(void);

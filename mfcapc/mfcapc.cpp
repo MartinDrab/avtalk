@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "mfgen.h"
 #include "mfcap.h"
 #include "mfplay.h"
 
@@ -20,14 +21,14 @@ HRESULT ProcessProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count)
 	for (UINT32 k = 0; k < Count; ++k) {
 		PROPVARIANT tmp;
 		
-		ret = MFCap_StringFromGuid(Guids + k, &guidString);
+		ret = MFGen_StringFromGuid(Guids + k, &guidString);
 		if (FAILED(ret)) {
 			fprintf(stderr, "MFCap_StringFree: 0x%x\n", ret);
 			continue;
 		}
 
 		fprintf(stdout, "   %ls\t%u\t", guidString, Values[k].vt);
-		MFCap_StringFree(guidString);
+		MFGen_StringFree(guidString);
 		switch (Values[k].vt) {
 			case VT_CLSID:
 				ret = PropVariantToCLSID(Values[k], &g);
@@ -36,14 +37,14 @@ HRESULT ProcessProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count)
 					continue;
 				}
 
-				ret = MFCap_StringFromGuid(&g, &guidString);
+				ret = MFGen_StringFromGuid(&g, &guidString);
 				if (FAILED(ret)) {
 					fprintf(stderr, "\nMFCap_StringFromGuid: 0x%x\n", ret);
 					continue;
 				}
 
 				fprintf(stdout, "%ls\n", guidString);
-				MFCap_StringFree(guidString);
+				MFGen_StringFree(guidString);
 				break;
 			default:
 				ret = PropVariantChangeType(&tmp, Values[k], 0, VT_LPWSTR);
@@ -63,10 +64,10 @@ HRESULT ProcessProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count)
 
 
 template <EMFCapFormatType Type>
-HRESULT ProcessMediaFormats(PMFCAP_FORMAT Formats, DWORD FormatCount)
+HRESULT ProcessMediaFormats(PMFGEN_FORMAT Formats, DWORD FormatCount)
 {
 	HRESULT ret = S_OK;
-	PMFCAP_FORMAT tmpFormat = NULL;
+	PMFGEN_FORMAT tmpFormat = NULL;
 
 	tmpFormat = Formats;
 	for (UINT32 k = 0; k < FormatCount; ++k) {
@@ -76,13 +77,13 @@ HRESULT ProcessMediaFormats(PMFCAP_FORMAT Formats, DWORD FormatCount)
 		PROPVARIANT* values;
 		UINT32 valueCount = 0;
 
-		ret = MFCap_StringFromGuid(&tmpFormat->TypeGuid, &typeGuidString);
+		ret = MFGen_StringFromGuid(&tmpFormat->TypeGuid, &typeGuidString);
 		if (FAILED(ret)) {
 			fprintf(stderr, "MFCap_StringFromGuid: 0x%x\n", ret);
 			continue;
 		}
 
-		ret = MFCap_StringFromGuid(&tmpFormat->SubtypeGuid, &subtypeGuidString);
+		ret = MFGen_StringFromGuid(&tmpFormat->SubtypeGuid, &subtypeGuidString);
 		if (FAILED(ret)) {
 			fprintf(stderr, "MFCap_StringFromGuid: 0x%x\n", ret);
 			continue;
@@ -94,8 +95,8 @@ HRESULT ProcessMediaFormats(PMFCAP_FORMAT Formats, DWORD FormatCount)
 		fprintf(stdout, "    Type: %u\n", tmpFormat->Type);
 		fprintf(stdout, "    Type GUID: %ls\n", typeGuidString);
 		fprintf(stdout, "    Subtype GUID: %ls\n", subtypeGuidString);
-		MFCap_StringFree(subtypeGuidString);
-		MFCap_StringFree(typeGuidString);
+		MFGen_StringFree(subtypeGuidString);
+		MFGen_StringFree(typeGuidString);
 		switch (tmpFormat->Type) {
 			case mcftVideo:
 				fprintf(stdout, "    Width: %u\n", tmpFormat->Video.Width);
@@ -110,14 +111,14 @@ HRESULT ProcessMediaFormats(PMFCAP_FORMAT Formats, DWORD FormatCount)
 				break;
 		}
 
-		ret = MFCap_GetFormatProperties(tmpFormat, &guids, &values, &valueCount);
+		ret = MFGen_GetFormatProperties(tmpFormat, &guids, &values, &valueCount);
 		if (FAILED(ret)) {
 			fprintf(stderr, "MFCap_GetFormatProperties: 0x%x\n", ret);
 			continue;
 		}
 
 		ProcessProperties<mcftAudio>(guids, values, valueCount);
-		MFCap_FreeProperties(guids, values, valueCount);
+		MFGen_FreeProperties(guids, values, valueCount);
 		fprintf(stdout, "\n");
 		++tmpFormat;
 	}
@@ -148,11 +149,11 @@ HRESULT ProcessDeviceType(void)
 			
 			fprintf(stdout, "Device #%u\n", j);
 			ret = ProcessProperties<Type>(guids, values, valueCount);
-			MFCap_FreeProperties(guids, values, valueCount);
+			MFGen_FreeProperties(guids, values, valueCount);
 			if (SUCCEEDED(ret)) {
 				PMFCAP_DEVICE d = NULL;
-				PMFCAP_FORMAT formats = NULL;
-				PMFCAP_FORMAT tmpFormat = NULL;
+				PMFGEN_FORMAT formats = NULL;
+				PMFGEN_FORMAT tmpFormat = NULL;
 				UINT32 formatCount = 0;
 				UINT32 streamCount;
 				PWCHAR typeGuidString = NULL;
@@ -192,7 +193,7 @@ HRESULT ProcessAudoOoutput(void)
 	PMFPLAY_DEVICE_INFO tmp = NULL;
 	MFPLAY_DEVICE_STATE_MASK stateMask;
 	PMFPLAY_DEVICE instance = NULL;
-	PMFCAP_FORMAT formats = NULL;
+	PMFGEN_FORMAT formats = NULL;
 	DWORD formatCount = 0;
 	DWORD streamCount = 0;
 

@@ -8,10 +8,6 @@ EXPORTS
 	MFCap_FreeMediaTypes
 	MFCap_SelectStream
 	MFCap_GetProperties
-	MFCap_GetFormatProperties
-	MFCap_FreeProperties
-	MFCap_StringFromGuid
-	MFCap_StringFree
 	MFCap_Init
 	MFCap_Finit
 	MFCap_Start
@@ -26,3 +22,9 @@ EXPORTS
 	MFPlay_EnumFormats
 	MFPlay_NewInstance
 	MFPlay_FreeInstance
+
+	MFGen_StringFromGuid
+	MFGen_StringFree
+	MFGen_GetFormatProperties
+	MFGen_GetProperties
+	MFGen_FreeProperties

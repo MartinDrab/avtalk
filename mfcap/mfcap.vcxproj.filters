@@ -21,12 +21,18 @@
     <ClInclude Include="..\include\mfplay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\mfgen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mfcap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mfplay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mfgen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

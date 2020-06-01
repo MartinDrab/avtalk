@@ -136,16 +136,16 @@ extern "C" void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Coun
 }
 
 
-extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Formats, DWORD* Count, DWORD *StreamCount)
+extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFGEN_FORMAT* Formats, DWORD* Count, DWORD *StreamCount)
 {
 	HRESULT ret = S_OK;
 	DWORD streamCount = 0;
 	DWORD mtCount = 0;
-	std::vector<MFCAP_FORMAT> formats;
+	std::vector<MFGEN_FORMAT> formats;
 	IMFStreamSink* ss = NULL;
 	IMFMediaTypeHandler* mth = NULL;
 	IMFMediaType* mt = NULL;
-	MFCAP_FORMAT format;
+	MFGEN_FORMAT format;
 	GUID formatGuids[] = {
 		MFVideoFormat_NV12,
 		MFVideoFormat_YUY2,
@@ -164,7 +164,7 @@ extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Form
 		L"PCM",
 		L"Float"
 	};
-	PMFCAP_FORMAT tmpFormats = NULL;
+	PMFGEN_FORMAT tmpFormats = NULL;
 
 	ret = Device->Sink->GetStreamSinkCount(&streamCount);
 	if (SUCCEEDED(ret)) {
@@ -244,7 +244,7 @@ extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFCAP_FORMAT* Form
 			*Count = (UINT32)formats.size();
 			*Formats = NULL;
 			if (formats.size() > 0) {
-				tmpFormats = (PMFCAP_FORMAT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, formats.size() * sizeof(tmpFormats[0]));
+				tmpFormats = (PMFGEN_FORMAT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, formats.size() * sizeof(tmpFormats[0]));
 				if (tmpFormats == NULL)
 					ret = E_OUTOFMEMORY;
 
