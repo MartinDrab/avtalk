@@ -57,6 +57,7 @@ void MFGen_FreeProperties(GUID * Guids, PROPVARIANT * Values, UINT32 Count);
 void MFGen_SafeRelease(IUnknown * Object);
 HRESULT MFGen_MediaTypeToFormat(IMFMediaType* MediaType, PMFGEN_FORMAT Format);
 void MFGen_FreeFormats(PMFGEN_FORMAT Formats, UINT32 Count);
+void MFGen_FreeStreamNodes(IMFTopologyNode * *Nodes, UINT32 Count);
 
 HRESULT MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer);
 void MFGen_RefMemAddRef(void* Buffer);

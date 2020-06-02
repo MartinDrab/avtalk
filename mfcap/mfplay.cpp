@@ -290,7 +290,7 @@ extern "C" void MFPlay_FreeInstance(PMFPLAY_DEVICE Device)
 }
 
 
-extern "C" HRESULT MFPlay_CreateNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count)
+extern "C" HRESULT MFPlay_CreateStreamNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count)
 {
 	HRESULT ret = S_OK;
 	DWORD tmpCount = 0;

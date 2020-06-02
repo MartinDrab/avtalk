@@ -50,7 +50,7 @@ HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFGEN_FORMAT* Formats, DWORD*
 HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO * DeviceInfo, PMFPLAY_DEVICE * Device);
 HRESULT MFPlay_NewInstanceForWindow(HWND Window, PMFPLAY_DEVICE* Device);
 void MFPlay_FreeInstance(PMFPLAY_DEVICE Device);
-HRESULT MFPlay_CreateNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count);
+HRESULT MFPlay_CreateStreamNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count);
 
 #ifdef __cplusplus
 }

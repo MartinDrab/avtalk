@@ -14,6 +14,7 @@ EXPORTS
 	MFCap_QueryCharacteristics
 	MFCap_EnumDevices
 	MFCap_FreeDeviceEnumeration
+	MFCap_CreateStreamNodes
 
 	MFPlay_EnumDevices
 	MFPlay_FreeDeviceEnum
@@ -21,6 +22,7 @@ EXPORTS
 	MFPlay_NewInstance
 	MFPlay_NewInstanceForWindow
 	MFPlay_FreeInstance
+	MFPlay_CreateStreamNodes
 
 	MFGen_StringFromGuid
 	MFGen_StringFree
@@ -33,6 +35,7 @@ EXPORTS
 	MFGen_RefMemAlloc
 	MFGen_RefMemAddRef
 	MFGen_RefMemRelease
+	MFGen_FreeStreamNodes
 
 	MFCap_Init
 	MFCap_Finit

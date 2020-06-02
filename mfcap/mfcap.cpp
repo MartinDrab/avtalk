@@ -353,19 +353,6 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, IMFTopologyNode
 }
 
 
-extern "C" void MFCap_FreeStreamNodes(IMFTopologyNode** Nodes, UINT32 Count)
-{
-	if (Count > 0) {
-		for (UINT32 i = 0; i < Count; ++i)
-			Nodes[i]->Release();
-
-		MFGen_RefMemRelease(Nodes);
-	}
-
-	return;
-}
-
-
 extern "C" HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* Devices, PUINT32 Count)
 {
 	HRESULT ret = S_OK;
