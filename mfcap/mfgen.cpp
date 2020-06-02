@@ -1,5 +1,4 @@
 
-
 #include <vector>
 #include <windows.h>
 #include <initguid.h>
@@ -269,6 +268,48 @@ extern "C" void MFGen_FreeFormats(PMFGEN_FORMAT Formats, UINT32 Count)
 			Formats[i].MediaType->Release();
 
 		HeapFree(GetProcessHeap(), 0, Formats);
+	}
+
+	return;
+}
+
+
+extern "C" HRESULT MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer)
+{
+	HRESULT ret = S_OK;
+	void* tmpBuffer = NULL;
+	volatile LONG* refCount = NULL;
+
+	tmpBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, NumberOfBytes + sizeof(size_t));
+	if (tmpBuffer != NULL) {
+		refCount = (LONG*)tmpBuffer;
+		InterlockedExchange(refCount, 1);
+		*Buffer = (size_t *)tmpBuffer + 1;
+	} else ret = E_OUTOFMEMORY;
+
+	return ret;
+}
+
+
+extern "C" void MFGen_RefMemAddRef(void* Buffer)
+{
+	volatile LONG* refCount = NULL;
+
+	refCount = (LONG*)((size_t*)Buffer - 1);
+	InterlockedIncrement(refCount);
+
+	return;
+}
+
+
+extern "C" void MFGen_RefMemRelease(void* Buffer)
+{
+	volatile LONG* refCount = NULL;
+
+	if (Buffer != NULL) {
+		refCount = (LONG*)((size_t*)Buffer - 1);
+		if (InterlockedDecrement(refCount) == 0)
+			HeapFree(GetProcessHeap(), 0, (void*)refCount);
 	}
 
 	return;
