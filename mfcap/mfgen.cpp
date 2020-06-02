@@ -145,7 +145,7 @@ extern "C" void MFGen_FreeProperties(GUID * Guids, PROPVARIANT * Values, UINT32 
 		for (UINT32 i = 0; i < Count; ++i)
 			PropVariantClear(Values + i);
 
-		HeapFree(GetProcessHeap(), 0, Guids);
+		MFGen_RefMemRelease(Guids);
 	}
 
 	return;
@@ -165,10 +165,7 @@ extern "C" HRESULT MFGen_GetProperties(IMFAttributes* Attributes, GUID** Guids, 
 		*Guids = NULL;
 		*Values = NULL;
 		if (tmpCount > 0) {
-			tmpTypes = (GUID*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, tmpCount * (sizeof(tmpTypes[0]) + sizeof(tmpValues[0])));
-			if (tmpTypes == NULL)
-				hr = E_OUTOFMEMORY;
-
+			hr = MFGen_RefMemAlloc(tmpCount * (sizeof(tmpTypes[0]) + sizeof(tmpValues[0])), (void **)&tmpTypes);
 			if (SUCCEEDED(hr)) {
 				tmpValues = (PROPVARIANT*)(tmpTypes + tmpCount);
 				for (UINT32 i = 0; i < tmpCount; ++i) {
@@ -182,12 +179,12 @@ extern "C" HRESULT MFGen_GetProperties(IMFAttributes* Attributes, GUID** Guids, 
 				}
 
 				if (SUCCEEDED(hr)) {
+					MFGen_RefMemAddRef(tmpTypes);
 					*Guids = tmpTypes;
 					*Values = tmpValues;
 				}
 
-				if (FAILED(hr))
-					HeapFree(GetProcessHeap(), 0, tmpTypes);
+				MFGen_RefMemRelease(tmpTypes);
 			}
 		}
 	}
@@ -267,7 +264,7 @@ extern "C" void MFGen_FreeFormats(PMFGEN_FORMAT Formats, UINT32 Count)
 		for (UINT32 i = 0; i < Count; ++i)
 			Formats[i].MediaType->Release();
 
-		HeapFree(GetProcessHeap(), 0, Formats);
+		MFGen_RefMemRelease(Formats);
 	}
 
 	return;

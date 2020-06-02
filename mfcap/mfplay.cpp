@@ -34,8 +34,8 @@ extern "C" HRESULT MFPlay_EnumDevices(MFPLAY_DEVICE_STATE_MASK StateMask, PMFPLA
 		ret = collection->GetCount(&tmpCount);
 
 	if (SUCCEEDED(ret) && tmpCount > 0) {
-		tmpDevices = (PMFPLAY_DEVICE_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, tmpCount*sizeof(MFPLAY_DEVICE_INFO));
-		if (tmpDevices != NULL) {
+		ret = MFGen_RefMemAlloc(tmpCount * sizeof(MFPLAY_DEVICE_INFO), (void **)&tmpDevices);
+		if (SUCCEEDED(ret)) {
 			for (UINT i = 0; i < tmpCount; ++i) {
 				PROPVARIANT varName;
 				PROPVARIANT varDesc;
@@ -88,16 +88,15 @@ extern "C" HRESULT MFPlay_EnumDevices(MFPLAY_DEVICE_STATE_MASK StateMask, PMFPLA
 					PropVariantClear(&varDesc);
 				}
 
-				if (pProps != NULL)
-					pProps->Release();
-
-				if (d != NULL)
-					d->Release();
+				MFGen_SafeRelease(pProps);
+				MFGen_SafeRelease(d);
 			}
 
-			if (FAILED(ret))
-				HeapFree(GetProcessHeap(), 0, tmpDevices);
-		} else ret = E_OUTOFMEMORY;
+			if (SUCCEEDED(ret))
+				MFGen_RefMemAddRef(tmpDevices);
+
+			MFGen_RefMemRelease(tmpDevices);
+		}
 	}
 
 	if (SUCCEEDED(ret)) {
@@ -105,11 +104,8 @@ extern "C" HRESULT MFPlay_EnumDevices(MFPLAY_DEVICE_STATE_MASK StateMask, PMFPLA
 		*Count = tmpCount;
 	}
 
-	if (collection != NULL)
-		collection->Release();
-
-	if (pEnumerator != NULL)
-		pEnumerator->Release();
+	MFGen_SafeRelease(collection);
+	MFGen_SafeRelease(pEnumerator);
 
 	return ret;
 }
@@ -129,7 +125,7 @@ extern "C" void MFPlay_FreeDeviceEnum(PMFPLAY_DEVICE_INFO Devices, uint32_t Coun
 				CoTaskMemFree(Devices[i].EndpointId);
 		}
 
-		HeapFree(GetProcessHeap(), 0, Devices);
+		MFGen_RefMemRelease(Devices);
 	}
 
 	return;
@@ -190,10 +186,7 @@ extern "C" HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFGEN_FORMAT* Form
 			*Count = (UINT32)formats.size();
 			*Formats = NULL;
 			if (formats.size() > 0) {
-				tmpFormats = (PMFGEN_FORMAT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, formats.size() * sizeof(tmpFormats[0]));
-				if (tmpFormats == NULL)
-					ret = E_OUTOFMEMORY;
-
+				ret = MFGen_RefMemAlloc(formats.size() * sizeof(tmpFormats[0]), (void **)&tmpFormats);
 				if (SUCCEEDED(ret)) {
 					for (size_t i = 0; i < formats.size(); ++i) {
 						tmpFormats[i] = formats[i];

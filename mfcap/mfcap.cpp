@@ -91,7 +91,7 @@ static DWORD WINAPI _SamplingThreadRoutine(PVOID Context)
 		CoUninitialize();
 	}
 
-	HeapFree(GetProcessHeap(), 0, ctx);
+	MFGen_RefMemRelease(ctx);
 
 	return ret;
 }
@@ -151,10 +151,7 @@ extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT *Typ
 		*Count = (UINT32)types.size();
 		*Types = NULL;
 		if (types.size() > 0) {
-			tmpFormats = (PMFGEN_FORMAT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, types.size()*sizeof(tmpFormats[0]));
-			if (tmpFormats == NULL)
-				hr = E_OUTOFMEMORY;
-
+			hr = MFGen_RefMemAlloc(types.size() * sizeof(tmpFormats[0]), (void **)&tmpFormats);
 			if (SUCCEEDED(hr)) {
 				for (UINT32 i = 0; i < types.size(); ++i) {
 					tmpFormats[i] = types[i];
@@ -229,11 +226,9 @@ extern "C" HRESULT MFCap_Start(PMFCAP_DEVICE Device, MFCAP_SAMPLE_CALLBACK* Call
 	}
 
 	if (SUCCEEDED(ret)) {
-		ctx = (PSAMPLING_THREAD_CONTEXT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SAMPLING_THREAD_CONTEXT));
-		if (ctx == NULL)
-			ret = E_OUTOFMEMORY;
-
+		ret = MFGen_RefMemAlloc(sizeof(SAMPLING_THREAD_CONTEXT), (void **)&ctx);
 		if (SUCCEEDED(ret)) {
+			MFGen_RefMemAddRef(ctx);
 			msr->AddRef();
 			ctx->MediaSourceReader = msr;
 			ctx->Device = Device;
@@ -241,7 +236,10 @@ extern "C" HRESULT MFCap_Start(PMFCAP_DEVICE Device, MFCAP_SAMPLE_CALLBACK* Call
 			if (Device->SamplingThread == NULL) {
 				ret = __HRESULT_FROM_WIN32(GetLastError());
 				msr->Release();
+				MFGen_RefMemRelease(ctx);
 			}
+
+			MFGen_RefMemRelease(ctx);
 		}
 
 		if (FAILED(ret)) {
@@ -299,11 +297,8 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, IMFTopologyNode
 	pd = Device->PresentationDescriptor;
 	ret = pd->GetStreamDescriptorCount(&sdCount);
 	if (SUCCEEDED(ret) && sdCount > 0) {
-		tmpNodes = (IMFTopologyNode**)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sdCount*sizeof(IMFTopologyNode*));
-		if (tmpNodes == NULL)
-			ret = E_OUTOFMEMORY;
-
-		if (tmpNodes != NULL) {
+		ret = MFGen_RefMemAlloc(sdCount * sizeof(IMFTopologyNode*), (void **)&tmpNodes);
+		if (SUCCEEDED(ret)) {
 			for (UINT32 i = 0; i < sdCount; ++i) {
 				sd = NULL;
 				tmpNode = NULL;
@@ -332,12 +327,8 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, IMFTopologyNode
 					}
 				}
 
-				if (tmpNode != NULL)
-					tmpNode->Release();
-
-				if (sd = NULL)
-					sd->Release();
-
+				MFGen_SafeRelease(tmpNode);
+				MFGen_SafeRelease(pd);
 				if (FAILED(ret)) {
 					for (UINT32 j = 0; j < nodeIndex; ++j)
 						tmpNodes[i]->Release();
@@ -346,8 +337,10 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, IMFTopologyNode
 				}
 			}
 
-			if (FAILED(ret))
-				HeapFree(GetProcessHeap(), 0, tmpNodes);
+			if (SUCCEEDED(ret))
+				MFGen_RefMemAddRef(tmpNodes);
+
+			MFGen_RefMemRelease(tmpNodes);
 		}
 	}
 
@@ -366,7 +359,7 @@ extern "C" void MFCap_FreeStreamNodes(IMFTopologyNode** Nodes, UINT32 Count)
 		for (UINT32 i = 0; i < Count; ++i)
 			Nodes[i]->Release();
 
-		HeapFree(GetProcessHeap(), 0, Nodes);
+		MFGen_RefMemRelease(Nodes);
 	}
 
 	return;
@@ -442,9 +435,7 @@ extern "C" HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* 
 			CoTaskMemFree(devices);
 		}
 
-		if (attributes != NULL)
-			attributes->Release();
-
+		MFGen_SafeRelease(attributes);
 		if (FAILED(ret))
 			break;
 	}
@@ -453,10 +444,7 @@ extern "C" HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* 
 		*Devices = NULL;
 		*Count = NULL;
 		if (ds.size() > 0) {
-			tmpDevices = (PMFCAP_DEVICE_INFO)CoTaskMemAlloc(ds.size()*sizeof(tmpDevices[0]));
-			if (tmpDevices == NULL)
-				ret = E_OUTOFMEMORY;
-
+			ret = MFGen_RefMemAlloc(ds.size() * sizeof(tmpDevices[0]), (void **)&tmpDevices);
 			if (SUCCEEDED(ret)) {
 				for (auto i = 0; i < ds.size(); ++i)
 					tmpDevices[i] = ds[i];
@@ -488,7 +476,7 @@ extern "C" void MFCap_FreeDeviceEnumeration(PMFCAP_DEVICE_INFO Devices, UINT32 C
 			CoTaskMemFree(Devices[i].FriendlyName);
 		}
 
-		CoTaskMemFree(Devices);
+		MFGen_RefMemRelease(Devices);
 	}
 
 	return;
@@ -532,8 +520,7 @@ extern "C" HRESULT MFCap_GetDeviceCount(EMFCapFormatType Type, UINT32 *aCount)
 		*aCount = deviceCount;
 	}
 
-	if (attributes != NULL)
-		attributes->Release();
+	MFGen_SafeRelease(attributes);
 
 	return hr;
 }
@@ -541,7 +528,7 @@ extern "C" HRESULT MFCap_GetDeviceCount(EMFCapFormatType Type, UINT32 *aCount)
 
 extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP_DEVICE* aInstance)
 {
-	HRESULT hr = S_OK;
+	HRESULT ret = S_OK;
 	UINT32 deviceCount = 0;
 	IMFActivate** devices = NULL;
 	IMFAttributes* attributes = NULL;
@@ -557,58 +544,51 @@ extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP
 			captureGuid = MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID;
 			break;
 		default:
-			hr = E_INVALIDARG;
+			ret = E_INVALIDARG;
 			break;
 	}
 
-	if (SUCCEEDED(hr))
-		hr = MFCreateAttributes(&attributes, 1);
+	if (SUCCEEDED(ret))
+		ret = MFCreateAttributes(&attributes, 1);
 	
-	if (SUCCEEDED(hr))
-		hr = attributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, captureGuid);
+	if (SUCCEEDED(ret))
+		ret = attributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, captureGuid);
 
-	if (SUCCEEDED(hr))
-		hr = MFEnumDeviceSources(attributes, &devices, &deviceCount);
+	if (SUCCEEDED(ret))
+		ret = MFEnumDeviceSources(attributes, &devices, &deviceCount);
 
-	if (SUCCEEDED(hr)) {
-		hr = devices[Index]->ActivateObject(__uuidof(IMFMediaSource), (void**)&ms);
-		if (SUCCEEDED(hr)) {
-			cam = (PMFCAP_DEVICE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFCAP_DEVICE));
-			if (cam == NULL)
-				hr = E_OUTOFMEMORY;
-		}
+	if (SUCCEEDED(ret)) {
+		ret = devices[Index]->ActivateObject(__uuidof(IMFMediaSource), (void**)&ms);
+		if (SUCCEEDED(ret))
+			ret = MFGen_RefMemAlloc(sizeof(MFCAP_DEVICE), (void **)&cam);
 
-		if (SUCCEEDED(hr)) {
+		if (SUCCEEDED(ret)) {
 			cam->Type = Type;
-			cam->MediaSource = ms;
 			cam->StreamSelectionMask = 0xffffffff;
-			hr = ms->GetCharacteristics(&cam->Characteristics.Value);
-			if (SUCCEEDED(hr))
-				hr = ms->CreatePresentationDescriptor(&cam->PresentationDescriptor);
+			ret = ms->GetCharacteristics(&cam->Characteristics.Value);
+			if (SUCCEEDED(ret))
+				ret = ms->CreatePresentationDescriptor(&cam->PresentationDescriptor);
 		}
 
-		if (SUCCEEDED(hr)) {
+		if (SUCCEEDED(ret)) {
 			ms->AddRef();
+			cam->MediaSource = ms;
+			MFGen_RefMemAddRef(cam);
 			*aInstance = cam;
-			cam = NULL;
 		}
 
-		if (cam != NULL)
-			HeapFree(GetProcessHeap(), 0, cam);
-
-		if (ms != NULL)
-			ms->Release();
-
+		MFGen_RefMemRelease(cam);
+		MFGen_SafeRelease(ms);
 		for (UINT32 i = 0; i < deviceCount; ++i)
 			devices[i]->Release();
 
 		CoTaskMemFree(devices);
 	}
 
-	if (attributes != NULL)
-		attributes->Release();
 
-	return hr;
+	MFGen_SafeRelease(attributes);
+
+	return ret;
 }
 
 
@@ -618,32 +598,31 @@ extern "C" HRESULT MFCap_NewInstanceFromURL(PWCHAR URL, PMFCAP_DEVICE* Device)
 	PMFCAP_DEVICE d = NULL;
 	IMFSourceResolver* r = NULL;
 	MF_OBJECT_TYPE objectType;
+	IMFMediaSource* ms = NULL;
 
-	d = (PMFCAP_DEVICE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFCAP_DEVICE));
-	if (d != NULL)
-		ret = E_OUTOFMEMORY;
+	ret = MFGen_RefMemAlloc(sizeof(MFCAP_DEVICE), (void **)&d);
+	if (SUCCEEDED(ret))
+		ret = MFCreateSourceResolver(&r);
+	
+	if (SUCCEEDED(ret))
+		ret = r->CreateObjectFromURL(URL, MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE | MF_RESOLUTION_READ, NULL, &objectType, (IUnknown **)&ms);
+
+	if (SUCCEEDED(ret))
+		ret = ms->GetCharacteristics(&d->Characteristics.Value);
+
+	if (SUCCEEDED(ret))
+		ret = ms->CreatePresentationDescriptor(&d->PresentationDescriptor);
 
 	if (SUCCEEDED(ret)) {
-		ret = MFCreateSourceResolver(&r);
-		if (SUCCEEDED(ret))
-			ret = r->CreateObjectFromURL(URL, MF_RESOLUTION_MEDIASOURCE | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE | MF_RESOLUTION_READ, NULL, &objectType, (IUnknown **)&d->MediaSource);
-
-		if (SUCCEEDED(ret))
-			ret = d->MediaSource->GetCharacteristics(&d->Characteristics.Value);
-
-		if (SUCCEEDED(ret))
-			ret = d->MediaSource->CreatePresentationDescriptor(&d->PresentationDescriptor);
-
-		if (SUCCEEDED(ret)) {
-			d->MediaSource->AddRef();
-			*Device = d;
-		}
-
-		MFGen_SafeRelease(d->MediaSource);
-		MFGen_SafeRelease(r);
-		if (FAILED(ret))
-			HeapFree(GetProcessHeap(), 0, d);
+		ms->AddRef();
+		d->MediaSource = ms;
+		MFGen_RefMemAddRef(d);
+		*Device = d;
 	}
+
+	MFGen_SafeRelease(ms);
+	MFGen_SafeRelease(r);
+	MFGen_RefMemRelease(d);
 
 	return ret;
 }
@@ -654,7 +633,7 @@ extern "C" void MFCap_FreeInstance(PMFCAP_DEVICE Instance)
 	Instance->PresentationDescriptor->Release();
 //	Instance->MediaSource->Shutdown();
 	Instance->MediaSource->Release();
-	HeapFree(GetProcessHeap(), 0, Instance);
+	MFGen_RefMemRelease(Instance);
 
 	return;
 }
@@ -702,11 +681,8 @@ extern "C" HRESULT MFCap_GetProperties(EMFCapFormatType Type, UINT32 Index, GUID
 	if (SUCCEEDED(hr))
 		hr = MFGen_GetProperties(d, Guids, Values, Count);
 
-	if (d != NULL)
-		d->Release();
-
-	if (attributes != NULL)
-		attributes->Release();
+	MFGen_SafeRelease(d);
+	MFGen_SafeRelease(attributes);
 
 	return hr;
 }
@@ -715,29 +691,19 @@ extern "C" HRESULT MFCap_GetProperties(EMFCapFormatType Type, UINT32 Index, GUID
 extern "C" HRESULT MFCap_SetFormat(PMFCAP_DEVICE Device, UINT32 Stream, IMFMediaType *Format)
 {
 	HRESULT hr = S_OK;
-	IMFPresentationDescriptor* pd = NULL;
 	IMFStreamDescriptor* sd = NULL;
 	IMFMediaTypeHandler* mth = NULL;
 	BOOL selected = FALSE;
 
-	hr = Device->MediaSource->CreatePresentationDescriptor(&pd);
-	if (SUCCEEDED(hr))
-		hr = pd->GetStreamDescriptorByIndex(Stream, &selected, &sd);
-
+	hr = Device->PresentationDescriptor->GetStreamDescriptorByIndex(Stream, &selected, &sd);
 	if (SUCCEEDED(hr))
 		hr = sd->GetMediaTypeHandler(&mth);
 
 	if (SUCCEEDED(hr))
 		hr = mth->SetCurrentMediaType(Format);
 
-	if (mth != NULL)
-		mth->Release();
-
-	if (sd != NULL)
-		sd->Release();
-
-	if (pd != NULL)
-		pd->Release();
+	MFGen_SafeRelease(mth);
+	MFGen_SafeRelease(sd);
 
 	return hr;
 }
