@@ -222,10 +222,7 @@ extern "C" HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO *DeviceInfo, PMFP
 	IMFAttributes* attrs = NULL;
 	IMFMediaSink* s = NULL;
 
-	d = (PMFPLAY_DEVICE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFPLAY_DEVICE));
-	if (d == NULL)
-		ret = E_OUTOFMEMORY;
-
+	ret = MFGen_RefMemAlloc(sizeof(MFPLAY_DEVICE), (void**)&d);
 	if (SUCCEEDED(ret))
 		ret = MFCreateAttributes(&attrs, 2);
 
@@ -244,13 +241,13 @@ extern "C" HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO *DeviceInfo, PMFP
 	if (SUCCEEDED(ret)) {
 		s->AddRef();
 		d->Sink = s;
+		MFGen_RefMemAddRef(d);
 		*Device = d;
 	}
 
 	MFGen_SafeRelease(s);
 	MFGen_SafeRelease(attrs);
-	if (FAILED(ret) && d != NULL)
-		HeapFree(GetProcessHeap(), 0, d);
+	MFGen_RefMemRelease(d);
 
 	return ret;
 }
@@ -263,10 +260,7 @@ extern "C" HRESULT MFPlay_NewInstanceForWindow(HWND Window, PMFPLAY_DEVICE* Devi
 	PMFPLAY_DEVICE d = NULL;
 	IMFMediaSink* s = NULL;
 
-	d = (PMFPLAY_DEVICE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFPLAY_DEVICE));
-	if (d == NULL)
-		ret = E_OUTOFMEMORY;
-
+	ret = MFGen_RefMemAlloc(sizeof(MFPLAY_DEVICE), (void **)&d);
 	if (SUCCEEDED(ret)) {
 		d->Window = Window;
 		ret = MFCreateVideoRendererActivate(Window, &a);
@@ -281,13 +275,13 @@ extern "C" HRESULT MFPlay_NewInstanceForWindow(HWND Window, PMFPLAY_DEVICE* Devi
 	if (SUCCEEDED(ret)) {
 		s->AddRef();
 		d->Sink = s;
+		MFGen_RefMemAddRef(d);
 		*Device = d;
 	}
 
 	MFGen_SafeRelease(s);
 	MFGen_SafeRelease(a);
-	if (FAILED(ret) && d != NULL)
-		HeapFree(GetProcessHeap(), 0, d);
+	MFGen_RefMemRelease(d);
 
 	return ret;
 }
@@ -297,7 +291,7 @@ extern "C" void MFPlay_FreeInstance(PMFPLAY_DEVICE Device)
 {
 	Device->Sink->Shutdown();
 	Device->Sink->Release();
-	HeapFree(GetProcessHeap(), 0, Device);
+	MFGen_RefMemRelease(Device);
 
 	return;
 }
@@ -313,10 +307,7 @@ extern "C" HRESULT MFPlay_CreateNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** 
 
 	ret = Device->Sink->GetStreamSinkCount(&tmpCount);
 	if (SUCCEEDED(ret) && tmpCount > 0) {
-		tmpNodes = (IMFTopologyNode**)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, tmpCount*sizeof(IMFTopologyNode *));
-		if (tmpNodes == NULL)
-			ret = E_OUTOFMEMORY;
-
+		ret = MFGen_RefMemAlloc(tmpCount*sizeof(IMFTopologyNode *), (void **)&tmpNodes);
 		if (SUCCEEDED(ret)) {
 			for (DWORD i = 0; i < tmpCount; ++i) {
 				ret = Device->Sink->GetStreamSinkByIndex(i, &s);
@@ -348,8 +339,10 @@ extern "C" HRESULT MFPlay_CreateNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** 
 				}
 			}
 
-			if (FAILED(ret))
-				HeapFree(GetProcessHeap(), 0, tmpNodes);
+			if (SUCCEEDED(ret))
+				MFGen_RefMemAddRef(tmpNodes);
+
+			MFGen_RefMemRelease(tmpNodes);
 		}
 	}
 	
