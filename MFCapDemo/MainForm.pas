@@ -8,9 +8,6 @@ uses
 
 type
   TMainFrm = class(TForm)
-    DeviceGroupBox: TGroupBox;
-    StreamGroupBox: TGroupBox;
-    DeviceListView: TListView;
   private
     { Private declarations }
   public

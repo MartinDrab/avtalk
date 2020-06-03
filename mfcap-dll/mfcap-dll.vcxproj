@@ -28,6 +28,9 @@
     <ProjectReference Include="..\mfplay\mfplay.vcxproj">
       <Project>{efd7c2c9-b637-45ea-bfa4-114d38990a93}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\mfsession\mfsession.vcxproj">
+      <Project>{ddda4829-95ba-4052-857d-6488c0e5e1d9}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="mfcap.def" />

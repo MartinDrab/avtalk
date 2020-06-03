@@ -66,8 +66,6 @@ HRESULT MFCap_EnumDevices(EMFCapFormatType Type, PMFCAP_DEVICE_INFO* Devices, PU
 void MFCap_FreeDeviceEnumeration(PMFCAP_DEVICE_INFO Devices, UINT32 Count);
 HRESULT MFCap_GetDeviceCount(EMFCapFormatType Type, UINT32* aCount);
 HRESULT MFCap_GetProperties(EMFCapFormatType Type, UINT32 Index, GUID** Guids, PROPVARIANT** Values, UINT32* Count);
-HRESULT MFGen_GetFormatProperties(MFGEN_FORMAT* Format, GUID** Guids, PROPVARIANT** Values, UINT32* Count);
-void MFGen_FreeProperties(GUID* Guids, PROPVARIANT* Values, UINT32 Count);
 
 HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT* Types, UINT32* Count, UINT32* StreamCount);
 HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP_DEVICE* aInstance);

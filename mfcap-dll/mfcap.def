@@ -37,5 +37,11 @@ EXPORTS
 	MFGen_RefMemRelease
 	MFGen_FreeStreamNodes
 
+	MFSession_NewInstance
+	MFSession_FreeInstance
+	MFSession_Start
+	MFSession_Stop
+	MFSession_ConnectNodes
+
 	MFCap_Init
 	MFCap_Finit
