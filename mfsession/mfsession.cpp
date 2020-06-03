@@ -13,25 +13,19 @@ extern "C" HRESULT MFSession_NewInstance(PMF_SESSION* Session)
 	HRESULT ret = S_OK;
 	PMF_SESSION tmpSession = NULL;
 	IMFMediaSession* s = NULL;
-	IMFTopology* t = NULL;
 
 	ret = MFGen_RefMemAlloc(sizeof(MF_SESSION), (void **)&tmpSession);
 	if (SUCCEEDED(ret))
 		ret = MFCreateMediaSession(NULL, &s);
-	
-	if (SUCCEEDED(ret))
-		ret = MFCreateTopology(&t);
 
 	if (SUCCEEDED(ret)) {
 		MFGen_RefMemAddRef(tmpSession);
 		s->AddRef();
 		tmpSession->Session = s;
-		t->AddRef();
-		tmpSession->Topology = t;
+		tmpSession->Topology = NULL;
 		*Session = tmpSession;
 	}
 
-	MFGen_SafeRelease(t);
 	MFGen_SafeRelease(s);
 	MFGen_RefMemRelease(tmpSession);
 
@@ -54,6 +48,17 @@ HRESULT MFSession_Start(PMF_SESSION Session)
 {
 	HRESULT ret = S_OK;
 
+	PROPVARIANT time;
+
+	ret = Session->Session->SetTopology(0, Session->Topology);
+	if (SUCCEEDED(ret)) {
+		Session->Topology->Release();
+		Session->Topology = NULL;
+		PropVariantInit(&time);
+		ret = Session->Session->Start(NULL, &time);
+		PropVariantClear(&time);
+	}
+
 	return ret;
 }
 
@@ -61,6 +66,10 @@ HRESULT MFSession_Start(PMF_SESSION Session)
 HRESULT MFSession_Stop(PMF_SESSION Session)
 {
 	HRESULT ret = S_OK;
+
+	ret = Session->Session->Stop();
+	if (SUCCEEDED(ret))
+		ret = Session->Session->ClearTopologies();
 
 	return ret;
 }
@@ -70,7 +79,12 @@ HRESULT MFSession_ConnectNodes(PMF_SESSION Session, PMFGEN_STREAM_INFO Source, P
 {
 	HRESULT ret = S_OK;
 
-	ret = Session->Topology->AddNode(Source->Node);
+	if (Session->Topology == NULL)
+		ret = MFCreateTopology(&Session->Topology);
+
+	if (SUCCEEDED(ret))
+		ret = Session->Topology->AddNode(Source->Node);
+	
 	if (SUCCEEDED(ret))
 		ret = Session->Topology->AddNode(Target->Node);
 
