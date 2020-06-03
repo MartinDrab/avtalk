@@ -22,6 +22,12 @@
     <ProjectReference Include="..\mfcap\mfcap.vcxproj">
       <Project>{802cb91a-fb46-42ce-99f0-ea0940b29d3c}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\mfgen\mfgen.vcxproj">
+      <Project>{24335e6b-6e52-4f24-ba1e-cf61effa6692}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\mfplay\mfplay.vcxproj">
+      <Project>{efd7c2c9-b637-45ea-bfa4-114d38990a93}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="mfcap.def" />
