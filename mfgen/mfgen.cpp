@@ -313,11 +313,11 @@ extern "C" void MFGen_RefMemRelease(void* Buffer)
 }
 
 
-extern "C" void MFGen_FreeStreamNodes(IMFTopologyNode * *Nodes, UINT32 Count)
+extern "C" void MFGen_FreeStreamNodes(PMFGEN_STREAM_INFO Nodes, UINT32 Count)
 {
 	if (Count > 0) {
 		for (UINT32 i = 0; i < Count; ++i)
-			Nodes[i]->Release();
+			Nodes[i].Node->Release();
 
 		MFGen_RefMemRelease(Nodes);
 	}

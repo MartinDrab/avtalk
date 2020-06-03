@@ -16,7 +16,7 @@ typedef enum _EMFCapFormatType {
 	mcftVideo,
 	mcftAudio,
 	mcftMax,
-} EMFCapFormatType, * PEMFCapFormatType;
+} EMFCapFormatType, *PEMFCapFormatType;
 
 typedef struct _MFGEN_FORMAT {
 	GUID TypeGuid;
@@ -43,6 +43,14 @@ typedef struct _MFGEN_FORMAT {
 } MFGEN_FORMAT, * PMFGEN_FORMAT;
 
 
+typedef struct _MFGEN_STREAM_INFO {
+	GUID MajorType;
+	EMFCapFormatType Type;
+	DWORD Index;
+	DWORD Id;
+	IMFTopologyNode* Node;
+} MFGEN_STREAM_INFO, *PMFGEN_STREAM_INFO;
+
 
 
 #ifdef __cplusplus
@@ -57,7 +65,7 @@ void MFGen_FreeProperties(GUID * Guids, PROPVARIANT * Values, UINT32 Count);
 void MFGen_SafeRelease(IUnknown * Object);
 HRESULT MFGen_MediaTypeToFormat(IMFMediaType* MediaType, PMFGEN_FORMAT Format);
 void MFGen_FreeFormats(PMFGEN_FORMAT Formats, UINT32 Count);
-void MFGen_FreeStreamNodes(IMFTopologyNode * *Nodes, UINT32 Count);
+void MFGen_FreeStreamNodes(PMFGEN_STREAM_INFO Nodes, UINT32 Count);
 
 HRESULT MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer);
 void MFGen_RefMemAddRef(void* Buffer);

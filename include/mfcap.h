@@ -80,7 +80,7 @@ void MFCap_Stop(PMFCAP_DEVICE Device);
 void MFCap_QueryStreamSelection(PMFCAP_DEVICE Device, PUINT32 StreamMask);
 void MFCap_QueryCharacteristics(PMFCAP_DEVICE Device, PMFCAP_DEVICE_CHARACTERISTICS Characteristics);
 
-HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count);
+HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_INFO * Nodes, DWORD * Count);
 
 HRESULT MFCap_Init(void);
 void MFCap_Finit(void);

@@ -283,25 +283,25 @@ extern "C" void MFCap_QueryCharacteristics(PMFCAP_DEVICE Device, PMFCAP_DEVICE_C
 }
 
 
-extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count)
+extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_INFO * Nodes, DWORD* Count)
 {
 	HRESULT ret = S_OK;
 	DWORD sdCount = 0;
 	IMFStreamDescriptor* sd = NULL;
 	IMFPresentationDescriptor* pd = NULL;
-	IMFTopologyNode** tmpNodes = NULL;
+	PMFGEN_STREAM_INFO tmpNodes = NULL;
 	BOOL selected = FALSE;
 	UINT32 nodeIndex = 0;
-	IMFTopologyNode* tmpNode = NULL;
+	PMFGEN_STREAM_INFO tmpNode = NULL;
 
 	pd = Device->PresentationDescriptor;
 	ret = pd->GetStreamDescriptorCount(&sdCount);
 	if (SUCCEEDED(ret) && sdCount > 0) {
-		ret = MFGen_RefMemAlloc(sdCount * sizeof(IMFTopologyNode*), (void **)&tmpNodes);
+		ret = MFGen_RefMemAlloc(sdCount * sizeof(MFGEN_STREAM_INFO), (void **)&tmpNodes);
 		if (SUCCEEDED(ret)) {
+			tmpNode = tmpNodes;
 			for (UINT32 i = 0; i < sdCount; ++i) {
 				sd = NULL;
-				tmpNode = NULL;
 				if ((Device->StreamSelectionMask & (1 << i)) != 0)
 					ret = pd->SelectStream(i);
 				else ret = pd->DeselectStream(i);
@@ -310,31 +310,36 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, IMFTopologyNode
 					ret = pd->GetStreamDescriptorByIndex(i, &selected, &sd);
 				
 				if (SUCCEEDED(ret) && selected) {
-					ret = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &tmpNode);
+					ret = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &tmpNode->Node);
 					if (SUCCEEDED(ret))
-						ret = tmpNode->SetUnknown(MF_TOPONODE_SOURCE, Device->MediaSource);
+						ret = tmpNode->Node->SetUnknown(MF_TOPONODE_SOURCE, Device->MediaSource);
 
 					if (SUCCEEDED(ret))
-						ret = tmpNode->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, pd);
+						ret = tmpNode->Node->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, pd);
 
 					if (SUCCEEDED(ret))
-						ret = tmpNode->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, sd);
+						ret = tmpNode->Node->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, sd);
+
+					if (SUCCEEDED(ret))
+						ret = sd->GetStreamIdentifier(&tmpNode->Id);
 
 					if (SUCCEEDED(ret)) {
-						tmpNode->AddRef();
-						tmpNodes[nodeIndex] = tmpNode;
+						tmpNode->Node->AddRef();
+						tmpNode->Index = i;
 						++nodeIndex;
 					}
 				}
 
-				MFGen_SafeRelease(tmpNode);
+				MFGen_SafeRelease(tmpNode->Node);
 				MFGen_SafeRelease(pd);
 				if (FAILED(ret)) {
 					for (UINT32 j = 0; j < nodeIndex; ++j)
-						tmpNodes[i]->Release();
+						tmpNodes[i].Node->Release();
 					
 					break;
 				}
+
+				++tmpNode;
 			}
 
 			if (SUCCEEDED(ret))

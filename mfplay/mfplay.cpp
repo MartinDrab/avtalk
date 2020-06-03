@@ -290,46 +290,48 @@ extern "C" void MFPlay_FreeInstance(PMFPLAY_DEVICE Device)
 }
 
 
-extern "C" HRESULT MFPlay_CreateStreamNodes(PMFPLAY_DEVICE Device, IMFTopologyNode*** Nodes, DWORD* Count)
+extern "C" HRESULT MFPlay_CreateStreamNodes(PMFPLAY_DEVICE Device, PMFGEN_STREAM_INFO *Nodes, DWORD* Count)
 {
 	HRESULT ret = S_OK;
 	DWORD tmpCount = 0;
 	IMFStreamSink* s = NULL;
-	IMFTopologyNode* node = NULL;
-	IMFTopologyNode** tmpNodes = NULL;
+	PMFGEN_STREAM_INFO node = NULL;
+	PMFGEN_STREAM_INFO tmpNodes = NULL;
 
 	ret = Device->Sink->GetStreamSinkCount(&tmpCount);
 	if (SUCCEEDED(ret) && tmpCount > 0) {
-		ret = MFGen_RefMemAlloc(tmpCount*sizeof(IMFTopologyNode *), (void **)&tmpNodes);
+		ret = MFGen_RefMemAlloc(tmpCount*sizeof(MFGEN_STREAM_INFO), (void **)&tmpNodes);
 		if (SUCCEEDED(ret)) {
+			node = tmpNodes;
 			for (DWORD i = 0; i < tmpCount; ++i) {
 				ret = Device->Sink->GetStreamSinkByIndex(i, &s);
 				if (SUCCEEDED(ret))
-					ret = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
+					ret = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node->Node);
 
 				if (SUCCEEDED(ret))
-					ret = node->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, TRUE);
+					ret = node->Node->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, TRUE);
 
 				if (SUCCEEDED(ret))
-					ret = node->SetObject(s);
+					ret = node->Node->SetObject(s);
+
+				if (SUCCEEDED(ret))
+					ret = s->GetIdentifier(&node->Id);
 
 				if (SUCCEEDED(ret)) {
-					node->AddRef();
-					tmpNodes[i] = node;
+					node->Index = i;
+					node->Node->AddRef();
 				}
 
-				if (node != NULL)
-					node->Release();
-
-				if (s != NULL)
-					s->Release();
-
+				MFGen_SafeRelease(node->Node);
+				MFGen_SafeRelease(s);
 				if (FAILED(ret)) {
 					for (DWORD j = 0; j < i; ++j)
-						tmpNodes[j]->Release();
+						tmpNodes[j].Node->Release();
 					
 					break;
 				}
+
+				++node;
 			}
 
 			if (SUCCEEDED(ret))
