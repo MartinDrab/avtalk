@@ -293,6 +293,7 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_I
 	BOOL selected = FALSE;
 	UINT32 nodeIndex = 0;
 	PMFGEN_STREAM_INFO tmpNode = NULL;
+	IMFMediaTypeHandler* mth = NULL;
 
 	pd = Device->PresentationDescriptor;
 	ret = pd->GetStreamDescriptorCount(&sdCount);
@@ -302,6 +303,7 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_I
 			tmpNode = tmpNodes;
 			for (UINT32 i = 0; i < sdCount; ++i) {
 				sd = NULL;
+				mth = NULL;
 				if ((Device->StreamSelectionMask & (1 << i)) != 0)
 					ret = pd->SelectStream(i);
 				else ret = pd->DeselectStream(i);
@@ -323,6 +325,20 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_I
 					if (SUCCEEDED(ret))
 						ret = sd->GetStreamIdentifier(&tmpNode->Id);
 
+					if (SUCCEEDED(ret))
+						ret = sd->GetMediaTypeHandler(&mth);
+
+					if (SUCCEEDED(ret))
+						ret = mth->GetMajorType(&tmpNode->MajorType);
+
+					if (SUCCEEDED(ret)) {
+						tmpNode->Type = mcftUnknown;
+						if (tmpNode->MajorType == MFMediaType_Video)
+							tmpNode->Type = mcftVideo;
+						else if (tmpNode->MajorType == MFMediaType_Audio)
+							tmpNode->Type = mcftAudio;
+					}
+
 					if (SUCCEEDED(ret)) {
 						tmpNode->Node->AddRef();
 						tmpNode->Index = i;
@@ -330,8 +346,9 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_I
 					}
 				}
 
+				MFGen_SafeRelease(mth);
 				MFGen_SafeRelease(tmpNode->Node);
-				MFGen_SafeRelease(pd);
+				MFGen_SafeRelease(sd);
 				if (FAILED(ret)) {
 					for (UINT32 j = 0; j < nodeIndex; ++j)
 						tmpNodes[i].Node->Release();
