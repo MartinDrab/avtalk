@@ -95,7 +95,7 @@ If Result = 0THen
   tmp := streams;
   FOr I := 0 To count - 1 Do
     begin
-    AList.Add(TMFGenStream.Create(tmp^));
+    AList.Add(TMFGenStream.Create(Self, tmp^));
     Inc(tmp);
     end;
 
