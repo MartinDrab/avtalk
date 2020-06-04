@@ -90,7 +90,7 @@ Type
   MFPLAY_DEVICE_INFO = _MFPLAY_DEVICE_INFO;
   PMFPLAY_DEVICE_INFO = ^MFPLAY_DEVICE_INFO;
 
-Function MFCap_EnumDevices(Var ADevices:PMFCAP_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl;
+Function MFCap_EnumDevices(AType:EMFCapFormatType; Var ADevices:PMFCAP_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl;
 Procedure MFCap_FreeDeviceEnumeration(ADevices:PMFCAP_DEVICE_INFO; ACount:Cardinal); Cdecl;
 Function MFCap_EnumMediaTypes(ADevice:Pointer; Var AFormats:PMFGEN_FORMAT; Var ACount:Cardinal; Var AStreamCount:Cardinal):Cardinal; Cdecl;
 Function MFCap_NewInstance(AType:EMFCapFormatType; AIndex:Cardinal; Var ADevice:Pointer):Cardinal; Cdecl;
@@ -101,6 +101,7 @@ Function MFCap_Start(ADevice:Pointer; ACallback:MFCAP_SAMPLE_CALLBACK; AContext:
 Procedure MFCap_Stop(ADevice:Pointer); Cdecl;
 Procedure MFCap_QueryStreamSelection(ADevice:Pointer; Var AMask:Cardinal); Cdecl;
 Procedure MFCap_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:MFCAP_DEVICE_CHARACTERISTICS); Cdecl;
+Function MFCap_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl;
 
 Function MFPlay_EnumDevices(AStateMask:Cardinal; Var ADevices:PMFPLAY_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl;
 Procedure MFPlay_FreeDeviceEnum(ADevices:PMFPLAY_DEVICE_INFO; ACount:Cardinal); Cdecl;
@@ -131,7 +132,7 @@ Implementation
 Const
   LibraryName = 'mfcap-dll.dll';
 
-Function MFCap_EnumDevices(Var ADevices:PMFCAP_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
+Function MFCap_EnumDevices(AType:EMFCapFormatType; Var ADevices:PMFCAP_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
 Procedure MFCap_FreeDeviceEnumeration(ADevices:PMFCAP_DEVICE_INFO; ACount:Cardinal); Cdecl; External LibraryName;
 Function MFCap_EnumMediaTypes(ADevice:Pointer; Var AFormats:PMFGEN_FORMAT; Var ACount:Cardinal; Var AStreamCount:Cardinal):Cardinal; Cdecl; External LibraryName;
 Function MFCap_NewInstance(AType:EMFCapFormatType; AIndex:Cardinal; Var ADevice:Pointer):Cardinal; Cdecl; External LibraryName;
@@ -142,6 +143,7 @@ Function MFCap_Start(ADevice:Pointer; ACallback:MFCAP_SAMPLE_CALLBACK; AContext:
 Procedure MFCap_Stop(ADevice:Pointer); Cdecl; External LibraryName;
 Procedure MFCap_QueryStreamSelection(ADevice:Pointer; Var AMask:Cardinal); Cdecl; External LibraryName;
 Procedure MFCap_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:MFCAP_DEVICE_CHARACTERISTICS); Cdecl; External LibraryName;
+Function MFCap_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
 
 Function MFPlay_EnumDevices(AStateMask:Cardinal; Var ADevices:PMFPLAY_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
 Procedure MFPlay_FreeDeviceEnum(ADevices:PMFPLAY_DEVICE_INFO; ACount:Cardinal); Cdecl; External LibraryName;
