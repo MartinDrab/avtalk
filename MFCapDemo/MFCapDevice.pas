@@ -4,30 +4,27 @@ Interface
 
 Uses
   Windows, MFCapDll, Generics.Collections,
-  MFGenStream;
+  MFGenStream, MFDevice;
 
 Type
-  TMFCapDevice = Class
+  TMFCapDevice = Class (TMFDevice)
   Private
     FName : WideString;
     FSymbolicLink : WideString;
     FIndex : Cardinal;
     FDeviceType : EMFCapFormatType;
-    FHandle : Pointer;
     Constructor Create(Var ARecord:MFCAP_DEVICE_INFO); Reintroduce;
   Public
-    Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TList<TMFCapDevice>):Cardinal;
+    Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>):Cardinal;
 
-    Destructor Destroy; Override;
-    Function Open:Cardinal;
-    Procedure Close;
-    Function EnumStreams(AList:TList<TMFGenStream>):Cardinal;
+    Function Open:Cardinal; Override;
+    Procedure Close; Override;
+    Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Override;
 
     Property Name : WideString Read FName;
     Property SymbolicLink : WideString Read FSymbolicLink;
     Property Index : Cardinal Read FIndex;
     Property DeviceType : EMFCapFormatType Read FDeviceType;
-    Property Handle : Pointer Read FHandle;
   end;
 
 Implementation
@@ -37,7 +34,7 @@ Uses
 
 (** TMFCapDevice **)
 
-Class Function TMFCapDevice.Enumerate(ADeviceType:EMFCapFormatType; AList:TList<TMFCapDevice>):Cardinal;
+Class Function TMFCapDevice.Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>):Cardinal;
 Var
   I : Integer;
   d : PMFCAP_DEVICE_INFO;
@@ -67,14 +64,6 @@ FName := WideCharToString(ARecord.FriendlyName);
 FSymbolicLink := WideCharToString(ARecord.SymbolicLink);
 end;
 
-Destructor TMFCapDevice.Destroy;
-begin
-If Assigned(FHandle) Then
-  Close;
-
-Inherited Destroy;
-end;
-
 Function TMFCapDevice.Open:Cardinal;
 begin
 Result := MFCap_NewInstance(FDeviceType, FIndex, FHandle);
@@ -86,7 +75,7 @@ MFCap_FreeInstance(FHandle);
 FHandle := Nil;
 end;
 
-Function TMFCapDevice.EnumStreams(AList:TList<TMFGenStream>):Cardinal;
+Function TMFCapDevice.EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal;
 Var
   I : Integer;
   count : Cardinal;
@@ -110,3 +99,4 @@ end;
 
 
 End.
+

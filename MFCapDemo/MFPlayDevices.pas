@@ -4,32 +4,29 @@ Interface
 
 Uses
   Windows, MFCapDll, Generics.Collections,
-  MFGenStream;
+  MFDevice, MFGenStream;
 
 Type
-  TMFPlayDevice = Class
+  TMFPlayDevice = Class (TMFDevice)
   Private
     FName : WideString;
     FDescription : WideString;
     FEndpointId : WideString;
     FState : Cardinal;
     FCharacteristics : Cardinal;
-    FHandle : Pointer;
     Constructor Create(Var ARecord:MFPLAY_DEVICE_INFO); Reintroduce;
   Public
-    Class Function Enumerate(AList:TList<TMFPlayDevice>):Cardinal;
+    Class Function Enumerate(AList:TObjectList<TMFPlayDevice>):Cardinal;
 
-    Destructor Destroy; Override;
-    Function Open:Cardinal;
-    Procedure Close;
-    Function EnumStreams(AList:TList<TMFGenStream>):Cardinal;
+    Function Open:Cardinal; Override;
+    Procedure Close; Override;
+    Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Override;
 
     Property Name : WideString Read FName;
     Property Description : WideString Read FDescription;
     Property EndpointId : WideString Read FEndpointId;
     Property State : Cardinal Read FState;
     Property Characteristics : Cardinal Read FCharacteristics;
-    Property Handle : Pointer Read FHandle;
   end;
 
 Implementation
@@ -37,9 +34,9 @@ Implementation
 Uses
   SysUtils;
 
-(** TMFCapDevice **)
+(** TMFPlayDevice **)
 
-Class Function TMFPlayDevice.Enumerate(AList:TList<TMFPlayDevice>):Cardinal;
+Class Function TMFPlayDevice.Enumerate(AList:TObjectList<TMFPlayDevice>):Cardinal;
 Var
   I : Integer;
   d : PMFPLAY_DEVICE_INFO;
@@ -70,14 +67,6 @@ FState := ARecord.State;
 FCharacteristics := ARecord.Characteristics;
 end;
 
-Destructor TMFPlayDevice.Destroy;
-begin
-If Assigned(FHandle) Then
-  Close;
-
-Inherited Destroy;
-end;
-
 Function TMFPlayDevice.Open:Cardinal;
 Var
   d : MFPLAY_DEVICE_INFO;
@@ -93,7 +82,7 @@ MFPlay_FreeInstance(FHandle);
 FHandle := Nil;
 end;
 
-Function TMFPlayDevice.EnumStreams(AList:TList<TMFGenStream>):Cardinal;
+Function TMFPlayDevice.EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal;
 Var
   I : Integer;
   count : Cardinal;

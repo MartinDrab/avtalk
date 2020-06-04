@@ -7,7 +7,8 @@ uses
   MFCapDevice in 'MFCapDevice.pas',
   MFGenStream in 'MFGenStream.pas',
   Utils in 'Utils.pas',
-  MFPlayDevices in 'MFPlayDevices.pas';
+  MFPlayDevices in 'MFPlayDevices.pas',
+  MFDevice in 'MFDevice.pas';
 
 {$R *.res}
 
