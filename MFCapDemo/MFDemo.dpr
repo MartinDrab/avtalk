@@ -5,7 +5,8 @@ uses
   MainForm in 'MainForm.pas' {MainFrm},
   MFCapDll in 'MFCapDll.pas',
   MFCapDevice in 'MFCapDevice.pas',
-  MFGenStream in 'MFGenStream.pas';
+  MFGenStream in 'MFGenStream.pas',
+  Utils in 'Utils.pas';
 
 {$R *.res}
 
@@ -20,6 +21,7 @@ If err = 0 Then
   Application.CreateForm(TMainFrm, MainFrm);
   Application.Run;
   MFGen_Finit;
-  end;
+  end
+Else Win32ErrorMessage('Znable to initialize MF libraries', err);
 end.
 
