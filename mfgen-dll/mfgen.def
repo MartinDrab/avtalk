@@ -12,4 +12,6 @@ EXPORTS
 	MFGen_RefMemAddRef
 	MFGen_RefMemRelease
 	MFGen_FreeStreamNodes
+	MFGen_Init
+	MFGen_Finit
 

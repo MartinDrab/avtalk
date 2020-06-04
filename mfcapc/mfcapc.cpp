@@ -242,7 +242,7 @@ int wmain(int argc, wchar_t* argv[])
 {
 	int ret = 0;
 
-	ret = MFCap_Init();
+	ret = MFGen_Init();
 	if (FAILED(ret)) {
 		fprintf(stderr, "MFCap_Init: 0x%x", ret);
 		goto Exit;
@@ -267,7 +267,7 @@ int wmain(int argc, wchar_t* argv[])
 	}
 
 FInitMFCap:
-	MFCap_Finit();
+	MFGen_Finit();
 Exit:
 	return ret;
 }

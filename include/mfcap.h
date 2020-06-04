@@ -80,9 +80,6 @@ void MFCap_QueryCharacteristics(PMFCAP_DEVICE Device, PMFCAP_DEVICE_CHARACTERIST
 
 HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_INFO * Nodes, DWORD * Count);
 
-HRESULT MFCap_Init(void);
-void MFCap_Finit(void);
-
 #ifdef __cplusplus
 }
 #endif

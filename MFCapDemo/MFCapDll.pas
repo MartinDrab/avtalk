@@ -124,13 +124,13 @@ Procedure MFGen_FreeProperties(AGuids:PGuid; AValues:Pointer; ACount:Cardinal); 
 Procedure MFGen_FreeFormats(AFormats:PMFGEN_FORMAT; ACount:Cardinal); Cdecl;
 Procedure MFGen_FreeStreamNodes(Var Nodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal); Cdecl;
 
-Function MFCap_Init:Cardinal; Cdecl;
-Procedure MFCap_Finit; Cdecl;
+Function MFGen_Init:Cardinal; Cdecl;
+Procedure MFGen_Finit; Cdecl;
 
 Implementation
 
 Const
-  GENLibraryName = 'mfgen-dl.dll';
+  GENLibraryName = 'mfgen-dll.dll';
   CAPLibraryName = 'mfcap-dll.dll';
   PLAYLibraryName = 'mfplaz-dll.dll';
   SESSIONLibraryName = 'mfsession-dll.dll';
@@ -170,8 +170,8 @@ Function MFGen_GetFormatProperties(Var AFormat:MFGEN_FORMAT; Var AGuids:Pointer;
 Function MFGen_GetProperties(AAttributes:Pointer; Var AGuids:PGuid; Var AValues:Pointer; Var ACount:Cardinal):Cardinal; Cdecl; External GENLibraryName;
 Procedure MFGen_FreeProperties(AGuids:PGuid; AValues:Pointer; ACount:Cardinal); Cdecl; External GENLibraryName;
 
-Function MFCap_Init:Cardinal; Cdecl; External CAPLibraryName;
-Procedure MFCap_Finit; Cdecl; External CAPLibraryName;
+Function MFGen_Init:Cardinal; Cdecl; External GENLibraryName;
+Procedure MFGen_Finit; Cdecl; External GENLibraryName;
 
 End.
 

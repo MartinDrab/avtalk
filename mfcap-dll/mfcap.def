@@ -15,6 +15,3 @@ EXPORTS
 	MFCap_EnumDevices
 	MFCap_FreeDeviceEnumeration
 	MFCap_CreateStreamNodes
-
-	MFCap_Init
-	MFCap_Finit

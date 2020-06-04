@@ -330,3 +330,27 @@ extern "C" void MFGen_FreeStreamNodes(PMFGEN_STREAM_INFO Nodes, UINT32 Count)
 
 	return;
 }
+
+
+extern "C" HRESULT MFGen_Init(void)
+{
+	HRESULT hr = S_OK;
+
+	hr = CoInitialize(NULL);
+	if (SUCCEEDED(hr)) {
+		hr = MFStartup(MF_SDK_VERSION, 0);
+		if (FAILED(hr))
+			CoUninitialize();
+	}
+
+	return hr;
+}
+
+
+extern "C" void MFGen_Finit(void)
+{
+	MFShutdown();
+	CoUninitialize();
+
+	return;
+}

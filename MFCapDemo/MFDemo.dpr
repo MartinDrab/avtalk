@@ -13,13 +13,13 @@ Var
   err : Cardinal;
 begin
 Application.Initialize;
-err := MFCap_Init;
+err := MFGen_Init;
 If err = 0 Then
   begin
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TMainFrm, MainFrm);
   Application.Run;
-  MFCap_Finit;
+  MFGen_Finit;
   end;
 end.
 

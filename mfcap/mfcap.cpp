@@ -716,27 +716,3 @@ extern "C" HRESULT MFCap_SetFormat(PMFCAP_DEVICE Device, UINT32 Stream, IMFMedia
 
 	return hr;
 }
-
-
-extern "C" HRESULT MFCap_Init(void)
-{
-	HRESULT hr = S_OK;
-
-	hr = CoInitialize(NULL);
-	if (SUCCEEDED(hr)) {
-		hr = MFStartup(MF_SDK_VERSION, 0);
-		if (FAILED(hr))
-			CoUninitialize();
-	}
-
-	return hr;
-}
-
-
-extern "C" void MFCap_Finit(void)
-{
-	MFShutdown();
-	CoUninitialize();
-
-	return;
-}
