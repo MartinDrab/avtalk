@@ -14,6 +14,8 @@ object MainFrm: TMainFrm
   Font.Style = []
   OldCreateOrder = False
   Position = poScreenCenter
+  OnClose = FormClose
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object MainPageControl: TPageControl
@@ -24,12 +26,8 @@ object MainFrm: TMainFrm
     ActivePage = DevicesTabSheet
     Align = alClient
     TabOrder = 0
-    ExplicitWidth = 454
-    ExplicitHeight = 327
     object DevicesTabSheet: TTabSheet
       Caption = 'Devices'
-      ExplicitWidth = 446
-      ExplicitHeight = 299
       object AudioInputGroupBox: TGroupBox
         Left = 0
         Top = 0
@@ -38,7 +36,6 @@ object MainFrm: TMainFrm
         Align = alTop
         Caption = 'Audio input'
         TabOrder = 0
-        ExplicitWidth = 446
         object AUdioInputPanel: TPanel
           Left = 2
           Top = 15
@@ -72,7 +69,6 @@ object MainFrm: TMainFrm
         Align = alTop
         Caption = 'AUdio output'
         TabOrder = 1
-        ExplicitWidth = 446
         object AudioOutputPanel: TPanel
           Left = 2
           Top = 15
@@ -106,8 +102,6 @@ object MainFrm: TMainFrm
         Align = alClient
         Caption = 'Video input'
         TabOrder = 2
-        ExplicitWidth = 446
-        ExplicitHeight = 137
         object Label1: TLabel
           Left = 128
           Top = 21
@@ -124,7 +118,6 @@ object MainFrm: TMainFrm
           Color = clBlack
           ParentBackground = False
           TabOrder = 0
-          ExplicitHeight = 120
         end
         object VideoInputComboBox: TComboBox
           Left = 128

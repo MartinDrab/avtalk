@@ -1,13 +1,15 @@
-unit MainForm;
+Unit MainForm;
 
-interface
+Interface
 
-uses
+Uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls, Vcl.ExtCtrls;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls, Vcl.ExtCtrls,
+  Generics.Collections,
+  MFCapDevice, MFPlayDevices, MFGenStream;
 
-type
-  TMainFrm = class(TForm)
+Type
+  TMainFrm = Class (TForm)
     MainPageControl: TPageControl;
     DevicesTabSheet: TTabSheet;
     AudioInputGroupBox: TGroupBox;
@@ -24,17 +26,45 @@ type
     RefreshAudioInputBUtton: TButton;
     RefreshAudioOutputButton: TButton;
     RefreshVideoButton: TButton;
-  private
-    { Private declarations }
-  public
-    { Public declarations }
+    procedure FormCreate(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+  Private
+    FAudioInList : TObjectList<TMFCapDevice>;
+    FAudioInStreamList : TObjectList<TMFGenStream>;
+    FVideoInList : TObjectList<TMFCapDevice>;
+    FVideoInStreamList : TObjectList<TMFGenStream>;
+    FAudioOutList : TObjectList<TMFPlayDevice>;
+    FAudioOutStreamList : TObjectList<TMFGenStream>;
   end;
 
-var
+Var
   MainFrm: TMainFrm;
 
-implementation
+Implementation
 
-{$R *.dfm}
+{$R *.DFM}
 
-end.
+Procedure TMainFrm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+FVideoInStreamList.Free;
+FAudioOutStreamList.Free;
+FAudioInStreamList.Free;
+FVideoInList.Free;
+FAudioOutList.Free;
+FAudioInList.Free;
+end;
+
+Procedure TMainFrm.FormCreate(Sender: TObject);
+begin
+FAudioInList := TObjectList<TMFCapDevice>.Create;
+FAudioOutList := TObjectList<TMFPlayDevice>.Create;
+FVideoInList := TObjectList<TMFCapDevice>.Create;
+FAudioInStreamList := TObjectList<TMFGenStream>.Create;
+FAudioOutStreamList := TObjectList<TMFGenStream>.Create;
+FVideoInStreamList := TObjectList<TMFGenStream>.Create;
+end;
+
+
+
+End.
+
