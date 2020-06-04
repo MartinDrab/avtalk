@@ -161,6 +161,12 @@
     <ProjectReference Include="..\mfcap-dll\mfcap-dll.vcxproj">
       <Project>{e8d23eaf-17b0-48f8-a740-b9ecabc6035a}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\mfgen-dll\mfgen-dll.vcxproj">
+      <Project>{d4311828-5b43-4ace-bf44-7a485dd8f7d3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\mfplay-dll\mfplay-dll.vcxproj">
+      <Project>{c182b480-9b6f-4f9e-8aa5-96cbbb1b62a0}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

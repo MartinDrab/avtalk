@@ -1,0 +1,10 @@
+LIBRARY mfplay-dll
+EXPORTS
+	MFPlay_EnumDevices
+	MFPlay_FreeDeviceEnum
+	MFPlay_EnumFormats
+	MFPlay_NewInstance
+	MFPlay_NewInstanceForWindow
+	MFPlay_FreeInstance
+	MFPlay_CreateStreamNodes
+

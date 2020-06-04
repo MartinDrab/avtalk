@@ -16,32 +16,5 @@ EXPORTS
 	MFCap_FreeDeviceEnumeration
 	MFCap_CreateStreamNodes
 
-	MFPlay_EnumDevices
-	MFPlay_FreeDeviceEnum
-	MFPlay_EnumFormats
-	MFPlay_NewInstance
-	MFPlay_NewInstanceForWindow
-	MFPlay_FreeInstance
-	MFPlay_CreateStreamNodes
-
-	MFGen_StringFromGuid
-	MFGen_StringFree
-	MFGen_GetFormatProperties
-	MFGen_GetProperties
-	MFGen_FreeProperties
-	MFGen_MediaTypeToFormat
-	MFGen_FreeFormats
-	MFGen_SafeRelease
-	MFGen_RefMemAlloc
-	MFGen_RefMemAddRef
-	MFGen_RefMemRelease
-	MFGen_FreeStreamNodes
-
-	MFSession_NewInstance
-	MFSession_FreeInstance
-	MFSession_Start
-	MFSession_Stop
-	MFSession_ConnectNodes
-
 	MFCap_Init
 	MFCap_Finit

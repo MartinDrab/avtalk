@@ -13,6 +13,12 @@
 #include <math.h>
 #include "mfgen.h"
 
+#pragma comment(lib, "strmiids")
+#pragma comment(lib, "mfplat.lib")
+#pragma comment(lib, "Mfreadwrite.lib")
+#pragma comment(lib, "Mf.lib")
+#pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "Propsys.lib")
 
 
 

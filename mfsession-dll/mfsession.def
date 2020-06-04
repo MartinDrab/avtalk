@@ -1,0 +1,9 @@
+LIBRARY mfsession-dll
+EXPORTS
+	MFSession_NewInstance
+	MFSession_FreeInstance
+	MFSession_Start
+	MFSession_Stop
+	MFSession_ConnectNodes
+
+
