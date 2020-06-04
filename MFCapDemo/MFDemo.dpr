@@ -6,7 +6,8 @@ uses
   MFCapDll in 'MFCapDll.pas',
   MFCapDevice in 'MFCapDevice.pas',
   MFGenStream in 'MFGenStream.pas',
-  Utils in 'Utils.pas';
+  Utils in 'Utils.pas',
+  MFPlayDevices in 'MFPlayDevices.pas';
 
 {$R *.res}
 

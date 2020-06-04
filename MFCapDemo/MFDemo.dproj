@@ -137,6 +137,7 @@
         <DCCReference Include="MFCapDevice.pas"/>
         <DCCReference Include="MFGenStream.pas"/>
         <DCCReference Include="Utils.pas"/>
+        <DCCReference Include="MFPlayDevices.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
