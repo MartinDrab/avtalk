@@ -130,44 +130,48 @@ Procedure MFCap_Finit; Cdecl;
 Implementation
 
 Const
-  LibraryName = 'mfcap-dll.dll';
+  GENLibraryName = 'mfgen-dl.dll';
+  CAPLibraryName = 'mfcap-dll.dll';
+  PLAYLibraryName = 'mfplaz-dll.dll';
+  SESSIONLibraryName = 'mfsession-dll.dll';
 
-Function MFCap_EnumDevices(AType:EMFCapFormatType; Var ADevices:PMFCAP_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
-Procedure MFCap_FreeDeviceEnumeration(ADevices:PMFCAP_DEVICE_INFO; ACount:Cardinal); Cdecl; External LibraryName;
-Function MFCap_EnumMediaTypes(ADevice:Pointer; Var AFormats:PMFGEN_FORMAT; Var ACount:Cardinal; Var AStreamCount:Cardinal):Cardinal; Cdecl; External LibraryName;
-Function MFCap_NewInstance(AType:EMFCapFormatType; AIndex:Cardinal; Var ADevice:Pointer):Cardinal; Cdecl; External LibraryName;
-Procedure MFCap_FreeInstance(ADevice:Pointer); Cdecl; External LibraryName;
-Function MFCap_SetFormat(ADevice:Pointer; AStream:Cardinal; AMediaType:Pointer):Cardinal; Cdecl; External LibraryName;
-Function MFCap_SelectStream(ADevice:Pointer; AStream:Cardinal; ASelect:LongBool):Cardinal; Cdecl; External LibraryName;
-Function MFCap_Start(ADevice:Pointer; ACallback:MFCAP_SAMPLE_CALLBACK; AContext:Pointer):Cardinal; Cdecl; External LibraryName;
-Procedure MFCap_Stop(ADevice:Pointer); Cdecl; External LibraryName;
-Procedure MFCap_QueryStreamSelection(ADevice:Pointer; Var AMask:Cardinal); Cdecl; External LibraryName;
-Procedure MFCap_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:MFCAP_DEVICE_CHARACTERISTICS); Cdecl; External LibraryName;
-Function MFCap_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
 
-Function MFPlay_EnumDevices(AStateMask:Cardinal; Var ADevices:PMFPLAY_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
-Procedure MFPlay_FreeDeviceEnum(ADevices:PMFPLAY_DEVICE_INFO; ACount:Cardinal); Cdecl; External LibraryName;
-Function MFPlay_EnumFormats(ADevice:Pointer; Var AFormats:PMFGEN_FORMAT; Var ACount:Cardinal; Var AStreamCount:Cardinal):Cardinal; Cdecl; Cdecl; External LibraryName;
-Function MFPlay_NewInstance(Var ADeviceInfo:MFPLAY_DEVICE_INFO; Var ADevice:Pointer):Cardinal; Cdecl; Cdecl; External LibraryName;
-Function MFPlay_NewInstanceForWindow(AWindow:HWND; Var ADevice:Pointer):Cardinal; Cdecl; Cdecl; External LibraryName;
-Procedure MFPlay_FreeInstance(ADevice:Pointer); Cdecl; Cdecl; External LibraryName;
-Function MFPlay_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
+Function MFCap_EnumDevices(AType:EMFCapFormatType; Var ADevices:PMFCAP_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External CAPLibraryName;
+Procedure MFCap_FreeDeviceEnumeration(ADevices:PMFCAP_DEVICE_INFO; ACount:Cardinal); Cdecl; External CAPLibraryName;
+Function MFCap_EnumMediaTypes(ADevice:Pointer; Var AFormats:PMFGEN_FORMAT; Var ACount:Cardinal; Var AStreamCount:Cardinal):Cardinal; Cdecl; External CAPLibraryName;
+Function MFCap_NewInstance(AType:EMFCapFormatType; AIndex:Cardinal; Var ADevice:Pointer):Cardinal; Cdecl; External CAPLibraryName;
+Procedure MFCap_FreeInstance(ADevice:Pointer); Cdecl; External CAPLibraryName;
+Function MFCap_SetFormat(ADevice:Pointer; AStream:Cardinal; AMediaType:Pointer):Cardinal; Cdecl; External CAPLibraryName;
+Function MFCap_SelectStream(ADevice:Pointer; AStream:Cardinal; ASelect:LongBool):Cardinal; Cdecl; External CAPLibraryName;
+Function MFCap_Start(ADevice:Pointer; ACallback:MFCAP_SAMPLE_CALLBACK; AContext:Pointer):Cardinal; Cdecl; External CAPLibraryName;
+Procedure MFCap_Stop(ADevice:Pointer); Cdecl; External CAPLibraryName;
+Procedure MFCap_QueryStreamSelection(ADevice:Pointer; Var AMask:Cardinal); Cdecl; External CAPLibraryName;
+Procedure MFCap_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:MFCAP_DEVICE_CHARACTERISTICS); Cdecl; External CAPLibraryName;
+Function MFCap_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External CAPLibraryName;
 
-Function MFSession_NewInstance(Var ASession:Pointer):Cardinal; Cdecl; External LibraryName;
-Procedure MFSession_FreeInstance(ASession:Pointer); Cdecl; External LibraryName;
-Function MFSession_Start(ASession:Pointer):Cardinal; Cdecl; External LibraryName;
-Function MFSession_Stop(ASession:Pointer):Cardinal; Cdecl; External LibraryName;
-Function MFSession_ConnectNodes(ASession:Pointer; Var ASource:MFGEN_STREAM_INFO; Var ATarget:MFGEN_STREAM_INFO):Cardinal; Cdecl; External LibraryName;
+Function MFPlay_EnumDevices(AStateMask:Cardinal; Var ADevices:PMFPLAY_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External PLAYLibraryName;
+Procedure MFPlay_FreeDeviceEnum(ADevices:PMFPLAY_DEVICE_INFO; ACount:Cardinal); Cdecl; External PLAYLibraryName;
+Function MFPlay_EnumFormats(ADevice:Pointer; Var AFormats:PMFGEN_FORMAT; Var ACount:Cardinal; Var AStreamCount:Cardinal):Cardinal; Cdecl; Cdecl; External PLAYLibraryName;
+Function MFPlay_NewInstance(Var ADeviceInfo:MFPLAY_DEVICE_INFO; Var ADevice:Pointer):Cardinal; Cdecl; Cdecl; External PLAYLibraryName;
+Function MFPlay_NewInstanceForWindow(AWindow:HWND; Var ADevice:Pointer):Cardinal; Cdecl; Cdecl; External PLAYLibraryName;
+Procedure MFPlay_FreeInstance(ADevice:Pointer); Cdecl; Cdecl; External PLAYLibraryName;
+Function MFPlay_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External PLAYLibraryName;
 
-Procedure MFGen_FreeFormats(AFormats:PMFGEN_FORMAT; ACount:Cardinal); Cdecl; External LibraryName;
-Procedure MFGen_FreeStreamNodes(Var Nodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal); Cdecl; External LibraryName;
-Function MFGen_MediaTypeToFormat(AMediaType:Pointer; Var AFormat:MFGEN_FORMAT):Cardinal; Cdecl; External LibraryName;
-Function MFGen_GetFormatProperties(Var AFormat:MFGEN_FORMAT; Var AGuids:Pointer; Var AValues:Pointer; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
-Function MFGen_GetProperties(AAttributes:Pointer; Var AGuids:PGuid; Var AValues:Pointer; Var ACount:Cardinal):Cardinal; Cdecl; External LibraryName;
-Procedure MFGen_FreeProperties(AGuids:PGuid; AValues:Pointer; ACount:Cardinal); Cdecl; External LibraryName;
+Function MFSession_NewInstance(Var ASession:Pointer):Cardinal; Cdecl; External SESSIONLibraryName;
+Procedure MFSession_FreeInstance(ASession:Pointer); Cdecl; External SESSIONLibraryName;
+Function MFSession_Start(ASession:Pointer):Cardinal; Cdecl; External SESSIONLibraryName;
+Function MFSession_Stop(ASession:Pointer):Cardinal; Cdecl; External SESSIONLibraryName;
+Function MFSession_ConnectNodes(ASession:Pointer; Var ASource:MFGEN_STREAM_INFO; Var ATarget:MFGEN_STREAM_INFO):Cardinal; Cdecl; External SESSIONLibraryName;
 
-Function MFCap_Init:Cardinal; Cdecl; External LibraryName;
-Procedure MFCap_Finit; Cdecl; External LibraryName;
+Procedure MFGen_FreeFormats(AFormats:PMFGEN_FORMAT; ACount:Cardinal); Cdecl; External GENLibraryName;
+Procedure MFGen_FreeStreamNodes(Var Nodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal); Cdecl; External GENLibraryName;
+Function MFGen_MediaTypeToFormat(AMediaType:Pointer; Var AFormat:MFGEN_FORMAT):Cardinal; Cdecl; External GENLibraryName;
+Function MFGen_GetFormatProperties(Var AFormat:MFGEN_FORMAT; Var AGuids:Pointer; Var AValues:Pointer; Var ACount:Cardinal):Cardinal; Cdecl; External GENLibraryName;
+Function MFGen_GetProperties(AAttributes:Pointer; Var AGuids:PGuid; Var AValues:Pointer; Var ACount:Cardinal):Cardinal; Cdecl; External GENLibraryName;
+Procedure MFGen_FreeProperties(AGuids:PGuid; AValues:Pointer; ACount:Cardinal); Cdecl; External GENLibraryName;
+
+Function MFCap_Init:Cardinal; Cdecl; External CAPLibraryName;
+Procedure MFCap_Finit; Cdecl; External CAPLibraryName;
 
 End.
 
