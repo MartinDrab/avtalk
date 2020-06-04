@@ -3,9 +3,10 @@ object MainFrm: TMainFrm
   Top = 0
   BorderIcons = [biSystemMenu]
   Caption = 'MFRaptor'
-  ClientHeight = 327
-  ClientWidth = 454
+  ClientHeight = 388
+  ClientWidth = 508
   Color = clBtnFace
+  CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -18,26 +19,26 @@ object MainFrm: TMainFrm
   object MainPageControl: TPageControl
     Left = 0
     Top = 0
-    Width = 454
-    Height = 327
+    Width = 508
+    Height = 388
     ActivePage = DevicesTabSheet
     Align = alClient
     TabOrder = 0
+    ExplicitWidth = 454
+    ExplicitHeight = 327
     object DevicesTabSheet: TTabSheet
       Caption = 'Devices'
-      ExplicitLeft = 8
-      ExplicitTop = 28
+      ExplicitWidth = 446
+      ExplicitHeight = 299
       object AudioInputGroupBox: TGroupBox
         Left = 0
         Top = 0
-        Width = 446
+        Width = 500
         Height = 89
         Align = alTop
         Caption = 'Audio input'
         TabOrder = 0
-        ExplicitLeft = 40
-        ExplicitTop = 40
-        ExplicitWidth = 121
+        ExplicitWidth = 446
         object AUdioInputPanel: TPanel
           Left = 2
           Top = 15
@@ -45,7 +46,6 @@ object MainFrm: TMainFrm
           Height = 72
           Align = alLeft
           TabOrder = 0
-          ExplicitTop = 14
           object TestAudioInputButton: TButton
             Left = 0
             Top = 0
@@ -67,12 +67,12 @@ object MainFrm: TMainFrm
       object AudioOutputGroupBox: TGroupBox
         Left = 0
         Top = 89
-        Width = 446
+        Width = 500
         Height = 73
         Align = alTop
         Caption = 'AUdio output'
         TabOrder = 1
-        ExplicitTop = 83
+        ExplicitWidth = 446
         object AudioOutputPanel: TPanel
           Left = 2
           Top = 15
@@ -101,15 +101,13 @@ object MainFrm: TMainFrm
       object VideoInputGroupBox: TGroupBox
         Left = 0
         Top = 162
-        Width = 446
-        Height = 137
+        Width = 500
+        Height = 198
         Align = alClient
         Caption = 'Video input'
         TabOrder = 2
-        ExplicitLeft = 56
-        ExplicitTop = 200
-        ExplicitWidth = 81
-        ExplicitHeight = 65
+        ExplicitWidth = 446
+        ExplicitHeight = 137
         object Label1: TLabel
           Left = 128
           Top = 21
@@ -121,11 +119,12 @@ object MainFrm: TMainFrm
           Left = 2
           Top = 15
           Width = 120
-          Height = 120
+          Height = 181
           Align = alLeft
           Color = clBlack
           ParentBackground = False
           TabOrder = 0
+          ExplicitHeight = 120
         end
         object VideoInputComboBox: TComboBox
           Left = 128
