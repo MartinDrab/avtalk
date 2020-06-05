@@ -207,9 +207,15 @@ extern "C" HRESULT MFCap_SelectStream(PMFCAP_DEVICE Device, UINT32 StreamIndex, 
 	UINT32 bitValue = 0;
 
 	bitValue = (1 << StreamIndex);
-	if (Select)
-		Device->StreamSelectionMask |= bitValue;
-	else Device->StreamSelectionMask &= ~bitValue;
+	if (Select) {
+		hr = Device->PresentationDescriptor->SelectStream(StreamIndex);
+		if (SUCCEEDED(hr))
+			Device->StreamSelectionMask |= bitValue;
+	} else {
+		hr = Device->PresentationDescriptor->DeselectStream(StreamIndex);
+		if (SUCCEEDED(hr))
+			Device->StreamSelectionMask &= ~bitValue;
+	}
 
 	return hr;
 }
@@ -242,16 +248,6 @@ extern "C" HRESULT MFCap_Start(PMFCAP_DEVICE Device, MFCAP_SAMPLE_CALLBACK* Call
 	if (SUCCEEDED(ret)) {
 		Device->SamplingCallback = Callback;
 		Device->SamplingContext = Context;
-		for (UINT32 i = 0; i < 31; ++i) {
-			if ((Device->StreamSelectionMask & (1 << i)) != 0)
-				ret = msr->SetStreamSelection(i, TRUE);
-
-			if (FAILED(ret)) {
-				msr->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
-				msr->Flush(MF_SOURCE_READER_ALL_STREAMS);
-				break;
-			}
-		}
 	}
 
 	if (SUCCEEDED(ret)) {
@@ -269,11 +265,6 @@ extern "C" HRESULT MFCap_Start(PMFCAP_DEVICE Device, MFCAP_SAMPLE_CALLBACK* Call
 			}
 
 			MFGen_RefMemRelease(ctx);
-		}
-
-		if (FAILED(ret)) {
-			msr->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
-			msr->Flush(MF_SOURCE_READER_ALL_STREAMS);
 		}
 	}
 
@@ -621,7 +612,9 @@ extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP
 			*aInstance = cam;
 		}
 
-		MFGen_SafeRelease(cam->PresentationDescriptor);
+		if (cam != NULL)
+			MFGen_SafeRelease(cam->PresentationDescriptor);
+		
 		MFGen_RefMemRelease(cam);
 		MFGen_SafeRelease(ms);
 		for (UINT32 i = 0; i < deviceCount; ++i)
@@ -663,10 +656,15 @@ extern "C" HRESULT MFCap_NewInstanceFromURL(PWCHAR URL, PMFCAP_DEVICE* Device)
 
 	if (SUCCEEDED(ret)) {
 		ms->AddRef();
+		d->PresentationDescriptor->AddRef();
 		d->MediaSource = ms;
 		MFGen_RefMemAddRef(d);
 		*Device = d;
 	}
+
+	if (d != NULL)
+		MFGen_SafeRelease(d->PresentationDescriptor);
+
 
 	MFGen_SafeRelease(ms);
 	MFGen_SafeRelease(r);
