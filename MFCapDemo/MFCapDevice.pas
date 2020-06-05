@@ -15,8 +15,9 @@ Type
     FDeviceType : EMFCapFormatType;
     Constructor Create(Var ARecord:MFCAP_DEVICE_INFO); Reintroduce;
   Public
-    Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>):Cardinal;
+    Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
 
+    Function SelectStream(AIndex:Cardinal; ASelect:Boolean):Cardinal;
     Function Open:Cardinal; Override;
     Procedure Close; Override;
     Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Override;
@@ -34,24 +35,67 @@ Uses
 
 (** TMFCapDevice **)
 
-Class Function TMFCapDevice.Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>):Cardinal;
+Class Function TMFCapDevice.Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
 Var
   I : Integer;
-  d : PMFCAP_DEVICE_INFO;
+  di : PMFCAP_DEVICE_INFO;
   tmp : PMFCAP_DEVICE_INFO;
   count : Cardinal;
+  d : TMFCapDevice;
+  old : TMFCapDevice;
+  p : TPair<EMFDeviceEnumerationStatus, TMFCapDevice>;
+  prevailing : TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, TMFCapDevice>>;
 begin
-Result := MFCap_EnumDevices(ADeviceType, d, count);
+Result := MFCap_EnumDevices(ADeviceType, di, count);
 If Result = 0 Then
   begin
-  tmp := d;
+  prevailing := TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, TMFCapDevice>>.Create;
+  If (mdeoCompare In AOptions) Then
+    begin
+    For d In  AList Do
+      begin
+      p.Key := mdesDeleted;
+      p.Value := d;
+      prevailing.AddOrSetValue(d.SymbolicLink, p);
+      end;
+    end;
+
+  tmp := di;
   For I := 0 To count - 1 Do
     begin
-    AList.Add(TMFCapDevice.Create(tmp^));
+    d := TMFCapDevice.Create(tmp^);
+    If prevailing.TryGetValue(d.SymbolicLink, p) Then
+      p.Key := mdesPresent
+    Else p.Key := mdesNew;
+
+    p.Value := d;
+    prevailing.AddOrSetValue(d.SymbolicLink, p);
     Inc(tmp);
     end;
 
-  MFCap_FreeDeviceEnumeration(d, count);
+  For p In prevailing.Values Do
+    begin
+    Case p.Key Of
+      mdesNew: begin
+        If (mdeoOpen In AOptions) Then
+          begin
+          Result := p.Value.Open;
+          If Result <> 0 Then
+            begin
+            p.Value.Free;
+            Continue;
+            end;
+          end;
+
+        AList.Add(p.Value);
+        end;
+      mdesDeleted: AList.Delete(AList.IndexOf(p.Value));
+      mdesPresent: p.Value.Free;
+      end;
+    end;
+
+  prevailing.Free;
+  MFCap_FreeDeviceEnumeration(di, count);
   end;
 end;
 
@@ -96,6 +140,10 @@ If Result = 0THen
   end;
 end;
 
+Function TMFCapDevice.SelectStream(AIndex:Cardinal; ASelect:Boolean):Cardinal;
+begin
+Result := MFCap_SelectStream(FHandle, AIndex, ASelect);
+end;
 
 
 End.

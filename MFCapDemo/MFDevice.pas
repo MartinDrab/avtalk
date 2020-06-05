@@ -6,6 +6,18 @@ Uses
   Windows, Generics.Collections, MFCAPDll, MFGenStream;
 
 Type
+  EMFDeviceEnumerateOption = (
+    mdeoOpen,
+    mdeoCompare
+  );
+  TMFDeviceEnumerateOptions = Set Of EMFDeviceEnumerateOption;
+
+  EMFDeviceEnumerationStatus = (
+    mdesNew,
+    mdesDeleted,
+    mdesPresent
+  );
+
   TMFDevice = Class
     Protected
       FHandle : Pointer;

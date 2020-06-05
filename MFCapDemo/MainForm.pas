@@ -31,6 +31,7 @@ Type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure AudioInputListViewData(Sender: TObject; Item: TListItem);
     procedure RefreshAudioInputButtonClick(Sender: TObject);
+    procedure AudioInputListViewItemChecked(Sender: TObject; Item: TListItem);
   Private
     FAudioInList : TObjectList<TMFCapDevice>;
     FAudioInStreamList : TObjectList<TMFGenStream>;
@@ -54,9 +55,12 @@ Procedure TMainFrm.AudioInputListViewData(Sender: TObject; Item: TListItem);
 Var
   s : TMFGenStream;
   d : TMFCapDevice;
+  l : TListView;
   streamList : TObjectList<TMFGenStream>;
   streamTypeStr : WideString;
+  tmp : TLVCheckedItemEvent;
 begin
+l := Sender As TListView;
 s := Nil;
 d := Nil;
 If Sender = AudioInputListView Then
@@ -78,8 +82,43 @@ With Item  Do
 
   SubItems.Add(streamTypeStr);
   SubItems.Add(Format('%d', [s.Index]));
+  tmp := l.OnItemChecked;
+  l.OnItemChecked := Nil;
   Checked := s.Selected;
+  l.OnItemChecked := tmp;
   end;
+end;
+
+Procedure TMainFrm.AudioInputListViewItemChecked(Sender: TObject;
+  Item: TListItem);
+Var
+  d : TMFCapDevice;
+  s : TMFGenStream;
+  streamList : TObjectList<TMFGenStream>;
+  deviceList : TObjectList<TMFCapDevice>;
+  b : TButton;
+  err : Cardinal;
+begin
+If Sender = AudioInputListView Then
+  begin
+  deviceList := FAudioInList;
+  streamList := FAudioInStreamList;
+  b := RefreshAudioInputButton;
+  end
+Else If Sender = VideoInputListView Then
+  begin
+  deviceList := FVideoInList;
+  streamList := FVideoInStreamList;
+  b := RefreshVideoButton;
+  end;
+
+s := streamList[Item.Index];
+d := s.MFDevice;
+err := d.SelectStream(s.Index, Item.Checked);
+If err <> 0 Then
+  Win32ErrorMessage('Failed to (de)select stream', err);
+
+Self.RefreshAudioInputButtonClick(b);
 end;
 
 Procedure TMainFrm.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -112,6 +151,7 @@ Var
   l : TListView;
   li : TListItem;
   deviceType : EMFCapFormatType;
+  tmp : TLVCheckedItemEvent;
 begin
 If Sender = RefreshAudioInputButton Then
   begin
@@ -128,23 +168,16 @@ Else If Sender = RefreshVideoButton Then
   deviceType := mcftVideo;
   end;
 
+tmp := l.OnItemChecked;
+l.OnItemChecked := Nil;
 l.Items.Clear;
 streamList.Clear;
-deviceList.Clear;
-err := TMFCapDevice.Enumerate(deviceType, deviceList);
+err := TMFCapDevice.Enumerate(deviceType, deviceList, [mdeoOpen, mdeoCompare]);
 If err = 0 Then
   begin
   For d In deviceList Do
     begin
-    err := d.Open;
-    If err <> 0 Then
-      begin
-      Win32ErrorMessage('Unable to open the input device', err);
-      Continue;
-      end;
-
     err := d.EnumStreams(streamList);
-    d.Close;
     If err <> 0 Then
       begin
       Win32ErrorMessage('Unable to enumerate input device streams', err);
@@ -169,6 +202,8 @@ If err = 0 Then
     end;
   end
 Else Win32ErrorMessage('Unable to enumerate audio input devices', err);
+
+l.OnItemChecked := tmp;
 end;
 
 End.

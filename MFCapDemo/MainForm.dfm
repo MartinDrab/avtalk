@@ -89,6 +89,7 @@ object MainFrm: TMainFrm
           TabOrder = 1
           ViewStyle = vsReport
           OnData = AudioInputListViewData
+          OnItemChecked = AudioInputListViewItemChecked
         end
       end
       object AudioOutputGroupBox: TGroupBox
@@ -197,6 +198,7 @@ object MainFrm: TMainFrm
           TabOrder = 2
           ViewStyle = vsReport
           OnData = AudioInputListViewData
+          OnItemChecked = AudioInputListViewItemChecked
           ExplicitLeft = 207
           ExplicitTop = 14
         end
