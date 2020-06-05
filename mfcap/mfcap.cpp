@@ -342,21 +342,23 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_I
 					if (SUCCEEDED(ret)) {
 						tmpNode->Node->AddRef();
 						tmpNode->Index = i;
+					}
+
+					MFGen_SafeRelease(tmpNode->Node);
+					MFGen_SafeRelease(mth);
+					if (SUCCEEDED(ret)) {
 						++nodeIndex;
+						++tmpNode;
 					}
 				}
 
-				MFGen_SafeRelease(mth);
-				MFGen_SafeRelease(tmpNode->Node);
 				MFGen_SafeRelease(sd);
 				if (FAILED(ret)) {
 					for (UINT32 j = 0; j < nodeIndex; ++j)
-						tmpNodes[i].Node->Release();
+						tmpNodes[j].Node->Release();
 					
 					break;
 				}
-
-				++tmpNode;
 			}
 
 			if (SUCCEEDED(ret))
