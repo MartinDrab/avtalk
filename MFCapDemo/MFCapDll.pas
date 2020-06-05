@@ -81,6 +81,7 @@ Type
     StreamType : EMFCapFormatType;
     Index : Cardinal;
     Id : Cardinal;
+    Selected : LongBool;
     Node : Pointer;
     end;
   MFGEN_STREAM_INFO = _MFGEN_STREAM_INFO;

@@ -13,6 +13,7 @@ Type
       FMajorTypeGuid : TGuid;
       FStreamType : EMFCapFormatType;
       FMFDevice : Pointer;
+      FSelected : Boolean;
     Public
       Constructor Create(ADevice:Pointer; Var ARecord:MFGEN_STREAM_INFO); Reintroduce;
 
@@ -21,6 +22,7 @@ Type
       Property MajorTypeGuid : TGuid Read FMajorTypeGuid;
       Property StreamType : EMFCapFormatType Read FStreamType;
       Property MFDevice : Pointer Read FMFDevice;
+      Property Selected : Boolean Read FSelected;
     end;
 
 Implementation
@@ -35,6 +37,9 @@ FIndex := ARecord.Index;
 FStreamType := ARecord.StreamType;
 FMajorTypeGuid := ARecord.MajorType;
 FMFDevice := ADevice;
+FSelected := ARecord.Selected;
 End;
+
+
 
 End.
