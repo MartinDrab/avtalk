@@ -46,7 +46,7 @@ Var
 Implementation
 
 Uses
-  Utils, MFCapDll;
+  Utils, MFDevice, MFCapDll;
 
 {$R *.DFM}
 
@@ -88,39 +88,51 @@ end;
 Procedure TMainFrm.RefreshAudioInputButtonClick(Sender: TObject);
 Var
   err : Cardinal;
-  d : TMFCapDevice;
+  d : TMFDevice;
+  deviceList : TObjectList<TMFCapDevice>;
+  streamList : TObjectList<TMFGenStream>;
+  l : TListView;
+  deviceType : EMFCapFormatType;
 begin
-AudioInputListView.Items.Count := 0;
-FAudioInStreamList.Clear;
-FAudioInList.Clear;
-err := TMFCapDevice.Enumerate(mcftAudio, FAudioInList);
+If Sender = RefreshAudioInputButton Then
+  begin
+  deviceList := FAudioInList;
+  streamList := FAudioInStreamList;
+  l := AudioInputListView;
+  deviceType := mcftAudio;
+  end;
+
+l.Items.Count := 0;
+streamList.Clear;
+deviceList.Clear;
+err := TMFCapDevice.Enumerate(deviceType, deviceList);
 If err = 0 Then
   begin
-  For d In FAudioInList Do
+  For d In deviceList Do
     begin
     err := d.Open;
     If err <> 0 Then
       begin
-      Win32ErrorMessage('Unable to open the audio device', err);
+      Win32ErrorMessage('Unable to open the input device', err);
       Continue;
       end;
 
-    err := d.EnumStreams(FAudioInStreamList);
+    err := d.EnumStreams(streamList);
     d.Close;
     If err <> 0 Then
       begin
-      Win32ErrorMessage('Unable to enumerate audio device streams', err);
+      Win32ErrorMessage('Unable to enumerate input device streams', err);
       Break;
       end;
     end;
 
   If err <> 0 Then
     begin
-    FAudioInStreamList.Clear;
-    FAudioInList.Clear;
+    streamList.Clear;
+    deviceList.Clear;
     end;
 
-  AudioInputListView.Items.Count := FAudioInStreamList.Count;
+  l.Items.Count := streamList.Count;
   end
 Else Win32ErrorMessage('Unable to enumerate audio input devices', err);
 end;
