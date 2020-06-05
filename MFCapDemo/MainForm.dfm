@@ -6,7 +6,6 @@ object MainFrm: TMainFrm
   ClientHeight = 388
   ClientWidth = 610
   Color = clBtnFace
-  CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -26,10 +25,8 @@ object MainFrm: TMainFrm
     ActivePage = DevicesTabSheet
     Align = alClient
     TabOrder = 0
-    ExplicitWidth = 508
     object DevicesTabSheet: TTabSheet
       Caption = 'Devices'
-      ExplicitWidth = 500
       object AudioInputGroupBox: TGroupBox
         Left = 0
         Top = 0
@@ -45,7 +42,6 @@ object MainFrm: TMainFrm
           Height = 105
           Align = alLeft
           TabOrder = 0
-          ExplicitHeight = 72
           object TestAudioInputButton: TButton
             Left = 0
             Top = 0
@@ -70,6 +66,7 @@ object MainFrm: TMainFrm
           Width = 478
           Height = 105
           Align = alClient
+          Checkboxes = True
           Columns = <
             item
               AutoSize = True
@@ -87,14 +84,11 @@ object MainFrm: TMainFrm
               Caption = 'Steram index'
               Width = 75
             end>
-          OwnerData = True
           ReadOnly = True
           RowSelect = True
           TabOrder = 1
           ViewStyle = vsReport
           OnData = AudioInputListViewData
-          ExplicitLeft = 144
-          ExplicitWidth = 456
         end
       end
       object AudioOutputGroupBox: TGroupBox
@@ -105,8 +99,6 @@ object MainFrm: TMainFrm
         Align = alTop
         Caption = 'AUdio output'
         TabOrder = 1
-        ExplicitTop = 89
-        ExplicitWidth = 500
         object AudioOutputPanel: TPanel
           Left = 2
           Top = 15
@@ -141,9 +133,6 @@ object MainFrm: TMainFrm
         Caption = 'Video input'
         TabOrder = 2
         OnClick = RefreshAudioInputButtonClick
-        ExplicitTop = 162
-        ExplicitWidth = 500
-        ExplicitHeight = 198
         object VideoTestOutputPanel: TPanel
           Left = 2
           Top = 15
@@ -153,7 +142,6 @@ object MainFrm: TMainFrm
           Color = clBlack
           ParentBackground = False
           TabOrder = 0
-          ExplicitHeight = 181
         end
         object Panel1: TPanel
           Left = 122
@@ -171,6 +159,14 @@ object MainFrm: TMainFrm
             TabOrder = 0
             OnClick = RefreshAudioInputButtonClick
           end
+          object TestVideoOutputButton: TButton
+            Left = 6
+            Top = 25
+            Width = 57
+            Height = 28
+            Caption = 'Test'
+            TabOrder = 1
+          end
         end
         object VideoInputListView: TListView
           Left = 201
@@ -178,6 +174,7 @@ object MainFrm: TMainFrm
           Width = 399
           Height = 148
           Align = alClient
+          Checkboxes = True
           Columns = <
             item
               AutoSize = True
@@ -195,14 +192,13 @@ object MainFrm: TMainFrm
               Caption = 'Steram index'
               Width = 75
             end>
-          OwnerData = True
           ReadOnly = True
           RowSelect = True
           TabOrder = 2
           ViewStyle = vsReport
           OnData = AudioInputListViewData
-          ExplicitLeft = 224
-          ExplicitWidth = 376
+          ExplicitLeft = 207
+          ExplicitTop = 14
         end
       end
     end

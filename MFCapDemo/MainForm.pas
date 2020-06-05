@@ -26,6 +26,7 @@ Type
     Panel1: TPanel;
     RefreshVideoButton: TButton;
     VideoInputListView: TListView;
+    TestVideoOutputButton: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure AudioInputListViewData(Sender: TObject; Item: TListItem);
@@ -76,7 +77,8 @@ With Item  Do
     end;
 
   SubItems.Add(streamTypeStr);
-  SubItems.Add(Format('%d', [s.Index]))
+  SubItems.Add(Format('%d', [s.Index]));
+  Checked := s.Selected;
   end;
 end;
 
@@ -104,9 +106,11 @@ Procedure TMainFrm.RefreshAudioInputButtonClick(Sender: TObject);
 Var
   err : Cardinal;
   d : TMFDevice;
+  s : TMFGenStream;
   deviceList : TObjectList<TMFCapDevice>;
   streamList : TObjectList<TMFGenStream>;
   l : TListView;
+  li : TListItem;
   deviceType : EMFCapFormatType;
 begin
 If Sender = RefreshAudioInputButton Then
@@ -124,7 +128,7 @@ Else If Sender = RefreshVideoButton Then
   deviceType := mcftVideo;
   end;
 
-l.Items.Count := 0;
+l.Items.Clear;
 streamList.Clear;
 deviceList.Clear;
 err := TMFCapDevice.Enumerate(deviceType, deviceList);
@@ -148,13 +152,21 @@ If err = 0 Then
       end;
     end;
 
+  If err = 0 Then
+    begin
+    For s In streamList Do
+      begin
+      li := l.Items.Add;
+      AudioInputListViewData(l, li);
+      end;
+    end;
+
   If err <> 0 Then
     begin
+    l.Clear;
     streamList.Clear;
     deviceList.Clear;
     end;
-
-  l.Items.Count := streamList.Count;
   end
 Else Win32ErrorMessage('Unable to enumerate audio input devices', err);
 end;
