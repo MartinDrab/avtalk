@@ -4,7 +4,7 @@ object MainFrm: TMainFrm
   BorderIcons = [biSystemMenu]
   Caption = 'MFRaptor'
   ClientHeight = 388
-  ClientWidth = 508
+  ClientWidth = 610
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
@@ -21,18 +21,20 @@ object MainFrm: TMainFrm
   object MainPageControl: TPageControl
     Left = 0
     Top = 0
-    Width = 508
+    Width = 610
     Height = 388
     ActivePage = DevicesTabSheet
     Align = alClient
     TabOrder = 0
+    ExplicitWidth = 508
     object DevicesTabSheet: TTabSheet
       Caption = 'Devices'
+      ExplicitWidth = 500
       object AudioInputGroupBox: TGroupBox
         Left = 0
         Top = 0
-        Width = 500
-        Height = 89
+        Width = 602
+        Height = 122
         Align = alTop
         Caption = 'Audio input'
         TabOrder = 0
@@ -40,9 +42,10 @@ object MainFrm: TMainFrm
           Left = 2
           Top = 15
           Width = 120
-          Height = 72
+          Height = 105
           Align = alLeft
           TabOrder = 0
+          ExplicitHeight = 72
           object TestAudioInputButton: TButton
             Left = 0
             Top = 0
@@ -51,24 +54,55 @@ object MainFrm: TMainFrm
             Caption = 'Test'
             TabOrder = 0
           end
-          object RefreshAudioInputBUtton: TButton
+          object RefreshAudioInputButton: TButton
             Left = 0
             Top = 34
             Width = 57
             Height = 28
             Caption = 'Refresh'
             TabOrder = 1
+            OnClick = RefreshAudioInputButtonClick
           end
+        end
+        object AudioInputListView: TListView
+          Left = 122
+          Top = 15
+          Width = 478
+          Height = 105
+          Align = alClient
+          Columns = <
+            item
+              AutoSize = True
+              Caption = 'Name'
+            end
+            item
+              AutoSize = True
+              Caption = 'Link'
+            end
+            item
+              Caption = 'Steram ID'
+              Width = 75
+            end>
+          OwnerData = True
+          ReadOnly = True
+          RowSelect = True
+          TabOrder = 1
+          ViewStyle = vsReport
+          OnData = AudioInputListViewData
+          ExplicitLeft = 152
+          ExplicitWidth = 448
         end
       end
       object AudioOutputGroupBox: TGroupBox
         Left = 0
-        Top = 89
-        Width = 500
+        Top = 122
+        Width = 602
         Height = 73
         Align = alTop
         Caption = 'AUdio output'
         TabOrder = 1
+        ExplicitTop = 89
+        ExplicitWidth = 500
         object AudioOutputPanel: TPanel
           Left = 2
           Top = 15
@@ -96,12 +130,15 @@ object MainFrm: TMainFrm
       end
       object VideoInputGroupBox: TGroupBox
         Left = 0
-        Top = 162
-        Width = 500
-        Height = 198
+        Top = 195
+        Width = 602
+        Height = 165
         Align = alClient
         Caption = 'Video input'
         TabOrder = 2
+        ExplicitTop = 162
+        ExplicitWidth = 500
+        ExplicitHeight = 198
         object Label1: TLabel
           Left = 128
           Top = 21
@@ -113,11 +150,12 @@ object MainFrm: TMainFrm
           Left = 2
           Top = 15
           Width = 120
-          Height = 181
+          Height = 148
           Align = alLeft
           Color = clBlack
           ParentBackground = False
           TabOrder = 0
+          ExplicitHeight = 181
         end
         object VideoInputComboBox: TComboBox
           Left = 128
