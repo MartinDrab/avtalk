@@ -344,6 +344,7 @@ extern "C" HRESULT MFPlay_CreateStreamNodes(PMFPLAY_DEVICE Device, PMFGEN_STREAM
 				if (SUCCEEDED(ret)) {
 					node->Index = i;
 					node->Node->AddRef();
+					node->Selected = TRUE;
 				}
 
 				MFGen_SafeRelease(mth);
