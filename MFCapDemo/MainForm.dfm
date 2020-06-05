@@ -80,7 +80,11 @@ object MainFrm: TMainFrm
               Caption = 'Link'
             end
             item
-              Caption = 'Steram ID'
+              Caption = 'Type'
+              Width = 60
+            end
+            item
+              Caption = 'Steram index'
               Width = 75
             end>
           OwnerData = True
@@ -89,8 +93,8 @@ object MainFrm: TMainFrm
           TabOrder = 1
           ViewStyle = vsReport
           OnData = AudioInputListViewData
-          ExplicitLeft = 152
-          ExplicitWidth = 448
+          ExplicitLeft = 144
+          ExplicitWidth = 456
         end
       end
       object AudioOutputGroupBox: TGroupBox
@@ -136,16 +140,10 @@ object MainFrm: TMainFrm
         Align = alClient
         Caption = 'Video input'
         TabOrder = 2
+        OnClick = RefreshAudioInputButtonClick
         ExplicitTop = 162
         ExplicitWidth = 500
         ExplicitHeight = 198
-        object Label1: TLabel
-          Left = 128
-          Top = 21
-          Width = 60
-          Height = 13
-          Caption = 'Input device'
-        end
         object VideoTestOutputPanel: TPanel
           Left = 2
           Top = 15
@@ -157,29 +155,54 @@ object MainFrm: TMainFrm
           TabOrder = 0
           ExplicitHeight = 181
         end
-        object VideoInputComboBox: TComboBox
-          Left = 128
-          Top = 40
-          Width = 154
-          Height = 21
-          Style = csDropDownList
+        object Panel1: TPanel
+          Left = 122
+          Top = 15
+          Width = 79
+          Height = 148
+          Align = alLeft
           TabOrder = 1
+          object RefreshVideoButton: TButton
+            Left = 6
+            Top = -9
+            Width = 57
+            Height = 28
+            Caption = 'Refresh'
+            TabOrder = 0
+            OnClick = RefreshAudioInputButtonClick
+          end
         end
-        object TestVideoButton: TButton
-          Left = 128
-          Top = 78
-          Width = 89
-          Height = 25
-          Caption = 'Test'
+        object VideoInputListView: TListView
+          Left = 201
+          Top = 15
+          Width = 399
+          Height = 148
+          Align = alClient
+          Columns = <
+            item
+              AutoSize = True
+              Caption = 'Name'
+            end
+            item
+              AutoSize = True
+              Caption = 'Link'
+            end
+            item
+              Caption = 'Type'
+              Width = 60
+            end
+            item
+              Caption = 'Steram index'
+              Width = 75
+            end>
+          OwnerData = True
+          ReadOnly = True
+          RowSelect = True
           TabOrder = 2
-        end
-        object RefreshVideoButton: TButton
-          Left = 128
-          Top = 109
-          Width = 89
-          Height = 25
-          Caption = 'Refresh'
-          TabOrder = 3
+          ViewStyle = vsReport
+          OnData = AudioInputListViewData
+          ExplicitLeft = 224
+          ExplicitWidth = 376
         end
       end
     end

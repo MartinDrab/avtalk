@@ -16,17 +16,16 @@ Type
     AudioOutputGroupBox: TGroupBox;
     VideoInputGroupBox: TGroupBox;
     VideoTestOutputPanel: TPanel;
-    VideoInputComboBox: TComboBox;
-    Label1: TLabel;
-    TestVideoButton: TButton;
     AudioOutputPanel: TPanel;
     TestAudioOutputButton: TButton;
     AUdioInputPanel: TPanel;
     TestAudioInputButton: TButton;
     RefreshAudioInputButton: TButton;
     RefreshAudioOutputButton: TButton;
-    RefreshVideoButton: TButton;
     AudioInputListView: TListView;
+    Panel1: TPanel;
+    RefreshVideoButton: TButton;
+    VideoInputListView: TListView;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure AudioInputListViewData(Sender: TObject; Item: TListItem);
@@ -54,14 +53,30 @@ Procedure TMainFrm.AudioInputListViewData(Sender: TObject; Item: TListItem);
 Var
   s : TMFGenStream;
   d : TMFCapDevice;
+  streamList : TObjectList<TMFGenStream>;
+  streamTypeStr : WideString;
 begin
-s := FAudioInStreamList[Item.Index];
+s := Nil;
+d := Nil;
+If Sender = AudioInputListView Then
+  streamList := FAudioInStreamList
+Else If Sender = VideoInputListView Then
+  streamList := FVideoInStreamList;
+
+s := streamList[Item.Index];
 d := s.MFDevice;
 With Item  Do
   begin
   Caption := d.Name;
   SubItems.Add(d.SymbolicLink);
-  SubItems.Add(Format('%d', [s.Id]))
+  streamTypeStr := '';
+  Case s.StreamType Of
+    mcftVideo: streamTypeStr := 'Video';
+    mcftAudio: streamTypeStr := 'Audio';
+    end;
+
+  SubItems.Add(streamTypeStr);
+  SubItems.Add(Format('%d', [s.Index]))
   end;
 end;
 
@@ -100,6 +115,13 @@ If Sender = RefreshAudioInputButton Then
   streamList := FAudioInStreamList;
   l := AudioInputListView;
   deviceType := mcftAudio;
+  end
+Else If Sender = RefreshVideoButton Then
+  begin
+  deviceList := FVideoInList;
+  streamList := FVideoInStreamList;
+  l := VideoInputListView;
+  deviceType := mcftVideo;
   end;
 
 l.Items.Count := 0;
