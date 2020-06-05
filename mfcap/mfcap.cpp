@@ -97,6 +97,35 @@ static DWORD WINAPI _SamplingThreadRoutine(PVOID Context)
 }
 
 
+static HRESULT _QueryStreamSelection(PMFCAP_DEVICE Device)
+{
+	HRESULT ret = S_OK;
+	BOOL selected = FALSE;
+	IMFPresentationDescriptor* pd = NULL;
+	DWORD streamCount = 0;
+	IMFStreamDescriptor* sd = NULL;
+
+	Device->StreamSelectionMask = 0;
+	pd = Device->PresentationDescriptor;
+	ret = pd->GetStreamDescriptorCount(&streamCount);
+	if (SUCCEEDED(ret)) {
+		for (DWORD i = 0; i < streamCount; ++i) {
+			sd = NULL;
+			ret = pd->GetStreamDescriptorByIndex(i, &selected, &sd);
+			if (FAILED(ret))
+				break;
+
+			if (selected)
+				Device->StreamSelectionMask |= (1 << i);
+
+			MFGen_SafeRelease(sd);
+		}
+	}
+
+	return ret;
+}
+
+
 extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT *Types, UINT32 *Count, UINT32 *StreamCount)
 {
 	HRESULT hr = S_OK;
@@ -575,19 +604,23 @@ extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP
 
 		if (SUCCEEDED(ret)) {
 			cam->Type = Type;
-			cam->StreamSelectionMask = 0xffffffff;
 			ret = ms->GetCharacteristics(&cam->Characteristics.Value);
 			if (SUCCEEDED(ret))
 				ret = ms->CreatePresentationDescriptor(&cam->PresentationDescriptor);
+		
+			if (SUCCEEDED(ret))
+				ret = _QueryStreamSelection(cam);
 		}
 
 		if (SUCCEEDED(ret)) {
 			ms->AddRef();
+			cam->PresentationDescriptor->AddRef();
 			cam->MediaSource = ms;
 			MFGen_RefMemAddRef(cam);
 			*aInstance = cam;
 		}
 
+		MFGen_SafeRelease(cam->PresentationDescriptor);
 		MFGen_RefMemRelease(cam);
 		MFGen_SafeRelease(ms);
 		for (UINT32 i = 0; i < deviceCount; ++i)
@@ -623,6 +656,9 @@ extern "C" HRESULT MFCap_NewInstanceFromURL(PWCHAR URL, PMFCAP_DEVICE* Device)
 
 	if (SUCCEEDED(ret))
 		ret = ms->CreatePresentationDescriptor(&d->PresentationDescriptor);
+
+	if (SUCCEEDED(ret))
+		ret = _QueryStreamSelection(d);
 
 	if (SUCCEEDED(ret)) {
 		ms->AddRef();
