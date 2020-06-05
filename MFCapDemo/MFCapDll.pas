@@ -138,7 +138,7 @@ Implementation
 Const
   GENLibraryName = 'mfgen-dll.dll';
   CAPLibraryName = 'mfcap-dll.dll';
-  PLAYLibraryName = 'mfplaz-dll.dll';
+  PLAYLibraryName = 'mfplay-dll.dll';
   SESSIONLibraryName = 'mfsession-dll.dll';
 
 
