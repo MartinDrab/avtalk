@@ -128,7 +128,7 @@ Function MFGen_GetFormatProperties(Var AFormat:MFGEN_FORMAT; Var AGuids:Pointer;
 Function MFGen_GetProperties(AAttributes:Pointer; Var AGuids:PGuid; Var AValues:Pointer; Var ACount:Cardinal):Cardinal; Cdecl;
 Procedure MFGen_FreeProperties(AGuids:PGuid; AValues:Pointer; ACount:Cardinal); Cdecl;
 Procedure MFGen_FreeFormats(AFormats:PMFGEN_FORMAT; ACount:Cardinal); Cdecl;
-Procedure MFGen_FreeStreamNodes(Var Nodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal); Cdecl;
+Procedure MFGen_FreeStreamNodes(ANodes:PMFGEN_STREAM_INFO; ACount:Cardinal); Cdecl;
 
 Function MFGen_Init:Cardinal; Cdecl;
 Procedure MFGen_Finit; Cdecl;
@@ -170,7 +170,7 @@ Function MFSession_Stop(ASession:Pointer):Cardinal; Cdecl; External SESSIONLibra
 Function MFSession_ConnectNodes(ASession:Pointer; Var ASource:MFGEN_STREAM_INFO; Var ATarget:MFGEN_STREAM_INFO):Cardinal; Cdecl; External SESSIONLibraryName;
 
 Procedure MFGen_FreeFormats(AFormats:PMFGEN_FORMAT; ACount:Cardinal); Cdecl; External GENLibraryName;
-Procedure MFGen_FreeStreamNodes(Var Nodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal); Cdecl; External GENLibraryName;
+Procedure MFGen_FreeStreamNodes(ANodes:PMFGEN_STREAM_INFO; ACount:Cardinal); Cdecl; External GENLibraryName;
 Function MFGen_MediaTypeToFormat(AMediaType:Pointer; Var AFormat:MFGEN_FORMAT):Cardinal; Cdecl; External GENLibraryName;
 Function MFGen_GetFormatProperties(Var AFormat:MFGEN_FORMAT; Var AGuids:Pointer; Var AValues:Pointer; Var ACount:Cardinal):Cardinal; Cdecl; External GENLibraryName;
 Function MFGen_GetProperties(AAttributes:Pointer; Var AGuids:PGuid; Var AValues:Pointer; Var ACount:Cardinal):Cardinal; Cdecl; External GENLibraryName;
