@@ -17,6 +17,8 @@ Type
   Public
     Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
 
+    Constructor CreateFromFile(AFileName:WideString); Reintroduce;
+
     Function SelectStream(AIndex:Cardinal; ASelect:Boolean):Cardinal;
     Function Open:Cardinal; Override;
     Procedure Close; Override;
@@ -31,7 +33,7 @@ Type
 Implementation
 
 Uses
-  SysUtils;
+  SysUtils, Utils;
 
 (** TMFCapDevice **)
 
@@ -106,6 +108,24 @@ FDeviceType := ARecord.DeviceType;
 FIndex := ARecord.Index;
 FName := WideCharToString(ARecord.FriendlyName);
 FSymbolicLink := WideCharToString(ARecord.SymbolicLink);
+end;
+
+Constructor TMFCapDevice.CreateFromFile(AFileName:WideString);
+Var
+  err : Cardinal;
+begin
+Inherited Create;
+FName := ExtractFileName(AFileName);
+FSymbolicLink := AFileName;
+FIndex := $FFFFFFFF;
+FDeviceType := mcftUnknown;
+FHandle := Nil;
+err := MFCapDll.MFCap_NewInstanceFromURL(PWideChar(AFileName), FHandle);
+If err <> 0 Then
+  begin
+  Win32ErrorMessage('Cannot create a device from file', err);
+  Raise Exception.Create('Cannot create a device from file');
+  end;
 end;
 
 Function TMFCapDevice.Open:Cardinal;

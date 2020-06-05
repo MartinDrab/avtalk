@@ -101,6 +101,7 @@ Function MFCap_EnumDevices(AType:EMFCapFormatType; Var ADevices:PMFCAP_DEVICE_IN
 Procedure MFCap_FreeDeviceEnumeration(ADevices:PMFCAP_DEVICE_INFO; ACount:Cardinal); Cdecl;
 Function MFCap_EnumMediaTypes(ADevice:Pointer; Var AFormats:PMFGEN_FORMAT; Var ACount:Cardinal; Var AStreamCount:Cardinal):Cardinal; Cdecl;
 Function MFCap_NewInstance(AType:EMFCapFormatType; AIndex:Cardinal; Var ADevice:Pointer):Cardinal; Cdecl;
+Function MFCap_NewInstanceFromURL(AURL:PWideChar; Var ADevice:Pointer):Cardinal; Cdecl;
 Procedure MFCap_FreeInstance(ADevice:Pointer); Cdecl;
 Function MFCap_SetFormat(ADevice:Pointer; AStream:Cardinal; AMediaType:Pointer):Cardinal; Cdecl;
 Function MFCap_SelectStream(ADevice:Pointer; AStream:Cardinal; ASelect:LongBool):Cardinal; Cdecl;
@@ -147,6 +148,7 @@ Function MFCap_EnumDevices(AType:EMFCapFormatType; Var ADevices:PMFCAP_DEVICE_IN
 Procedure MFCap_FreeDeviceEnumeration(ADevices:PMFCAP_DEVICE_INFO; ACount:Cardinal); Cdecl; External CAPLibraryName;
 Function MFCap_EnumMediaTypes(ADevice:Pointer; Var AFormats:PMFGEN_FORMAT; Var ACount:Cardinal; Var AStreamCount:Cardinal):Cardinal; Cdecl; External CAPLibraryName;
 Function MFCap_NewInstance(AType:EMFCapFormatType; AIndex:Cardinal; Var ADevice:Pointer):Cardinal; Cdecl; External CAPLibraryName;
+Function MFCap_NewInstanceFromURL(AURL:PWideChar; Var ADevice:Pointer):Cardinal; Cdecl; External CAPLibraryName;
 Procedure MFCap_FreeInstance(ADevice:Pointer); Cdecl; External CAPLibraryName;
 Function MFCap_SetFormat(ADevice:Pointer; AStream:Cardinal; AMediaType:Pointer):Cardinal; Cdecl; External CAPLibraryName;
 Function MFCap_SelectStream(ADevice:Pointer; AStream:Cardinal; ASelect:LongBool):Cardinal; Cdecl; External CAPLibraryName;
