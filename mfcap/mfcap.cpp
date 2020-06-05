@@ -340,7 +340,8 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_I
 				if (SUCCEEDED(ret))
 					ret = pd->GetStreamDescriptorByIndex(i, &selected, &sd);
 				
-				if (SUCCEEDED(ret) && selected) {
+				if (SUCCEEDED(ret)) {
+					tmpNode->Selected = selected;
 					ret = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &tmpNode->Node);
 					if (SUCCEEDED(ret))
 						ret = tmpNode->Node->SetUnknown(MF_TOPONODE_SOURCE, Device->MediaSource);

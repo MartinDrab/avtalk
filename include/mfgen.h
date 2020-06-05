@@ -48,6 +48,7 @@ typedef struct _MFGEN_STREAM_INFO {
 	EMFCapFormatType Type;
 	DWORD Index;
 	DWORD Id;
+	BOOL Selected;
 	IMFTopologyNode* Node;
 } MFGEN_STREAM_INFO, *PMFGEN_STREAM_INFO;
 
