@@ -292,6 +292,7 @@ If Not Assigned(s) Then
     Exit;
     end;
 
+  sl.Free;
   b.Tag := NativeUInt(s);
   b.Caption := 'Stop';
   end

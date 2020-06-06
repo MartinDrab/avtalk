@@ -97,7 +97,7 @@ static DWORD WINAPI _SamplingThreadRoutine(PVOID Context)
 }
 
 
-static HRESULT _QueryStreamSelection(PMFCAP_DEVICE Device)
+static HRESULT _QueryStreamSelection(PMFCAP_DEVICE Device, PUINT32 SelectionMask)
 {
 	HRESULT ret = S_OK;
 	BOOL selected = FALSE;
@@ -105,7 +105,7 @@ static HRESULT _QueryStreamSelection(PMFCAP_DEVICE Device)
 	DWORD streamCount = 0;
 	IMFStreamDescriptor* sd = NULL;
 
-	Device->StreamSelectionMask = 0;
+	*SelectionMask = 0;
 	pd = Device->PresentationDescriptor;
 	ret = pd->GetStreamDescriptorCount(&streamCount);
 	if (SUCCEEDED(ret)) {
@@ -116,7 +116,7 @@ static HRESULT _QueryStreamSelection(PMFCAP_DEVICE Device)
 				break;
 
 			if (selected)
-				Device->StreamSelectionMask |= (1 << i);
+				*SelectionMask |= (1 << i);
 
 			MFGen_SafeRelease(sd);
 		}
@@ -159,7 +159,7 @@ extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT *Typ
 
 			if (SUCCEEDED(hr)) {
 				format.StreamIndex = i;
-				format.Selected = (Device->StreamSelectionMask & (1 << format.StreamIndex)) != 0;
+				format.Selected = selected;
 				format.Index = j;
 				types.push_back(format);
 			}
@@ -204,22 +204,13 @@ extern "C" HRESULT MFCap_EnumMediaTypes(PMFCAP_DEVICE Device, PMFGEN_FORMAT *Typ
 extern "C" HRESULT MFCap_SelectStream(PMFCAP_DEVICE Device, UINT32 StreamIndex, BOOL Select)
 {
 	HRESULT hr = S_OK;
-	UINT32 bitValue = 0;
 
-	bitValue = (1 << StreamIndex);
-	if (Select) {
+	if (Select)
 		hr = Device->PresentationDescriptor->SelectStream(StreamIndex);
-		if (SUCCEEDED(hr))
-			Device->StreamSelectionMask |= bitValue;
-	} else {
-		hr = Device->PresentationDescriptor->DeselectStream(StreamIndex);
-		if (SUCCEEDED(hr))
-			Device->StreamSelectionMask &= ~bitValue;
-	}
+	else hr = Device->PresentationDescriptor->DeselectStream(StreamIndex);
 
 	return hr;
 }
-
 
 
 #define __HRESULT_FROM_WIN32(x) ((HRESULT)(x) <= 0 ? ((HRESULT)(x)) : ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)))
@@ -287,11 +278,13 @@ extern "C" void MFCap_Stop(PMFCAP_DEVICE Device)
 }
 
 
-extern "C" void MFCap_QueryStreamSelection(PMFCAP_DEVICE Device, PUINT32 StreamMask)
+extern "C" HRESULT MFCap_QueryStreamSelection(PMFCAP_DEVICE Device, PUINT32 StreamMask)
 {
-	*StreamMask = Device->StreamSelectionMask;
+	HRESULT ret = S_OK;
 
-	return;
+	ret = _QueryStreamSelection(Device, StreamMask);
+
+	return ret;
 }
 
 
@@ -323,14 +316,8 @@ extern "C" HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_I
 			tmpNode = tmpNodes;
 			for (UINT32 i = 0; i < sdCount; ++i) {
 				sd = NULL;
-				mth = NULL;
-				if ((Device->StreamSelectionMask & (1 << i)) != 0)
-					ret = pd->SelectStream(i);
-				else ret = pd->DeselectStream(i);
-				
-				if (SUCCEEDED(ret))
-					ret = pd->GetStreamDescriptorByIndex(i, &selected, &sd);
-				
+				mth = NULL;				
+				ret = pd->GetStreamDescriptorByIndex(i, &selected, &sd);
 				if (SUCCEEDED(ret)) {
 					tmpNode->Selected = selected;
 					ret = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &tmpNode->Node);
@@ -598,10 +585,7 @@ extern "C" HRESULT MFCap_NewInstance(EMFCapFormatType Type, UINT32 Index, PMFCAP
 			cam->Type = Type;
 			ret = ms->GetCharacteristics(&cam->Characteristics.Value);
 			if (SUCCEEDED(ret))
-				ret = ms->CreatePresentationDescriptor(&cam->PresentationDescriptor);
-		
-			if (SUCCEEDED(ret))
-				ret = _QueryStreamSelection(cam);
+				ret = ms->CreatePresentationDescriptor(&cam->PresentationDescriptor);		
 		}
 
 		if (SUCCEEDED(ret)) {
@@ -650,9 +634,6 @@ extern "C" HRESULT MFCap_NewInstanceFromURL(PWCHAR URL, PMFCAP_DEVICE* Device)
 
 	if (SUCCEEDED(ret))
 		ret = ms->CreatePresentationDescriptor(&d->PresentationDescriptor);
-
-	if (SUCCEEDED(ret))
-		ret = _QueryStreamSelection(d);
 
 	if (SUCCEEDED(ret)) {
 		ms->AddRef();

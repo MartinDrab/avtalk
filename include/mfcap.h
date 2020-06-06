@@ -39,7 +39,6 @@ typedef struct _MFCAP_DEVICE {
 	IMFPresentationDescriptor* PresentationDescriptor;
 	_MFCAP_DEVICE_CHARACTERISTICS Characteristics;
 	EMFCapFormatType Type;
-	DWORD StreamSelectionMask;
 	HANDLE SamplingThread;
 	volatile BOOL SamplingTerminated;
 	MFCAP_SAMPLE_CALLBACK* SamplingCallback;
@@ -75,7 +74,7 @@ HRESULT MFCap_SetFormat(PMFCAP_DEVICE Device, UINT32 Stream, IMFMediaType* Forma
 HRESULT MFCap_SelectStream(PMFCAP_DEVICE Device, UINT32 StreamIndex, BOOL Select);
 HRESULT MFCap_Start(PMFCAP_DEVICE Device, MFCAP_SAMPLE_CALLBACK* Callback, void* Context);
 void MFCap_Stop(PMFCAP_DEVICE Device);
-void MFCap_QueryStreamSelection(PMFCAP_DEVICE Device, PUINT32 StreamMask);
+HRESULT MFCap_QueryStreamSelection(PMFCAP_DEVICE Device, PUINT32 StreamMask);
 void MFCap_QueryCharacteristics(PMFCAP_DEVICE Device, PMFCAP_DEVICE_CHARACTERISTICS Characteristics);
 
 HRESULT MFCap_CreateStreamNodes(PMFCAP_DEVICE Device, PMFGEN_STREAM_INFO * Nodes, DWORD * Count);

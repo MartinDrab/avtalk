@@ -107,7 +107,7 @@ Function MFCap_SetFormat(ADevice:Pointer; AStream:Cardinal; AMediaType:Pointer):
 Function MFCap_SelectStream(ADevice:Pointer; AStream:Cardinal; ASelect:LongBool):Cardinal; Cdecl;
 Function MFCap_Start(ADevice:Pointer; ACallback:MFCAP_SAMPLE_CALLBACK; AContext:Pointer):Cardinal; Cdecl;
 Procedure MFCap_Stop(ADevice:Pointer); Cdecl;
-Procedure MFCap_QueryStreamSelection(ADevice:Pointer; Var AMask:Cardinal); Cdecl;
+Function MFCap_QueryStreamSelection(ADevice:Pointer; Var AMask:Cardinal):Cardinal; Cdecl;
 Procedure MFCap_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:MFCAP_DEVICE_CHARACTERISTICS); Cdecl;
 Function MFCap_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl;
 
@@ -155,7 +155,7 @@ Function MFCap_SetFormat(ADevice:Pointer; AStream:Cardinal; AMediaType:Pointer):
 Function MFCap_SelectStream(ADevice:Pointer; AStream:Cardinal; ASelect:LongBool):Cardinal; Cdecl; External CAPLibraryName;
 Function MFCap_Start(ADevice:Pointer; ACallback:MFCAP_SAMPLE_CALLBACK; AContext:Pointer):Cardinal; Cdecl; External CAPLibraryName;
 Procedure MFCap_Stop(ADevice:Pointer); Cdecl; External CAPLibraryName;
-Procedure MFCap_QueryStreamSelection(ADevice:Pointer; Var AMask:Cardinal); Cdecl; External CAPLibraryName;
+Function MFCap_QueryStreamSelection(ADevice:Pointer; Var AMask:Cardinal):Cardinal; Cdecl; External CAPLibraryName;
 Procedure MFCap_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:MFCAP_DEVICE_CHARACTERISTICS); Cdecl; External CAPLibraryName;
 Function MFCap_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External CAPLibraryName;
 
