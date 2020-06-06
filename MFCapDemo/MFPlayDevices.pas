@@ -42,7 +42,7 @@ Var
   d : PMFPLAY_DEVICE_INFO;
   count : Cardinal;
 begin
-Result := MFPlay_EnumDevices(DEVICE_STATEMASK_ALL, d, count);
+Result := MFPlay_EnumDevices(DEVICE_STATE_ACTIVE, d, count);
 If Result = 0 Then
   begin
   Result := _Enumerate<TMFPlayDevice>(d, SizeOf(MFPLAY_DEVICE_INFO), count, AList, AOptions);
