@@ -31,7 +31,7 @@ object MainFrm: TMainFrm
         Left = 0
         Top = 0
         Width = 602
-        Height = 122
+        Height = 97
         Align = alTop
         Caption = 'Audio input'
         TabOrder = 0
@@ -39,9 +39,10 @@ object MainFrm: TMainFrm
           Left = 2
           Top = 15
           Width = 120
-          Height = 105
+          Height = 80
           Align = alLeft
           TabOrder = 0
+          ExplicitHeight = 105
           object TestAudioInputButton: TButton
             Left = 0
             Top = 0
@@ -64,7 +65,7 @@ object MainFrm: TMainFrm
           Left = 122
           Top = 15
           Width = 478
-          Height = 105
+          Height = 80
           Align = alClient
           Checkboxes = True
           Columns = <
@@ -86,17 +87,21 @@ object MainFrm: TMainFrm
             end>
           ReadOnly = True
           RowSelect = True
+          ShowWorkAreas = True
           TabOrder = 1
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
+          ExplicitLeft = 128
+          ExplicitTop = 14
+          ExplicitHeight = 105
         end
       end
       object AudioOutputGroupBox: TGroupBox
         Left = 0
-        Top = 122
+        Top = 97
         Width = 602
-        Height = 73
+        Height = 96
         Align = alTop
         Caption = 'AUdio output'
         TabOrder = 1
@@ -104,9 +109,10 @@ object MainFrm: TMainFrm
           Left = 2
           Top = 15
           Width = 120
-          Height = 56
+          Height = 79
           Align = alLeft
           TabOrder = 0
+          ExplicitHeight = 56
           object TestAudioOutputButton: TButton
             Left = -2
             Top = -9
@@ -129,7 +135,7 @@ object MainFrm: TMainFrm
           Left = 122
           Top = 15
           Width = 478
-          Height = 56
+          Height = 79
           Align = alClient
           Checkboxes = True
           Columns = <
@@ -151,38 +157,44 @@ object MainFrm: TMainFrm
             end>
           ReadOnly = True
           RowSelect = True
+          ShowWorkAreas = True
           TabOrder = 1
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
+          ExplicitHeight = 56
         end
       end
       object VideoInputGroupBox: TGroupBox
         Left = 0
-        Top = 195
+        Top = 193
         Width = 602
-        Height = 165
+        Height = 167
         Align = alClient
         Caption = 'Video input'
         TabOrder = 2
         OnClick = RefreshAudioInputButtonClick
+        ExplicitTop = 195
+        ExplicitHeight = 165
         object VideoTestOutputPanel: TPanel
           Left = 2
           Top = 15
           Width = 120
-          Height = 148
+          Height = 150
           Align = alLeft
           Color = clBlack
           ParentBackground = False
           TabOrder = 0
+          ExplicitHeight = 148
         end
         object Panel1: TPanel
           Left = 122
           Top = 15
           Width = 79
-          Height = 148
+          Height = 150
           Align = alLeft
           TabOrder = 1
+          ExplicitHeight = 148
           object RefreshVideoButton: TButton
             Left = 6
             Top = -9
@@ -199,13 +211,14 @@ object MainFrm: TMainFrm
             Height = 28
             Caption = 'Test'
             TabOrder = 1
+            OnClick = TestVideoOutputButtonClick
           end
         end
         object VideoInputListView: TListView
           Left = 201
           Top = 15
           Width = 399
-          Height = 148
+          Height = 150
           Align = alClient
           Checkboxes = True
           Columns = <
@@ -227,10 +240,12 @@ object MainFrm: TMainFrm
             end>
           ReadOnly = True
           RowSelect = True
+          ShowWorkAreas = True
           TabOrder = 2
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
+          ExplicitHeight = 148
         end
       end
     end

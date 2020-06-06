@@ -37,7 +37,7 @@ Type
       Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Virtual; Abstract;
       Function SelectStream(AIndex:Cardinal; ASelect:Boolean):Cardinal; Virtual; Abstract;
 
-      Property Handle : Pointer Read FHandle;
+      Property Handle : Pointer Read FHandle Write FHandle;
       Property UniqueName : WideString Read FUniqueName;
       Property Name : WideString Read FName;
     end;

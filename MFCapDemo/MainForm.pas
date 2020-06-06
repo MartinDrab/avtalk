@@ -33,6 +33,7 @@ Type
     procedure AudioInputListViewData(Sender: TObject; Item: TListItem);
     procedure RefreshAudioInputButtonClick(Sender: TObject);
     procedure AudioInputListViewItemChecked(Sender: TObject; Item: TListItem);
+    procedure TestVideoOutputButtonClick(Sender: TObject);
   Private
     FAudioInList : TObjectList<TMFDevice>;
     FAudioInStreamList : TObjectList<TMFGenStream>;
@@ -218,6 +219,88 @@ If err = 0 Then
 Else Win32ErrorMessage('Unable to enumerate audio input devices', err);
 
 l.OnItemChecked := tmp;
+end;
+
+Procedure TMainFrm.TestVideoOutputButtonClick(Sender: TObject);
+Var
+  b : TButton;
+  err : Cardinal;
+  s : TMFSession;
+  o : TMFPlayDevice;
+  sl : TObjectList<TMFGenStream>;
+begin
+b := Sender As TButton;
+s := TMFSession(Pointer(b.Tag));
+If Not Assigned(s) Then
+  begin
+  err := TMFSession.NewSession(s);
+  If err <> 0 Then
+    begin
+    Win32ErrorMessage('Unable to create video session', err);
+    Exit;
+    end;
+
+  err := TMFPlayDevice.NewInstanceForWindow(VideoTestOutputPanel.Handle, o);
+  If err <> 0 Then
+    begin
+    s.Free;
+    Win32ErrorMessage('Unable to create video output', err);
+    Exit;
+    end;
+
+  sl := TObjectList<TMFGenStream>.Create;
+  err := o.EnumStreams(sl);
+  If err <> 0 Then
+    begin
+    sl.Free;
+    s.Free;
+    Win32ErrorMessage('Unable to enumerate video output streams', err);
+    Exit;
+    end;
+
+  If sl.Count = 0 Then
+    begin
+    sl.Free;
+    s.Free;
+    ErrorMessage('No video output streams');
+    Exit;
+    end;
+
+  If Not Assigned(VideoInputListView.Selected) Then
+    begin
+    sl.Free;
+    s.Free;
+    ErrorMessage('No video input device selected');
+    Exit;
+    end;
+
+  err := s.AddEdge(FVideoInStreamList[VideoInputListView.Selected.Index], sl[0]);
+  If err <> 0 Then
+    begin
+    sl.Free;
+    s.Free;
+    Win32ErrorMessage('Unable to add streams into the session', err);
+    Exit;
+    end;
+
+  err := s.Start;
+  If err <> 0 Then
+    begin
+    sl.Free;
+    s.Free;
+    Win32ErrorMessage('Unable to start the session', err);
+    Exit;
+    end;
+
+  b.Tag := NativeUInt(s);
+  b.Caption := 'Stop';
+  end
+Else begin
+  s.Stoop;
+  s.Free;
+  b.Caption := 'Test';
+  b.Tag := 0;
+  end;
 end;
 
 End.
