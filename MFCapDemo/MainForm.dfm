@@ -27,6 +27,10 @@ object MainFrm: TMainFrm
     TabOrder = 0
     object DevicesTabSheet: TTabSheet
       Caption = 'Devices'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object AudioInputGroupBox: TGroupBox
         Left = 0
         Top = 0

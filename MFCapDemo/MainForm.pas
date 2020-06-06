@@ -73,7 +73,7 @@ d := s.MFDevice;
 With Item  Do
   begin
   Caption := d.Name;
-  SubItems.Add(d.SymbolicLink);
+  SubItems.Add(d.UniqueName);
   streamTypeStr := '';
   Case s.StreamType Of
     mcftVideo: streamTypeStr := 'Video';

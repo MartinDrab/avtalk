@@ -10,7 +10,6 @@ Type
   TMFCapDevice = Class (TMFDevice)
   Private
     FName : WideString;
-    FSymbolicLink : WideString;
     FIndex : Cardinal;
     FDeviceType : EMFCapFormatType;
     Constructor Create(Var ARecord:MFCAP_DEVICE_INFO); Reintroduce;
@@ -25,7 +24,6 @@ Type
     Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Override;
 
     Property Name : WideString Read FName;
-    Property SymbolicLink : WideString Read FSymbolicLink;
     Property Index : Cardinal Read FIndex;
     Property DeviceType : EMFCapFormatType Read FDeviceType;
   end;
@@ -43,22 +41,22 @@ Var
   di : PMFCAP_DEVICE_INFO;
   tmp : PMFCAP_DEVICE_INFO;
   count : Cardinal;
-  d : TMFCapDevice;
-  old : TMFCapDevice;
-  p : TPair<EMFDeviceEnumerationStatus, TMFCapDevice>;
-  prevailing : TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, TMFCapDevice>>;
+  d : TMFDevice;
+  old : TMFDevice;
+  p : TPair<EMFDeviceEnumerationStatus, TMFDevice>;
+  prevailing : TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, TMFDevice>>;
 begin
 Result := MFCap_EnumDevices(ADeviceType, di, count);
 If Result = 0 Then
   begin
-  prevailing := TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, TMFCapDevice>>.Create;
+  prevailing := TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, TMFDevice>>.Create;
   If (mdeoCompare In AOptions) Then
     begin
     For d In  AList Do
       begin
       p.Key := mdesDeleted;
       p.Value := d;
-      prevailing.AddOrSetValue(d.SymbolicLink, p);
+      prevailing.AddOrSetValue(d.UniqueName, p);
       end;
     end;
 
@@ -66,12 +64,12 @@ If Result = 0 Then
   For I := 0 To count - 1 Do
     begin
     d := TMFCapDevice.Create(tmp^);
-    If prevailing.TryGetValue(d.SymbolicLink, p) Then
+    If prevailing.TryGetValue(d.UniqueName, p) Then
       p.Key := mdesPresent
     Else p.Key := mdesNew;
 
     p.Value := d;
-    prevailing.AddOrSetValue(d.SymbolicLink, p);
+    prevailing.AddOrSetValue(d.UniqueName, p);
     Inc(tmp);
     end;
 
@@ -89,9 +87,9 @@ If Result = 0 Then
             end;
           end;
 
-        AList.Add(p.Value);
+        AList.Add(p.Value As TMFCapDevice);
         end;
-      mdesDeleted: AList.Delete(AList.IndexOf(p.Value));
+      mdesDeleted: AList.Delete(AList.IndexOf(p.Value As TMFCapDevice));
       mdesPresent: p.Value.Free;
       end;
     end;
@@ -103,20 +101,18 @@ end;
 
 Constructor TMFCapDevice.Create(Var ARecord:MFCAP_DEVICE_INFO);
 begin
-Inherited Create;
+Inherited Create(WideCharToString(ARecord.SymbolicLink));
 FDeviceType := ARecord.DeviceType;
 FIndex := ARecord.Index;
 FName := WideCharToString(ARecord.FriendlyName);
-FSymbolicLink := WideCharToString(ARecord.SymbolicLink);
 end;
 
 Constructor TMFCapDevice.CreateFromFile(AFileName:WideString);
 Var
   err : Cardinal;
 begin
-Inherited Create;
+Inherited Create(AFileName);
 FName := ExtractFileName(AFileName);
-FSymbolicLink := AFileName;
 FIndex := $FFFFFFFF;
 FDeviceType := mcftUnknown;
 FHandle := Nil;

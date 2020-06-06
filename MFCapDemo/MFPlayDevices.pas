@@ -11,7 +11,6 @@ Type
   Private
     FName : WideString;
     FDescription : WideString;
-    FEndpointId : WideString;
     FState : Cardinal;
     FCharacteristics : Cardinal;
     FDeviceType : EMFCapFormatType;
@@ -25,7 +24,6 @@ Type
 
     Property Name : WideString Read FName;
     Property Description : WideString Read FDescription;
-    Property EndpointId : WideString Read FEndpointId;
     Property State : Cardinal Read FState;
     Property Characteristics : Cardinal Read FCharacteristics;
     Property DeviceType : EMFCapFormatType Read FDeviceType;
@@ -61,10 +59,9 @@ end;
 
 Constructor TMFPlayDevice.Create(Var ARecord:MFPLAY_DEVICE_INFO);
 begin
-Inherited Create;
+Inherited Create(WideCharToString(ARecord.EndpointId));
 FName := WideCharToString(ARecord.Name);
 FDescription := WideCharToString(ARecord.Description);
-FEndpointId := WideCharToString(ARecord.EndpointId);
 FState := ARecord.State;
 FCharacteristics := ARecord.Characteristics;
 FDeviceType := mcftAudio;
@@ -75,7 +72,7 @@ Var
   d : MFPLAY_DEVICE_INFO;
 begin
 FillChar(d, SizeOf(d), 0);
-d.EndpointId := PWideChar(FEndpointId);
+d.EndpointId := PWideChar(UniqueName);
 Result := MFPlay_NewInstance(d, FHandle);
 end;
 
