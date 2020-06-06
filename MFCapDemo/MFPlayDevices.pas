@@ -14,6 +14,7 @@ Type
     FEndpointId : WideString;
     FState : Cardinal;
     FCharacteristics : Cardinal;
+    FDeviceType : EMFCapFormatType;
     Constructor Create(Var ARecord:MFPLAY_DEVICE_INFO); Reintroduce;
   Public
     Class Function Enumerate(AList:TObjectList<TMFPlayDevice>):Cardinal;
@@ -27,6 +28,7 @@ Type
     Property EndpointId : WideString Read FEndpointId;
     Property State : Cardinal Read FState;
     Property Characteristics : Cardinal Read FCharacteristics;
+    Property DeviceType : EMFCapFormatType Read FDeviceType;
   end;
 
 Implementation
@@ -65,6 +67,7 @@ FDescription := WideCharToString(ARecord.Description);
 FEndpointId := WideCharToString(ARecord.EndpointId);
 FState := ARecord.State;
 FCharacteristics := ARecord.Characteristics;
+FDeviceType := mcftAudio;
 end;
 
 Function TMFPlayDevice.Open:Cardinal;
