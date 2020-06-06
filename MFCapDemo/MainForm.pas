@@ -6,7 +6,7 @@ Uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls, Vcl.ExtCtrls,
   Generics.Collections,
-  MFCapDevice, MFPlayDevices, MFGenStream;
+  MFCapDevice, MFPlayDevices, MFGenStream, MFDevice;
 
 Type
   TMainFrm = Class (TForm)
@@ -27,17 +27,18 @@ Type
     RefreshVideoButton: TButton;
     VideoInputListView: TListView;
     TestVideoOutputButton: TButton;
+    AudioOutputListView: TListView;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure AudioInputListViewData(Sender: TObject; Item: TListItem);
     procedure RefreshAudioInputButtonClick(Sender: TObject);
     procedure AudioInputListViewItemChecked(Sender: TObject; Item: TListItem);
   Private
-    FAudioInList : TObjectList<TMFCapDevice>;
+    FAudioInList : TObjectList<TMFDevice>;
     FAudioInStreamList : TObjectList<TMFGenStream>;
-    FVideoInList : TObjectList<TMFCapDevice>;
+    FVideoInList : TObjectList<TMFDevice>;
     FVideoInStreamList : TObjectList<TMFGenStream>;
-    FAudioOutList : TObjectList<TMFPlayDevice>;
+    FAudioOutList : TObjectList<TMFDevice>;
     FAudioOutStreamList : TObjectList<TMFGenStream>;
   end;
 
@@ -47,14 +48,14 @@ Var
 Implementation
 
 Uses
-  Utils, MFDevice, MFCapDll;
+  Utils, MFCapDll;
 
 {$R *.DFM}
 
 Procedure TMainFrm.AudioInputListViewData(Sender: TObject; Item: TListItem);
 Var
   s : TMFGenStream;
-  d : TMFCapDevice;
+  d : TMFDevice;
   l : TListView;
   streamList : TObjectList<TMFGenStream>;
   streamTypeStr : WideString;
@@ -66,7 +67,9 @@ d := Nil;
 If Sender = AudioInputListView Then
   streamList := FAudioInStreamList
 Else If Sender = VideoInputListView Then
-  streamList := FVideoInStreamList;
+  streamList := FVideoInStreamList
+Else If Sender = AudioOutputListView Then
+  streamList := FAudioOutStreamList;
 
 s := streamList[Item.Index];
 d := s.MFDevice;
@@ -92,24 +95,26 @@ end;
 Procedure TMainFrm.AudioInputListViewItemChecked(Sender: TObject;
   Item: TListItem);
 Var
-  d : TMFCapDevice;
+  d : TMFDevice;
   s : TMFGenStream;
   streamList : TObjectList<TMFGenStream>;
-  deviceList : TObjectList<TMFCapDevice>;
   b : TButton;
   err : Cardinal;
 begin
 If Sender = AudioInputListView Then
   begin
-  deviceList := FAudioInList;
   streamList := FAudioInStreamList;
   b := RefreshAudioInputButton;
   end
 Else If Sender = VideoInputListView Then
   begin
-  deviceList := FVideoInList;
   streamList := FVideoInStreamList;
   b := RefreshVideoButton;
+  end
+Else If Sender = AudioOutputListView Then
+  begin
+  streamList := FAudioOutStreamList;
+  b := RefreshAudioOutputButton;
   end;
 
 s := streamList[Item.Index];
@@ -133,9 +138,9 @@ end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
 begin
-FAudioInList := TObjectList<TMFCapDevice>.Create;
-FAudioOutList := TObjectList<TMFPlayDevice>.Create;
-FVideoInList := TObjectList<TMFCapDevice>.Create;
+FAudioInList := TObjectList<TMFDevice>.Create;
+FAudioOutList := TObjectList<TMFDevice>.Create;
+FVideoInList := TObjectList<TMFDevice>.Create;
 FAudioInStreamList := TObjectList<TMFGenStream>.Create;
 FAudioOutStreamList := TObjectList<TMFGenStream>.Create;
 FVideoInStreamList := TObjectList<TMFGenStream>.Create;
@@ -146,7 +151,7 @@ Var
   err : Cardinal;
   d : TMFDevice;
   s : TMFGenStream;
-  deviceList : TObjectList<TMFCapDevice>;
+  deviceList : TObjectList<TMFDevice>;
   streamList : TObjectList<TMFGenStream>;
   l : TListView;
   li : TListItem;
@@ -159,6 +164,7 @@ If Sender = RefreshAudioInputButton Then
   streamList := FAudioInStreamList;
   l := AudioInputListView;
   deviceType := mcftAudio;
+  err := TMFCapDevice.Enumerate(deviceType, deviceList, [mdeoOpen, mdeoCompare]);
   end
 Else If Sender = RefreshVideoButton Then
   begin
@@ -166,13 +172,21 @@ Else If Sender = RefreshVideoButton Then
   streamList := FVideoInStreamList;
   l := VideoInputListView;
   deviceType := mcftVideo;
+  err := TMFCapDevice.Enumerate(deviceType, deviceList, [mdeoOpen, mdeoCompare]);
+  end
+Else If Sender = RefreshAudioOutputButton Then
+  begin
+  deviceList := FAudioOutList;
+  streamList := FAudioOutStreamList;
+  l := AudioOutputListView;
+  deviceType := mcftAudio;
+  err := TMFPlayDevice.Enumerate(deviceType, deviceList, [mdeoOpen, mdeoCompare]);
   end;
 
 tmp := l.OnItemChecked;
 l.OnItemChecked := Nil;
 l.Items.Clear;
 streamList.Clear;
-err := TMFCapDevice.Enumerate(deviceType, deviceList, [mdeoOpen, mdeoCompare]);
 If err = 0 Then
   begin
   For d In deviceList Do

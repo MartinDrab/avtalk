@@ -9,13 +9,12 @@ Uses
 Type
   TMFCapDevice = Class (TMFDevice)
   Private
-    FName : WideString;
     FIndex : Cardinal;
     FDeviceType : EMFCapFormatType;
     Constructor Create(Var ARecord:MFCAP_DEVICE_INFO); Reintroduce;
   Protected
   Public
-    Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
+    Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal; Override;
     Class Function CreateInstance(ARecord:Pointer):TMFDevice; Override;
 
     Constructor CreateFromFile(AFileName:WideString); Reintroduce;
@@ -25,7 +24,6 @@ Type
     Procedure Close; Override;
     Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Override;
 
-    Property Name : WideString Read FName;
     Property Index : Cardinal Read FIndex;
     Property DeviceType : EMFCapFormatType Read FDeviceType;
   end;
@@ -37,7 +35,7 @@ Uses
 
 (** TMFCapDevice **)
 
-Class Function TMFCapDevice.Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
+Class Function TMFCapDevice.Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
 Var
   di : PMFCAP_DEVICE_INFO;
   count : Cardinal;
@@ -52,18 +50,16 @@ end;
 
 Constructor TMFCapDevice.Create(Var ARecord:MFCAP_DEVICE_INFO);
 begin
-Inherited Create(WideCharToString(ARecord.SymbolicLink));
+Inherited Create(WideCharToString(ARecord.SymbolicLink), WideCharToString(ARecord.FriendlyName));
 FDeviceType := ARecord.DeviceType;
 FIndex := ARecord.Index;
-FName := WideCharToString(ARecord.FriendlyName);
 end;
 
 Constructor TMFCapDevice.CreateFromFile(AFileName:WideString);
 Var
   err : Cardinal;
 begin
-Inherited Create(AFileName);
-FName := ExtractFileName(AFileName);
+Inherited Create(AFileName, ExtractFileName(AFileName));
 FIndex := $FFFFFFFF;
 FDeviceType := mcftUnknown;
 FHandle := Nil;

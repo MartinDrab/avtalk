@@ -21,14 +21,16 @@ Type
 
   TMFDevice = Class
     Private
+      FName : WideString;
       FUniqueName : WideString;
     Protected
       FHandle : Pointer;
-      Class Function _Enumerate<T:TMFDevice>(APointer:Pointer; ARecordSize:Cardinal; ACount:Cardinal; AList:TObjectList<T>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
+      Class Function _Enumerate<T:TMFDevice>(APointer:Pointer; ARecordSize:Cardinal; ACount:Cardinal; AList:TObjectList<TMFDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
     Public
       Class Function CreateInstance(ARecord:Pointer):TMFDevice; Virtual; Abstract;
+      Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal; Virtual; Abstract;
 
-      Constructor Create(AUniqueName:WideString); Reintroduce;
+      Constructor Create(AUniqueName:WideString; AName:WideString); Reintroduce;
       Destructor Destroy; Override;
       Function Open:Cardinal; Virtual; Abstract;
       Procedure Close; Virtual; Abstract;
@@ -37,6 +39,7 @@ Type
 
       Property Handle : Pointer Read FHandle;
       Property UniqueName : WideString Read FUniqueName;
+      Property Name : WideString Read FName;
     end;
 
 
@@ -44,10 +47,11 @@ Implementation
 
 (** TMFDevice **)
 
-Constructor TMFDevice.Create(AUniqueName:WideString);
+Constructor TMFDevice.Create(AUniqueName:WideString; AName:WideString);
 begin
 Inherited Create;
 FUniqueName := AUniqueName;
+FName := AName;
 end;
 
 Destructor TMFDevice.Destroy;
@@ -58,19 +62,21 @@ If Assigned(FHandle) Then
 Inherited Destroy;
 end;
 
-Class Function TMFDevice._Enumerate<T>(APointer:Pointer; ARecordSize:Cardinal; ACount:Cardinal; AList:TObjectList<T>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
+Class Function TMFDevice._Enumerate<T>(APointer:Pointer; ARecordSize:Cardinal; ACount:Cardinal; AList:TObjectList<TMFDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
 Var
-  I : Integer;
   d : T;
   old : T;
+  I : Integer;
+  deviceItem : TMFDevice;
   p : TPair<EMFDeviceEnumerationStatus, T>;
   prevailing : TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, T>>;
 begin
 prevailing := TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, T>>.Create;
 If (mdeoCompare In AOptions) Then
   begin
-  For d In  AList Do
+  For deviceItem In  AList Do
     begin
+    d := deviceItem As T;
     p.Key := mdesDeleted;
     p.Value := d;
     prevailing.AddOrSetValue(d.UniqueName, p);

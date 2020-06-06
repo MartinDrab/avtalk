@@ -16,7 +16,8 @@ Type
     FDeviceType : EMFCapFormatType;
     Constructor Create(Var ARecord:MFPLAY_DEVICE_INFO); Reintroduce;
   Public
-    Class Function Enumerate(AList:TObjectList<TMFPlayDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
+    Class Function CreateInstance(ARecord:Pointer):TMFDevice; Override;
+    Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal; Override;
 
     Function Open:Cardinal; Override;
     Procedure Close; Override;
@@ -36,7 +37,7 @@ Uses
 
 (** TMFPlayDevice **)
 
-Class Function TMFPlayDevice.Enumerate(AList:TObjectList<TMFPlayDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
+Class Function TMFPlayDevice.Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
 Var
   d : PMFPLAY_DEVICE_INFO;
   count : Cardinal;
@@ -51,8 +52,7 @@ end;
 
 Constructor TMFPlayDevice.Create(Var ARecord:MFPLAY_DEVICE_INFO);
 begin
-Inherited Create(WideCharToString(ARecord.EndpointId));
-FName := WideCharToString(ARecord.Name);
+Inherited Create(WideCharToString(ARecord.EndpointId), WideCharToString(ARecord.Name));
 FDescription := WideCharToString(ARecord.Description);
 FState := ARecord.State;
 FCharacteristics := ARecord.Characteristics;
@@ -95,6 +95,10 @@ If Result = 0THen
   end;
 end;
 
+Class Function TMFPlayDevice.CreateInstance(ARecord:Pointer):TMFDevice;
+begin
+Result := TMFPlayDevice.Create(PMFPLAY_DEVICE_INFO(ARecord)^);
+end;
 
 
 End.

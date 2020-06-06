@@ -27,10 +27,6 @@ object MainFrm: TMainFrm
     TabOrder = 0
     object DevicesTabSheet: TTabSheet
       Caption = 'Devices'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object AudioInputGroupBox: TGroupBox
         Left = 0
         Top = 0
@@ -126,7 +122,41 @@ object MainFrm: TMainFrm
             Height = 28
             Caption = 'Refresh'
             TabOrder = 1
+            OnClick = RefreshAudioInputButtonClick
           end
+        end
+        object AudioOutputListView: TListView
+          Left = 122
+          Top = 15
+          Width = 478
+          Height = 56
+          Align = alClient
+          Checkboxes = True
+          Columns = <
+            item
+              AutoSize = True
+              Caption = 'Name'
+            end
+            item
+              AutoSize = True
+              Caption = 'Link'
+            end
+            item
+              Caption = 'Type'
+              Width = 60
+            end
+            item
+              Caption = 'Steram index'
+              Width = 75
+            end>
+          ReadOnly = True
+          RowSelect = True
+          TabOrder = 1
+          ViewStyle = vsReport
+          OnData = AudioInputListViewData
+          OnItemChecked = AudioInputListViewItemChecked
+          ExplicitLeft = 124
+          ExplicitTop = 17
         end
       end
       object VideoInputGroupBox: TGroupBox
@@ -203,8 +233,6 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
-          ExplicitLeft = 207
-          ExplicitTop = 14
         end
       end
     end
