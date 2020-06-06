@@ -8,14 +8,17 @@ Uses
 Type
   TMFGenStream = Class
     Private
+      FInfo: MFGEN_STREAM_INFO;
       FIndex : Cardinal;
       FId : Cardinal;
       FMajorTypeGuid : TGuid;
       FStreamType : EMFCapFormatType;
       FMFDevice : Pointer;
       FSelected : Boolean;
+      FNode : IUnknown;
     Public
       Constructor Create(ADevice:Pointer; Var ARecord:MFGEN_STREAM_INFO); Reintroduce;
+      Destructor Destroy; Override;
 
       Property Index : Cardinal Read FIndex;
       Property Id : Cardinal Read FId;
@@ -23,6 +26,7 @@ Type
       Property StreamType : EMFCapFormatType Read FStreamType;
       Property MFDevice : Pointer Read FMFDevice;
       Property Selected : Boolean Read FSelected;
+      Property Node : IUnknown Read FNode;
     end;
 
 Implementation
@@ -38,8 +42,17 @@ FStreamType := ARecord.StreamType;
 FMajorTypeGuid := ARecord.MajorType;
 FMFDevice := ADevice;
 FSelected := ARecord.Selected;
+FNode := ARecord.Node;
+FNode._AddRef;
+FInfo := ARecord;
 End;
 
+Destructor TMFGenStream.Destroy;
+begin
+FNode._Release;
+Inherited Destroy;
+end;
 
 
 End.
+

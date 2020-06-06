@@ -82,7 +82,7 @@ Type
     Index : Cardinal;
     Id : Cardinal;
     Selected : LongBool;
-    Node : Pointer;
+    Node : IUnknown;
     end;
   MFGEN_STREAM_INFO = _MFGEN_STREAM_INFO;
   PMFGEN_STREAM_INFO = ^MFGEN_STREAM_INFO;
