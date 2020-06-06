@@ -27,6 +27,7 @@ Type
       Property MFDevice : Pointer Read FMFDevice;
       Property Selected : Boolean Read FSelected;
       Property Node : IUnknown Read FNode;
+      Property Info : MFGEN_STREAM_INFO Read FInfo;
     end;
 
 Implementation

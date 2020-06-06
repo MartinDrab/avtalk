@@ -155,8 +155,6 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
-          ExplicitLeft = 124
-          ExplicitTop = 17
         end
       end
       object VideoInputGroupBox: TGroupBox
