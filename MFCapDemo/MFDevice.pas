@@ -33,6 +33,7 @@ Type
       Function Open:Cardinal; Virtual; Abstract;
       Procedure Close; Virtual; Abstract;
       Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Virtual; Abstract;
+      Function SelectStream(AIndex:Cardinal; ASelect:Boolean):Cardinal; Virtual; Abstract;
 
       Property Handle : Pointer Read FHandle;
       Property UniqueName : WideString Read FUniqueName;

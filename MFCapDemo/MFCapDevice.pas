@@ -20,7 +20,7 @@ Type
 
     Constructor CreateFromFile(AFileName:WideString); Reintroduce;
 
-    Function SelectStream(AIndex:Cardinal; ASelect:Boolean):Cardinal;
+    Function SelectStream(AIndex:Cardinal; ASelect:Boolean):Cardinal; Override;
     Function Open:Cardinal; Override;
     Procedure Close; Override;
     Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Override;
