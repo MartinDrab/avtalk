@@ -3,7 +3,8 @@ Unit MFDevice;
 Interface
 
 Uses
-  Windows, Generics.Collections, MFCAPDll, MFGenStream;
+  Windows, MFCAPDll, MFGenStream,
+  Generics.Collections;
 
 Type
   EMFDeviceEnumerateOption = (
@@ -23,7 +24,10 @@ Type
       FUniqueName : WideString;
     Protected
       FHandle : Pointer;
+      Class Function _Enumerate<T:TMFDevice>(APointer:Pointer; ARecordSize:Cardinal; ACount:Cardinal; AList:TObjectList<T>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
     Public
+      Class Function CreateInstance(ARecord:Pointer):TMFDevice; Virtual; Abstract;
+
       Constructor Create(AUniqueName:WideString); Reintroduce;
       Destructor Destroy; Override;
       Function Open:Cardinal; Virtual; Abstract;
@@ -53,5 +57,62 @@ If Assigned(FHandle) Then
 Inherited Destroy;
 end;
 
+Class Function TMFDevice._Enumerate<T>(APointer:Pointer; ARecordSize:Cardinal; ACount:Cardinal; AList:TObjectList<T>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
+Var
+  I : Integer;
+  d : T;
+  old : T;
+  p : TPair<EMFDeviceEnumerationStatus, T>;
+  prevailing : TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, T>>;
+begin
+prevailing := TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, T>>.Create;
+If (mdeoCompare In AOptions) Then
+  begin
+  For d In  AList Do
+    begin
+    p.Key := mdesDeleted;
+    p.Value := d;
+    prevailing.AddOrSetValue(d.UniqueName, p);
+    end;
+  end;
+
+For I := 0 To ACount - 1 Do
+  begin
+  d := T.CreateInstance(APointer) As T;
+  If prevailing.TryGetValue(d.UniqueName, p) Then
+    p.Key := mdesPresent
+  Else p.Key := mdesNew;
+
+  p.Value := d;
+  prevailing.AddOrSetValue(d.UniqueName, p);
+  APointer := Pointer(NativeUInt(APointer) + ARecordSize);
+  end;
+
+For p In prevailing.Values Do
+  begin
+  Case p.Key Of
+    mdesNew: begin
+      If (mdeoOpen In AOptions) Then
+        begin
+        Result := p.Value.Open;
+        If Result <> 0 Then
+          begin
+          p.Value.Free;
+          Continue;
+          end;
+        end;
+
+      AList.Add(p.Value);
+      end;
+    mdesDeleted: AList.Delete(AList.IndexOf(p.Value));
+    mdesPresent: p.Value.Free;
+    end;
+  end;
+
+prevailing.Free;
+end;
+
+
 
 End.
+

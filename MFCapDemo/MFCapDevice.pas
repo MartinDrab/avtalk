@@ -13,8 +13,10 @@ Type
     FIndex : Cardinal;
     FDeviceType : EMFCapFormatType;
     Constructor Create(Var ARecord:MFCAP_DEVICE_INFO); Reintroduce;
+  Protected
   Public
     Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
+    Class Function CreateInstance(ARecord:Pointer):TMFDevice; Override;
 
     Constructor CreateFromFile(AFileName:WideString); Reintroduce;
 
@@ -37,64 +39,13 @@ Uses
 
 Class Function TMFCapDevice.Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFCapDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
 Var
-  I : Integer;
   di : PMFCAP_DEVICE_INFO;
-  tmp : PMFCAP_DEVICE_INFO;
   count : Cardinal;
-  d : TMFDevice;
-  old : TMFDevice;
-  p : TPair<EMFDeviceEnumerationStatus, TMFDevice>;
-  prevailing : TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, TMFDevice>>;
 begin
 Result := MFCap_EnumDevices(ADeviceType, di, count);
 If Result = 0 Then
   begin
-  prevailing := TDictionary<WideString, TPair<EMFDeviceEnumerationStatus, TMFDevice>>.Create;
-  If (mdeoCompare In AOptions) Then
-    begin
-    For d In  AList Do
-      begin
-      p.Key := mdesDeleted;
-      p.Value := d;
-      prevailing.AddOrSetValue(d.UniqueName, p);
-      end;
-    end;
-
-  tmp := di;
-  For I := 0 To count - 1 Do
-    begin
-    d := TMFCapDevice.Create(tmp^);
-    If prevailing.TryGetValue(d.UniqueName, p) Then
-      p.Key := mdesPresent
-    Else p.Key := mdesNew;
-
-    p.Value := d;
-    prevailing.AddOrSetValue(d.UniqueName, p);
-    Inc(tmp);
-    end;
-
-  For p In prevailing.Values Do
-    begin
-    Case p.Key Of
-      mdesNew: begin
-        If (mdeoOpen In AOptions) Then
-          begin
-          Result := p.Value.Open;
-          If Result <> 0 Then
-            begin
-            p.Value.Free;
-            Continue;
-            end;
-          end;
-
-        AList.Add(p.Value As TMFCapDevice);
-        end;
-      mdesDeleted: AList.Delete(AList.IndexOf(p.Value As TMFCapDevice));
-      mdesPresent: p.Value.Free;
-      end;
-    end;
-
-  prevailing.Free;
+  Result := _Enumerate<TMFCapDevice>(di, SizeOf(MFCAP_DEVICE_INFO), count, AList, AOptions);
   MFCap_FreeDeviceEnumeration(di, count);
   end;
 end;
@@ -159,6 +110,11 @@ end;
 Function TMFCapDevice.SelectStream(AIndex:Cardinal; ASelect:Boolean):Cardinal;
 begin
 Result := MFCap_SelectStream(FHandle, AIndex, ASelect);
+end;
+
+Class Function TMFCapDevice.CreateInstance(ARecord:Pointer):TMFDevice;
+begin
+Result := TMFCapDevice.Create(PMFCAP_DEVICE_INFO(ARecord)^);
 end;
 
 

@@ -16,7 +16,7 @@ Type
     FDeviceType : EMFCapFormatType;
     Constructor Create(Var ARecord:MFPLAY_DEVICE_INFO); Reintroduce;
   Public
-    Class Function Enumerate(AList:TObjectList<TMFPlayDevice>):Cardinal;
+    Class Function Enumerate(AList:TObjectList<TMFPlayDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
 
     Function Open:Cardinal; Override;
     Procedure Close; Override;
@@ -36,23 +36,15 @@ Uses
 
 (** TMFPlayDevice **)
 
-Class Function TMFPlayDevice.Enumerate(AList:TObjectList<TMFPlayDevice>):Cardinal;
+Class Function TMFPlayDevice.Enumerate(AList:TObjectList<TMFPlayDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal;
 Var
-  I : Integer;
   d : PMFPLAY_DEVICE_INFO;
-  tmp : PMFPLAY_DEVICE_INFO;
   count : Cardinal;
 begin
 Result := MFPlay_EnumDevices(DEVICE_STATEMASK_ALL, d, count);
 If Result = 0 Then
   begin
-  tmp := d;
-  For I := 0 To count - 1 Do
-    begin
-    AList.Add(TMFPlayDevice.Create(tmp^));
-    Inc(tmp);
-    end;
-
+  Result := _Enumerate<TMFPlayDevice>(d, SizeOf(MFPLAY_DEVICE_INFO), count, AList, AOptions);
   MFPlay_FreeDeviceEnum(d, count);
   end;
 end;
