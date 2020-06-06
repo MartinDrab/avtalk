@@ -374,3 +374,13 @@ extern "C" HRESULT MFPlay_CreateStreamNodes(PMFPLAY_DEVICE Device, PMFGEN_STREAM
 
 	return ret;
 }
+
+
+HRESULT MFPlay_QueryCharacteristics(PMFPLAY_DEVICE Device, PDWORD Characteristics)
+{
+	HRESULT ret = S_OK;
+
+	*Characteristics = Device->Characteristics;
+
+	return ret;
+}

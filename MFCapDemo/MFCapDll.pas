@@ -118,6 +118,7 @@ Function MFPlay_NewInstance(Var ADeviceInfo:MFPLAY_DEVICE_INFO; Var ADevice:Poin
 Function MFPlay_NewInstanceForWindow(AWindow:HWND; Var ADevice:Pointer):Cardinal; Cdecl;
 Procedure MFPlay_FreeInstance(ADevice:Pointer); Cdecl;
 Function MFPlay_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl;
+Function MFPlay_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:Cardinal):Cardinal; Cdecl;
 
 Function MFSession_NewInstance(Var ASession:Pointer):Cardinal; Cdecl;
 Procedure MFSession_FreeInstance(ASession:Pointer); Cdecl;
@@ -165,6 +166,7 @@ Function MFPlay_NewInstance(Var ADeviceInfo:MFPLAY_DEVICE_INFO; Var ADevice:Poin
 Function MFPlay_NewInstanceForWindow(AWindow:HWND; Var ADevice:Pointer):Cardinal; Cdecl; Cdecl; External PLAYLibraryName;
 Procedure MFPlay_FreeInstance(ADevice:Pointer); Cdecl; Cdecl; External PLAYLibraryName;
 Function MFPlay_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External PLAYLibraryName;
+Function MFPlay_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:Cardinal):Cardinal; Cdecl; External PLAYLibraryName;
 
 Function MFSession_NewInstance(Var ASession:Pointer):Cardinal; Cdecl; External SESSIONLibraryName;
 Procedure MFSession_FreeInstance(ASession:Pointer); Cdecl; External SESSIONLibraryName;

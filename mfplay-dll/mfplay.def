@@ -7,4 +7,4 @@ EXPORTS
 	MFPlay_NewInstanceForWindow
 	MFPlay_FreeInstance
 	MFPlay_CreateStreamNodes
-
+	MFPlay_QueryCharacteristics

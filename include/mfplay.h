@@ -51,6 +51,7 @@ HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO * DeviceInfo, PMFPLAY_DEVICE
 HRESULT MFPlay_NewInstanceForWindow(HWND Window, PMFPLAY_DEVICE* Device);
 void MFPlay_FreeInstance(PMFPLAY_DEVICE Device);
 HRESULT MFPlay_CreateStreamNodes(PMFPLAY_DEVICE Device, PMFGEN_STREAM_INFO * Nodes, DWORD * Count);
+HRESULT MFPlay_QueryCharacteristics(PMFPLAY_DEVICE Device, PDWORD Characteristics);
 
 #ifdef __cplusplus
 }
