@@ -19,7 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="mfplay.def">
-      <Filter>Source Files</Filter>
+      <Filter>DEF File</Filter>
     </None>
   </ItemGroup>
 </Project>
