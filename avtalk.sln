@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfplay-dll", "mfplay-dll\mf
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfsession-dll", "mfsession-dll\mfsession-dll.vcxproj", "{589F6617-0E09-45A0-A447-297DC268C4CE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfstream", "mfstream\mfstream.vcxproj", "{9545DFB3-5623-4844-9DE9-760B2E707706}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -101,6 +103,14 @@ Global
 		{589F6617-0E09-45A0-A447-297DC268C4CE}.Release|x64.Build.0 = Release|x64
 		{589F6617-0E09-45A0-A447-297DC268C4CE}.Release|x86.ActiveCfg = Release|Win32
 		{589F6617-0E09-45A0-A447-297DC268C4CE}.Release|x86.Build.0 = Release|Win32
+		{9545DFB3-5623-4844-9DE9-760B2E707706}.Debug|x64.ActiveCfg = Debug|x64
+		{9545DFB3-5623-4844-9DE9-760B2E707706}.Debug|x64.Build.0 = Debug|x64
+		{9545DFB3-5623-4844-9DE9-760B2E707706}.Debug|x86.ActiveCfg = Debug|Win32
+		{9545DFB3-5623-4844-9DE9-760B2E707706}.Debug|x86.Build.0 = Debug|Win32
+		{9545DFB3-5623-4844-9DE9-760B2E707706}.Release|x64.ActiveCfg = Release|x64
+		{9545DFB3-5623-4844-9DE9-760B2E707706}.Release|x64.Build.0 = Release|x64
+		{9545DFB3-5623-4844-9DE9-760B2E707706}.Release|x86.ActiveCfg = Release|Win32
+		{9545DFB3-5623-4844-9DE9-760B2E707706}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
