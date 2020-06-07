@@ -17,21 +17,8 @@ typedef enum _EMFRWStreamOperationType {
 	mrwsMax,
 } EMFRWStreamOperationType, *PEMFRWStreamOperationType;
 
-typedef struct _MFRW_STREAM_OPERATION {
-	LIST_ENTRY Entry;
-	EMFRWStreamOperationType Type;
-	DWORD Length;
-	void* Buffer;
-	IMFAsyncCallback* Callback;
-	IUnknown* State;
-	IMFAsyncResult* AsyncResult;
-	HRESULT Result;
-	DWORD BytesTransferred;
-	HANDLE Event;
-} MFRW_STREAM_OPERATION, *PMFRW_STREAM_OPERATION;
-
-template <typename T>
-class CMFSmartMemory : public IUnknown {
+class CMFRWStreamOp : public IUnknown
+{
 public:
 	// IUnknown interface
 	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
@@ -44,8 +31,7 @@ public:
 				*ppvObject = this;
 				ret = S_OK;
 			}
-		}
-		else ret = E_POINTER;
+		} else ret = E_POINTER;
 
 		return ret;
 	}
@@ -62,31 +48,122 @@ public:
 
 		return tmp;
 	}
-	CMFSmartMemory(T* Mem)
-		: mem_(Mem)
+
+	void Insert(PLIST_ENTRY Head)
 	{
-		InterlockedExchange(&refCount_, 1);
+		entry_.Flink = Head;
+		entry_.Blink = Head->Blink;
+		Head->Blink->Flink = &entry_;
+		Head->Blink = &entry_;
+		AddRef();
 
 		return;
 	}
-	~CMFSmartMemory()
+	void Wait(void)
 	{
-		if (mem_ != NULL)
-			HeapFree(GetProcessHeap(), 0, mem_);
+		WaitForSingleObject(event_, INFINITE);
 
 		return;
 	}
-	T *get(void) const { return mem_; }
-	void reset(T* NewMem)
+	static CMFRWStreamOp* RemoveFromList(PLIST_ENTRY Head)
 	{
-		mem_ = NewMem;
+		CMFRWStreamOp* ret = NULL;
+
+		if (Head->Flink != Head) {
+			ret = CONTAINING_RECORD(Head->Flink, CMFRWStreamOp, entry_);
+			ret->entry_.Flink->Blink = ret->entry_.Blink;
+			ret->entry_.Blink->Flink = ret->entry_.Flink;
+		}
+
+		return ret;
+	}
+	static HRESULT NewInstance(EMFRWStreamOperationType Type, void* Buffer, ULONG Length, IMFAsyncCallback* Callback, IUnknown* State, CMFRWStreamOp** Record)
+	{
+		HRESULT ret = S_OK;
+		CMFRWStreamOp *tmpRecord = NULL;
+
+		tmpRecord = new CMFRWStreamOp;
+		if (tmpRecord != NULL) {
+			tmpRecord->type_ = Type;
+			tmpRecord->buffer_ = Buffer;
+			tmpRecord->length_ = Length;
+			tmpRecord->event_ = CreateEventW(NULL, TRUE, FALSE, NULL);
+			if (tmpRecord->event_ != NULL) {
+				tmpRecord->callback_ = Callback;
+				tmpRecord->state_ = State;
+				if (tmpRecord->callback_ != NULL) {
+					ret = MFCreateAsyncResult(tmpRecord, tmpRecord->callback_, tmpRecord->state_, &tmpRecord->asyncResult_);
+					if (SUCCEEDED(ret))
+						tmpRecord->callback_->AddRef();
+				}
+
+				if (SUCCEEDED(ret)) {
+					if (tmpRecord->state_ != NULL)
+						tmpRecord->state_->AddRef();
+
+					tmpRecord->AddRef();
+					*Record = tmpRecord;
+				}
+			} else ret = GetLastError() | 0x80070000;
+
+			tmpRecord->Release();
+		} else ret = E_OUTOFMEMORY;
+
+		return ret;
+	}
+	~CMFRWStreamOp(void)
+	{
+		MFGen_SafeRelease(asyncResult_);
+		MFGen_SafeRelease(state_);
+		MFGen_SafeRelease(callback_);
+		if (event_ != NULL)
+			CloseHandle(event_);
+
+		return;
+	}
+	DWORD getBytesTransferred(void) const { return bytesTransferred_; }
+	HRESULT getResult(void) const { return result_; }
+	void* getBuffer(void) const { return buffer_; }
+	DWORD getLength(void) const { return length_; }
+	void Finish(HRESULT Result, DWORD BytesTransferred)
+	{
+		bytesTransferred_ = BytesTransferred;
+		result_ = Result;
+		SetEvent(event_);
+		if (callback_ != NULL) {
+			asyncResult_->SetStatus(result_);
+			callback_->Invoke(asyncResult_);
+		}
 
 		return;
 	}
 private:
+	CMFRWStreamOp()
+		: asyncResult_(NULL), callback_(NULL), state_(NULL), event_(NULL)
+	{
+		entry_.Flink = &entry_;
+		entry_.Blink = &entry_;
+		InterlockedExchange(&refCount_, 1);
+
+		return;
+	}
+	CMFRWStreamOp(const CMFRWStreamOp&) = delete;
+	CMFRWStreamOp(CMFRWStreamOp&&) = delete;
+	CMFRWStreamOp& operator = (const CMFRWStreamOp&) = delete;
+	CMFRWStreamOp& operator = (CMFRWStreamOp&&) = delete;
 	volatile LONG refCount_;
-	T* mem_;
+	LIST_ENTRY entry_;
+	EMFRWStreamOperationType type_;
+	DWORD length_;
+	void* buffer_;
+	IMFAsyncCallback* callback_;
+	IUnknown* state_;
+	IMFAsyncResult* asyncResult_;
+	HRESULT result_;
+	DWORD bytesTransferred_;
+	HANDLE event_;
 };
+
 
 
 class CMFRWStream : public virtual IMFByteStream {
@@ -177,17 +254,17 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE Read(__RPC__out_ecount_full(cb) BYTE* pb, ULONG cb, __RPC__out ULONG* pcbRead)
 	{
 		HRESULT ret = S_OK;
-		PMFRW_STREAM_OPERATION r = NULL;
+		CMFRWStreamOp *r = NULL;
 
-		ret = OpRecordAlloc(mrwsRead, (void*)pb, cb, NULL, NULL, &r);
+		ret = CMFRWStreamOp::NewInstance(mrwsRead, (void*)pb, cb, NULL, NULL, &r);
 		if (SUCCEEDED(ret)) {
 			OpRecordInsert(r);
-			OpRecordWait(r);
+			r->Wait();
 			if (pcbRead != NULL)
-				*pcbRead = r->BytesTransferred;
+				*pcbRead = r->getBytesTransferred();
 
-			ret = r->Result;
-			OpRecordFree(r);
+			ret = r->getResult();
+			r->Release();
 		}
 
 		return ret;
@@ -195,33 +272,31 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE BeginRead(_Out_writes_bytes_(cb)  BYTE* pb, ULONG cb, IMFAsyncCallback* pCallback, IUnknown* punkState)
 	{
 		HRESULT ret = S_OK;
-		PMFRW_STREAM_OPERATION r = NULL;
+		CMFRWStreamOp *r = NULL;
 
-		ret = OpRecordAlloc(mrwsRead, (void*)pb, cb, NULL, NULL, &r);
-		if (SUCCEEDED(ret))
+		ret = CMFRWStreamOp::NewInstance(mrwsRead, (void*)pb, cb, NULL, NULL, &r);
+		if (SUCCEEDED(ret)) {
 			OpRecordInsert(r);
+			r->Release();
+		}
 
 		return ret;
 	}
 	virtual HRESULT STDMETHODCALLTYPE EndRead(IMFAsyncResult* pResult, _Out_  ULONG* pcbRead)
 	{
 		HRESULT ret = S_OK;
-		PMFRW_STREAM_OPERATION r = NULL;
-		CMFSmartMemory<MFRW_STREAM_OPERATION> *sm = NULL;
+		CMFRWStreamOp *r = NULL;
 
 		if (pcbRead != NULL)
 			*pcbRead = 0;
 
-		ret = pResult->GetObjectW((IUnknown **)&sm);
+		ret = pResult->GetObjectW((IUnknown **)&r);
 		if (SUCCEEDED(ret)) {
-			r = sm->get();
-			sm->reset(NULL);
-			delete sm;
-			OpRecordWait(r);
+			r->Wait();
 			if (pcbRead != NULL)
-				*pcbRead = r->BytesTransferred;
+				*pcbRead = r->getBytesTransferred();
 
-			OpRecordFree(r);
+			r->Release();
 		}
 
 		return ret;
@@ -229,17 +304,17 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE Write(__RPC__in_ecount_full(cb) const BYTE* pb, ULONG cb, __RPC__out ULONG* pcbWritten)
 	{
 		HRESULT ret = S_OK;
-		PMFRW_STREAM_OPERATION r = NULL;
+		CMFRWStreamOp *r = NULL;
 
-		ret = OpRecordAlloc(mrwsWrite, (void*)pb, cb, NULL, NULL, &r);
+		ret = CMFRWStreamOp::NewInstance(mrwsWrite, (void*)pb, cb, NULL, NULL, &r);
 		if (SUCCEEDED(ret)) {
 			OpRecordInsert(r);
-			OpRecordWait(r);
+			r->Wait();
 			if (pcbWritten != NULL)
-				*pcbWritten = r->BytesTransferred;
+				*pcbWritten = r->getBytesTransferred();
 
-			ret = r->Result;
-			OpRecordFree(r);
+			ret = r->getResult();
+			r->Release();
 		}
 
 		return ret;
@@ -247,33 +322,31 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE BeginWrite(_In_reads_bytes_(cb)  const BYTE* pb, ULONG cb, IMFAsyncCallback* pCallback, IUnknown* punkState)
 	{
 		HRESULT ret = S_OK;
-		PMFRW_STREAM_OPERATION r = NULL;
+		CMFRWStreamOp *r = NULL;
 
-		ret = OpRecordAlloc(mrwsWrite, (void*)pb, cb, NULL, NULL, &r);
-		if (SUCCEEDED(ret))
+		ret = CMFRWStreamOp::NewInstance(mrwsWrite, (void*)pb, cb, NULL, NULL, &r);
+		if (SUCCEEDED(ret)) {
 			OpRecordInsert(r);
+			r->Release();
+		}
 
 		return ret;
 	}
 	virtual HRESULT STDMETHODCALLTYPE EndWrite(IMFAsyncResult* pResult, _Out_  ULONG* pcbWritten)
 	{
 		HRESULT ret = S_OK;
-		PMFRW_STREAM_OPERATION r = NULL;
-		CMFSmartMemory<MFRW_STREAM_OPERATION>* sm = NULL;
+		CMFRWStreamOp *r = NULL;
 
 		if (pcbWritten != NULL)
 			*pcbWritten = 0;
 
-		ret = pResult->GetObjectW((IUnknown**)&sm);
+		ret = pResult->GetObjectW((IUnknown**)&r);
 		if (SUCCEEDED(ret)) {
-			r = sm->get();
-			sm->reset(NULL);
-			delete sm;
-			OpRecordWait(r);
+			r->Wait();
 			if (pcbWritten != NULL)
-				*pcbWritten = r->BytesTransferred;
+				*pcbWritten = r->getBytesTransferred();
 
-			OpRecordFree(r);
+			r->Release();
 		}
 
 		return ret;
@@ -299,48 +372,42 @@ public:
 	}
 
 	CMFRWStream(bool ReadSupport, bool WriteSupport)
-		: supportsRead_(ReadSupport), supportsWrite_(WriteSupport), closed_(false)
+		: supportsRead_(ReadSupport), supportsWrite_(WriteSupport), closed_(false), errorCode_(S_OK), opThread_(NULL)
 	{
+		InterlockedExchange(&refCount_, 1);
 		InitializeCriticalSection(&opListLock_);
 		opListHead_.Blink = &opListHead_;
 		opListHead_.Flink = &opListHead_;
 		opListSemaphore_ = CreateSemaphoreW(NULL, 0, 0x7FFFFFFF, NULL);
 		if (opListSemaphore_ == NULL) {
 			errorCode_ = GetLastError();
-			DeleteCriticalSection(&opListLock_);
 			return;
 		}
 
 		opThread_ = CreateThread(NULL, 0, _StreamThreadROutine, this, 0, NULL);
 		if (opThread_ == NULL) {
 			errorCode_ = GetLastError();
-			CloseHandle(opListSemaphore_);
-			DeleteCriticalSection(&opListLock_);
 			return;
 		}
 
 		WaitForSingleObject(opListSemaphore_, INFINITE);
-		if (FAILED(errorCode_)) {
-			WaitForSingleObject(opThread_, INFINITE);
-			CloseHandle(opListSemaphore_);
-			DeleteCriticalSection(&opListLock_);
+		if (FAILED(errorCode_))
 			return;
-		}
-
-		InterlockedExchange(&refCount_, 1);
-		errorCode_ = S_OK;
 
 		return;
 	}
 	~CMFRWStream(void)
 	{
-		if (SUCCEEDED(errorCode_)) {
+		if (opThread_ != NULL) {
 			closed_ = true;
 			WaitForSingleObject(opThread_, INFINITE);
 			CloseHandle(opThread_);
-			CloseHandle(opListSemaphore_);
-			DeleteCriticalSection(&opListLock_);
 		}
+
+		if (opListSemaphore_ != NULL)
+			CloseHandle(opListSemaphore_);
+
+		DeleteCriticalSection(&opListLock_);
 
 		return;
 	}
@@ -348,83 +415,18 @@ private:
 	bool supportsRead_;
 	bool supportsWrite_;
 	volatile bool closed_;
-	HRESULT errorCode_;
+	volatile HRESULT errorCode_;
 	volatile LONG refCount_;
 	LIST_ENTRY opListHead_;
 	CRITICAL_SECTION opListLock_;
 	HANDLE opListSemaphore_;
 	HANDLE opThread_;
-	HRESULT OpRecordAlloc(EMFRWStreamOperationType Type, void *Buffer, ULONG Length, IMFAsyncCallback *Callback, IUnknown *State, PMFRW_STREAM_OPERATION* Record)
-	{
-		HRESULT ret = S_OK;
-		PMFRW_STREAM_OPERATION tmpRecord = NULL;
-		CMFSmartMemory<MFRW_STREAM_OPERATION>* sm = NULL;
-
-		tmpRecord = (PMFRW_STREAM_OPERATION)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MFRW_STREAM_OPERATION));
-		if (tmpRecord != NULL) {
-			tmpRecord->Entry.Flink = &tmpRecord->Entry;
-			tmpRecord->Entry.Blink = &tmpRecord->Entry;
-			tmpRecord->Type = Type;
-			tmpRecord->Buffer = Buffer;
-			tmpRecord->Length = Length;
-			tmpRecord->Event = CreateEventW(NULL, TRUE, FALSE, NULL);
-			if (tmpRecord->Event != NULL) {
-				tmpRecord->Callback = Callback;
-				tmpRecord->State = State;
-				if (tmpRecord->Callback != NULL) {
-					sm = new CMFSmartMemory<MFRW_STREAM_OPERATION>(tmpRecord);
-					ret = MFCreateAsyncResult(sm, tmpRecord->Callback, tmpRecord->State, &tmpRecord->AsyncResult);
-					if (SUCCEEDED(ret))
-						tmpRecord->Callback->AddRef();
-				}
-
-				if (SUCCEEDED(ret)) {
-					if (tmpRecord->State != NULL)
-						tmpRecord->State->AddRef();
-
-					*Record = tmpRecord;
-				}
-
-				if (FAILED(ret)) {
-					if (sm != NULL) {
-						sm->reset(NULL);
-						delete sm;
-					}
-
-					CloseHandle(tmpRecord->Event);
-				}
-			} else ret = GetLastError() | 0x80070000;
-			
-			if (FAILED(ret))
-				HeapFree(GetProcessHeap(), 0, tmpRecord);
-		} else ret = E_OUTOFMEMORY;
-
-		return ret;
-	}
-	void OpRecordInsert(PMFRW_STREAM_OPERATION Record)
+	void OpRecordInsert(CMFRWStreamOp *Record)
 	{
 		EnterCriticalSection(&opListLock_);
-		Record->Entry.Flink = &opListHead_;
-		Record->Entry.Blink = opListHead_.Blink;
-		opListHead_.Blink->Flink = &Record->Entry;
-		opListHead_.Blink = &Record->Entry;
+		Record->Insert(&opListHead_);
 		LeaveCriticalSection(&opListLock_);
 		ReleaseSemaphore(opListSemaphore_, 1, NULL);
-
-		return;
-	}
-	void OpRecordWait(PMFRW_STREAM_OPERATION Record)
-	{
-		WaitForSingleObject(Record->Event, INFINITE);
-
-		return;
-	}
-	void OpRecordFree(PMFRW_STREAM_OPERATION Record)
-	{
-		MFGen_SafeRelease(Record->AsyncResult);
-		MFGen_SafeRelease(Record->State);
-		MFGen_SafeRelease(Record->Callback);
-		HeapFree(GetProcessHeap(), 0, Record);
 
 		return;
 	}
@@ -432,8 +434,7 @@ private:
 	{
 		HRESULT ret = S_OK;
 		CMFRWStream* s = (CMFRWStream*)Context;
-		PMFRW_STREAM_OPERATION r = NULL;
-		IMFAsyncResult* ar = NULL;
+		CMFRWStreamOp *r = NULL;
 
 		ret = CoInitialize(NULL);
 		s->errorCode_ = ret;
@@ -443,26 +444,14 @@ private:
 				r = NULL;
 				WaitForSingleObject(s->opListSemaphore_, INFINITE);
 				EnterCriticalSection(&s->opListLock_);
-				if (s->opListHead_.Flink != &s->opListHead_) {
-					r = CONTAINING_RECORD(s->opListHead_.Flink, MFRW_STREAM_OPERATION, Entry);
-					r->Entry.Flink->Blink = r->Entry.Blink;
-					r->Entry.Blink->Flink = r->Entry.Flink;
-				}
-
+				r = CMFRWStreamOp::RemoveFromList(&s->opListHead_);
 				LeaveCriticalSection(&s->opListLock_);
 				if (r != NULL) {
 					// TODO: Process the operation
-					r->BytesTransferred = r->Length;
-					r->Result = S_OK;
-					SetEvent(r->Event);
-					if (r->Callback != NULL) {
-						ar = r->AsyncResult;
-						ar->AddRef();
-						ar->SetStatus(r->Result);
-						r->Callback->Invoke(ar);
-						ar->Release();
-					}
+					r->Finish(S_OK, r->getLength());
 				}
+
+				MFGen_SafeRelease(r);
 			}
 
 			CoUninitialize();
