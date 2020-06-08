@@ -321,6 +321,7 @@ DWORD WINAPI CMFRWStream::_StreamThreadROutine(PVOID Context)
 	HRESULT ret = S_OK;
 	CMFRWStream* s = (CMFRWStream*)Context;
 	CMFRWStreamOp* r = NULL;
+	DWORD bytesTransferred = 0;
 
 	ret = CoInitialize(NULL);
 	s->errorCode_ = ret;
@@ -334,7 +335,16 @@ DWORD WINAPI CMFRWStream::_StreamThreadROutine(PVOID Context)
 			LeaveCriticalSection(&s->opListLock_);
 			if (r != NULL) {
 				// TODO: Process the operation
-				r->Finish(S_OK, r->getLength());
+				switch (r->getType()) {
+					case CMFRWStreamOp::OpType::mrwsRead:
+						ret = s->callbacks_.Read(0, r->getBuffer(), r->getLength(), &bytesTransferred, s->callbacks_.ReadContext);
+						break;
+					case CMFRWStreamOp::OpType::mrwsWrite:
+						ret = s->callbacks_.Write(0, r->getBuffer(), r->getLength(), &bytesTransferred, s->callbacks_.WriteContext);
+						break;
+				}
+
+				r->Finish(ret, bytesTransferred);
 				EnterCriticalSection(&s->opListLock_);
 				if (InterlockedDecrement(&s->pendingOpCount_) == 0)
 					SetEvent(s->flushedEvent_);

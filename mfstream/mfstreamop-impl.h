@@ -36,6 +36,7 @@ public:
 	HRESULT getResult(void) const { return result_; }
 	void* getBuffer(void) const { return buffer_; }
 	DWORD getLength(void) const { return length_; }
+	OpType getType(void) const { return type_; }
 	void Finish(HRESULT Result, DWORD BytesTransferred);
 private:
 	CMFRWStreamOp();

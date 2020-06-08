@@ -25,6 +25,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfstream", "mfstream\mfstre
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfstream-dll", "mfstream-dll\mfstream-dll.vcxproj", "{3ABE0DC0-7D40-4B37-BC81-592CD8DFE45C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sodium", "libsodium\sodium.vcxproj", "{6D44E46D-CA84-4BC4-850F-C85235113111}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sodium-dll", "libsodium\sodium-dll.vcxproj", "{DA722EF1-3618-46A4-A076-BCC672B64587}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -121,6 +125,22 @@ Global
 		{3ABE0DC0-7D40-4B37-BC81-592CD8DFE45C}.Release|x64.Build.0 = Release|x64
 		{3ABE0DC0-7D40-4B37-BC81-592CD8DFE45C}.Release|x86.ActiveCfg = Release|Win32
 		{3ABE0DC0-7D40-4B37-BC81-592CD8DFE45C}.Release|x86.Build.0 = Release|Win32
+		{6D44E46D-CA84-4BC4-850F-C85235113111}.Debug|x64.ActiveCfg = Debug|x64
+		{6D44E46D-CA84-4BC4-850F-C85235113111}.Debug|x64.Build.0 = Debug|x64
+		{6D44E46D-CA84-4BC4-850F-C85235113111}.Debug|x86.ActiveCfg = Debug|Win32
+		{6D44E46D-CA84-4BC4-850F-C85235113111}.Debug|x86.Build.0 = Debug|Win32
+		{6D44E46D-CA84-4BC4-850F-C85235113111}.Release|x64.ActiveCfg = Release|x64
+		{6D44E46D-CA84-4BC4-850F-C85235113111}.Release|x64.Build.0 = Release|x64
+		{6D44E46D-CA84-4BC4-850F-C85235113111}.Release|x86.ActiveCfg = Release|Win32
+		{6D44E46D-CA84-4BC4-850F-C85235113111}.Release|x86.Build.0 = Release|Win32
+		{DA722EF1-3618-46A4-A076-BCC672B64587}.Debug|x64.ActiveCfg = Debug|x64
+		{DA722EF1-3618-46A4-A076-BCC672B64587}.Debug|x64.Build.0 = Debug|x64
+		{DA722EF1-3618-46A4-A076-BCC672B64587}.Debug|x86.ActiveCfg = Debug|Win32
+		{DA722EF1-3618-46A4-A076-BCC672B64587}.Debug|x86.Build.0 = Debug|Win32
+		{DA722EF1-3618-46A4-A076-BCC672B64587}.Release|x64.ActiveCfg = Release|x64
+		{DA722EF1-3618-46A4-A076-BCC672B64587}.Release|x64.Build.0 = Release|x64
+		{DA722EF1-3618-46A4-A076-BCC672B64587}.Release|x86.ActiveCfg = Release|Win32
+		{DA722EF1-3618-46A4-A076-BCC672B64587}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
