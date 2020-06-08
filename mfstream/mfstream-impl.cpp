@@ -3,8 +3,107 @@
 #include <winerror.h>
 #include <mfidl.h>
 #include <mfapi.h>
+#include "mfstreamop-impl.h"
 #include "mfstream-impl.h"
 
+
+
+HRESULT STDMETHODCALLTYPE CMFRWStream::QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
+{
+	HRESULT ret = E_NOINTERFACE;
+
+	if (ppvObject != NULL) {
+		if (riid == IID_IUnknown ||
+			riid == IID_IMFByteStream) {
+			AddRef();
+			*ppvObject = this;
+			ret = S_OK;
+		}
+	} else ret = E_POINTER;
+
+	return ret;
+}
+
+
+ULONG STDMETHODCALLTYPE CMFRWStream::AddRef(void)
+{
+	return (ULONG)InterlockedIncrement(&refCount_);
+}
+
+
+ULONG STDMETHODCALLTYPE CMFRWStream::Release(void)
+{
+	LONG tmp = InterlockedDecrement(&refCount_);
+
+	if (tmp == 0)
+		delete this;
+
+	return tmp;
+}
+
+
+HRESULT STDMETHODCALLTYPE CMFRWStream::GetCapabilities(__RPC__out DWORD* pdwCapabilities)
+{
+	DWORD caps = 0;
+	HRESULT ret = S_OK;
+
+	if (supportsRead_)
+		caps |= MFBYTESTREAM_IS_READABLE;
+
+	if (supportsWrite_)
+		caps |= MFBYTESTREAM_IS_WRITABLE;
+
+
+	*pdwCapabilities = caps;
+
+	return ret;
+}
+
+
+HRESULT STDMETHODCALLTYPE CMFRWStream::GetLength(__RPC__out QWORD* pqwLength)
+{
+	HRESULT ret = S_OK;
+
+	*pqwLength = (QWORD)-1;
+
+	return ret;
+}
+
+
+HRESULT STDMETHODCALLTYPE CMFRWStream::SetLength(QWORD qwLength)
+{
+	HRESULT ret = S_OK;
+
+	return ret;
+}
+
+
+HRESULT STDMETHODCALLTYPE CMFRWStream::GetCurrentPosition(__RPC__out QWORD* pqwPosition)
+{
+	HRESULT ret = S_OK;
+
+	*pqwPosition = 0;
+
+	return ret;
+}
+
+
+HRESULT STDMETHODCALLTYPE CMFRWStream::SetCurrentPosition(QWORD qwPosition)
+{
+	HRESULT ret = S_OK;
+
+	return ret;
+}
+
+
+HRESULT STDMETHODCALLTYPE CMFRWStream::IsEndOfStream(__RPC__out BOOL* pfEndOfStream)
+{
+	HRESULT ret = S_OK;
+
+	*pfEndOfStream = TRUE;
+
+	return ret;
+}
 
 
 HRESULT STDMETHODCALLTYPE CMFRWStream::Read(__RPC__out_ecount_full(cb) BYTE* pb, ULONG cb, __RPC__out ULONG* pcbRead)

@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mfstream-impl.h" />
+    <ClInclude Include="mfstreamop-impl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mfstream-impl.cpp" />
+    <ClCompile Include="mfstreamop-impl.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

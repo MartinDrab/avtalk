@@ -18,9 +18,15 @@
     <ClInclude Include="mfstream-impl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mfstreamop-impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mfstream-impl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mfstreamop-impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
