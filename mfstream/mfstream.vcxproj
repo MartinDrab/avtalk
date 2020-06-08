@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\mfstream.h" />
     <ClInclude Include="mfstream-impl.h" />
     <ClInclude Include="mfstreamop-impl.h" />
   </ItemGroup>

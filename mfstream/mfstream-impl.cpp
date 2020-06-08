@@ -47,12 +47,11 @@ HRESULT STDMETHODCALLTYPE CMFRWStream::GetCapabilities(__RPC__out DWORD* pdwCapa
 	DWORD caps = 0;
 	HRESULT ret = S_OK;
 
-	if (supportsRead_)
+	if (callbacks_.Read != NULL)
 		caps |= MFBYTESTREAM_IS_READABLE;
 
-	if (supportsWrite_)
+	if (callbacks_.Write != NULL)
 		caps |= MFBYTESTREAM_IS_WRITABLE;
-
 
 	*pdwCapabilities = caps;
 
@@ -245,8 +244,8 @@ HRESULT STDMETHODCALLTYPE CMFRWStream::Close(void)
 }
 
 
-CMFRWStream::CMFRWStream(bool ReadSupport, bool WriteSupport)
-	: supportsRead_(ReadSupport), supportsWrite_(WriteSupport), closed_(false), errorCode_(S_OK), opThread_(NULL)
+CMFRWStream::CMFRWStream(const MFSTREAM_CALLBACKS& Callbacks)
+	: callbacks_(Callbacks), closed_(false), errorCode_(S_OK), opThread_(NULL)
 {
 	InterlockedExchange(&refCount_, 1);
 	InterlockedExchange(&pendingOpCount_, 0);

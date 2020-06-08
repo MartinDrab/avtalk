@@ -9,7 +9,7 @@
 #include <mfapi.h>
 #include "mfgen.h"
 #include "mfstreamop-impl.h"
-
+#include "mfstream.h"
 
 
 
@@ -38,11 +38,9 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE Flush(void);
 	virtual HRESULT STDMETHODCALLTYPE Close(void);
 
-	CMFRWStream(bool ReadSupport, bool WriteSupport);
+	CMFRWStream(const MFSTREAM_CALLBACKS & Callbacks);
 	~CMFRWStream(void);
 private:
-	bool supportsRead_;
-	bool supportsWrite_;
 	volatile bool closed_;
 	volatile HRESULT errorCode_;
 	volatile LONG refCount_;
@@ -52,6 +50,7 @@ private:
 	HANDLE flushedEvent_;
 	HANDLE opListSemaphore_;
 	HANDLE opThread_;
+	MFSTREAM_CALLBACKS callbacks_;
 	void OpRecordInsert(CMFRWStreamOp* Record);
 	static DWORD WINAPI _StreamThreadROutine(PVOID Context);
 };
