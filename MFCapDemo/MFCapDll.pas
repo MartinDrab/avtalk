@@ -97,6 +97,21 @@ Type
   MFPLAY_DEVICE_INFO = _MFPLAY_DEVICE_INFO;
   PMFPLAY_DEVICE_INFO = ^MFPLAY_DEVICE_INFO;
 
+  MFSTREAM_READ_CALLBACK = Function (APosition:UInt64; ABuffer:Pointer; ALength:Cardinal; Var ARead:Cardinal; AContext:Pointer):Cardinal; Cdecl;
+  MFSTREAM_WRITE_CALLBACK = Function (APosition:UInt64; ABuffer:Pointer; Length:Cardinal; Var AWritten:Cardinal; AContext:Pointer):Cardinal; Cdecl;
+  MFSTREAM_BYTES_AVAILABLE_CALLBACK = Function (Var BytesAvailable:Cardinal; AContext:Pointer):Cardinal; Cdecl;
+
+  _MFSTREAM_CALLBACKS = Record
+    Read : MFSTREAM_READ_CALLBACK;
+    ReadContext : Pointer;
+    Write : MFSTREAM_WRITE_CALLBACK;
+    WriteContext : Pointer;
+    BytesAvailable : MFSTREAM_BYTES_AVAILABLE_CALLBACK;
+    BytesAvailableContext : Pointer;
+    end;
+  MFSTREAM_CALLBACKS = _MFSTREAM_CALLBACKS;
+  PMFSTREAM_CALLBACKS = ^MFSTREAM_CALLBACKS;
+
 Function MFCap_EnumDevices(AType:EMFCapFormatType; Var ADevices:PMFCAP_DEVICE_INFO; Var ACount:Cardinal):Cardinal; Cdecl;
 Procedure MFCap_FreeDeviceEnumeration(ADevices:PMFCAP_DEVICE_INFO; ACount:Cardinal); Cdecl;
 Function MFCap_EnumMediaTypes(ADevice:Pointer; Var AFormats:PMFGEN_FORMAT; Var ACount:Cardinal; Var AStreamCount:Cardinal):Cardinal; Cdecl;
@@ -119,6 +134,7 @@ Function MFPlay_NewInstanceForWindow(AWindow:HWND; Var ADevice:Pointer):Cardinal
 Procedure MFPlay_FreeInstance(ADevice:Pointer); Cdecl;
 Function MFPlay_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl;
 Function MFPlay_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:Cardinal):Cardinal; Cdecl;
+Function MFPlay_CreateASFStream(ACapDevice:Pointer; AWriteCallback:MFSTREAM_WRITE_CALLBACK; AContext:Pointer; Var Streams:Pointer):Cardinal; Cdecl;
 
 Function MFSession_NewInstance(Var ASession:Pointer):Cardinal; Cdecl;
 Procedure MFSession_FreeInstance(ASession:Pointer); Cdecl;
@@ -167,6 +183,7 @@ Function MFPlay_NewInstanceForWindow(AWindow:HWND; Var ADevice:Pointer):Cardinal
 Procedure MFPlay_FreeInstance(ADevice:Pointer); Cdecl; Cdecl; External PLAYLibraryName;
 Function MFPlay_CreateStreamNodes(ADevice:Pointer; Var ANodes:PMFGEN_STREAM_INFO; Var ACount:Cardinal):Cardinal; Cdecl; External PLAYLibraryName;
 Function MFPlay_QueryCharacteristics(ADevice:Pointer; Var ACharacteristics:Cardinal):Cardinal; Cdecl; External PLAYLibraryName;
+Function MFPlay_CreateASFStream(ACapDevice:Pointer; AWriteCallback:MFSTREAM_WRITE_CALLBACK; AContext:Pointer; Var Streams:Pointer):Cardinal; Cdecl; External PLAYLibraryName;
 
 Function MFSession_NewInstance(Var ASession:Pointer):Cardinal; Cdecl; External SESSIONLibraryName;
 Procedure MFSession_FreeInstance(ASession:Pointer); Cdecl; External SESSIONLibraryName;
