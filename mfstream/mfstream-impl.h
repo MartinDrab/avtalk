@@ -48,6 +48,8 @@ private:
 	volatile LONG refCount_;
 	LIST_ENTRY opListHead_;
 	CRITICAL_SECTION opListLock_;
+	volatile LONG pendingOpCount_;
+	HANDLE flushedEvent_;
 	HANDLE opListSemaphore_;
 	HANDLE opThread_;
 	void OpRecordInsert(CMFRWStreamOp* Record);

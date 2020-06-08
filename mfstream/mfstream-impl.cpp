@@ -228,6 +228,8 @@ HRESULT STDMETHODCALLTYPE CMFRWStream::Flush(void)
 {
 	HRESULT ret = S_OK;
 
+	WaitForSingleObject(flushedEvent_, INFINITE);
+
 	return ret;
 }
 
@@ -247,11 +249,18 @@ CMFRWStream::CMFRWStream(bool ReadSupport, bool WriteSupport)
 	: supportsRead_(ReadSupport), supportsWrite_(WriteSupport), closed_(false), errorCode_(S_OK), opThread_(NULL)
 {
 	InterlockedExchange(&refCount_, 1);
+	InterlockedExchange(&pendingOpCount_, 0);
 	InitializeCriticalSection(&opListLock_);
 	opListHead_.Blink = &opListHead_;
 	opListHead_.Flink = &opListHead_;
 	opListSemaphore_ = CreateSemaphoreW(NULL, 0, 0x7FFFFFFF, NULL);
 	if (opListSemaphore_ == NULL) {
+		errorCode_ = GetLastError();
+		return;
+	}
+
+	flushedEvent_ = CreateEventW(NULL, TRUE, TRUE, NULL);
+	if (flushedEvent_ == NULL) {
 		errorCode_ = GetLastError();
 		return;
 	}
@@ -278,6 +287,9 @@ CMFRWStream::~CMFRWStream(void)
 		CloseHandle(opThread_);
 	}
 
+	if (flushedEvent_ != NULL)
+		CloseHandle(flushedEvent_);
+
 	if (opListSemaphore_ != NULL)
 		CloseHandle(opListSemaphore_);
 
@@ -291,6 +303,9 @@ void CMFRWStream::OpRecordInsert(CMFRWStreamOp* Record)
 {
 	EnterCriticalSection(&opListLock_);
 	Record->Insert(&opListHead_);
+	if (InterlockedIncrement(&pendingOpCount_) == 1)
+		ResetEvent(flushedEvent_);
+
 	LeaveCriticalSection(&opListLock_);
 	ReleaseSemaphore(opListSemaphore_, 1, NULL);
 
@@ -317,6 +332,11 @@ DWORD WINAPI CMFRWStream::_StreamThreadROutine(PVOID Context)
 			if (r != NULL) {
 				// TODO: Process the operation
 				r->Finish(S_OK, r->getLength());
+				EnterCriticalSection(&s->opListLock_);
+				if (InterlockedDecrement(&s->pendingOpCount_) == 0)
+					SetEvent(s->flushedEvent_);
+
+				LeaveCriticalSection(&s->opListLock_);
 			}
 
 			MFGen_SafeRelease(r);
