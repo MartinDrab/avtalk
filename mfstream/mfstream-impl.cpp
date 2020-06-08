@@ -9,6 +9,7 @@
 
 
 #pragma comment(lib, "Mfplat.lib")
+#pragma comment(lib, "mfuuid.lib")
 
 
 HRESULT STDMETHODCALLTYPE CMFRWStream::QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
