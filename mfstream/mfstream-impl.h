@@ -10,16 +10,17 @@
 #include "mfgen.h"
 
 
-typedef enum _EMFRWStreamOperationType {
-	mrwsUnknown,
-	mrwsRead,
-	mrwsWrite,
-	mrwsMax,
-} EMFRWStreamOperationType, *PEMFRWStreamOperationType;
 
 class CMFRWStreamOp : public IUnknown
 {
 public:
+	enum OpType {
+		mrwsUnknown,
+		mrwsRead,
+		mrwsWrite,
+		mrwsMax,
+	};
+
 	// IUnknown interface
 	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
 	{
@@ -77,7 +78,7 @@ public:
 
 		return ret;
 	}
-	static HRESULT NewInstance(EMFRWStreamOperationType Type, void* Buffer, ULONG Length, IMFAsyncCallback* Callback, IUnknown* State, CMFRWStreamOp** Record)
+	static HRESULT NewInstance(OpType Type, void* Buffer, ULONG Length, IMFAsyncCallback* Callback, IUnknown* State, CMFRWStreamOp** Record)
 	{
 		HRESULT ret = S_OK;
 		CMFRWStreamOp *tmpRecord = NULL;
@@ -153,7 +154,7 @@ private:
 	CMFRWStreamOp& operator = (CMFRWStreamOp&&) = delete;
 	volatile LONG refCount_;
 	LIST_ENTRY entry_;
-	EMFRWStreamOperationType type_;
+	OpType type_;
 	DWORD length_;
 	void* buffer_;
 	IMFAsyncCallback* callback_;
@@ -256,7 +257,7 @@ public:
 		HRESULT ret = S_OK;
 		CMFRWStreamOp *r = NULL;
 
-		ret = CMFRWStreamOp::NewInstance(mrwsRead, (void*)pb, cb, NULL, NULL, &r);
+		ret = CMFRWStreamOp::NewInstance(CMFRWStreamOp::OpType::mrwsRead, (void*)pb, cb, NULL, NULL, &r);
 		if (SUCCEEDED(ret)) {
 			OpRecordInsert(r);
 			r->Wait();
@@ -274,7 +275,7 @@ public:
 		HRESULT ret = S_OK;
 		CMFRWStreamOp *r = NULL;
 
-		ret = CMFRWStreamOp::NewInstance(mrwsRead, (void*)pb, cb, NULL, NULL, &r);
+		ret = CMFRWStreamOp::NewInstance(CMFRWStreamOp::OpType::mrwsRead, (void*)pb, cb, NULL, NULL, &r);
 		if (SUCCEEDED(ret)) {
 			OpRecordInsert(r);
 			r->Release();
@@ -306,7 +307,7 @@ public:
 		HRESULT ret = S_OK;
 		CMFRWStreamOp *r = NULL;
 
-		ret = CMFRWStreamOp::NewInstance(mrwsWrite, (void*)pb, cb, NULL, NULL, &r);
+		ret = CMFRWStreamOp::NewInstance(CMFRWStreamOp::OpType::mrwsWrite, (void*)pb, cb, NULL, NULL, &r);
 		if (SUCCEEDED(ret)) {
 			OpRecordInsert(r);
 			r->Wait();
@@ -324,7 +325,7 @@ public:
 		HRESULT ret = S_OK;
 		CMFRWStreamOp *r = NULL;
 
-		ret = CMFRWStreamOp::NewInstance(mrwsWrite, (void*)pb, cb, NULL, NULL, &r);
+		ret = CMFRWStreamOp::NewInstance(CMFRWStreamOp::OpType::mrwsWrite, (void*)pb, cb, NULL, NULL, &r);
 		if (SUCCEEDED(ret)) {
 			OpRecordInsert(r);
 			r->Release();
