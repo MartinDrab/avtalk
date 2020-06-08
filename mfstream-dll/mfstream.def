@@ -1,0 +1,5 @@
+LIBRARY mfstream-dll
+EXPORTS
+	MFStream_NewInstance
+	MFStream_FreeInstance
+

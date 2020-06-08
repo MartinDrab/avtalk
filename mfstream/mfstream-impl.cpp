@@ -1,11 +1,14 @@
 
 #include <windows.h>
+#include <initguid.h>
 #include <winerror.h>
 #include <mfidl.h>
 #include <mfapi.h>
 #include "mfstreamop-impl.h"
 #include "mfstream-impl.h"
 
+
+#pragma comment(lib, "Mfplat.lib")
 
 
 HRESULT STDMETHODCALLTYPE CMFRWStream::QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
