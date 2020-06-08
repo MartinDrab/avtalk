@@ -288,7 +288,7 @@ extern "C" HRESULT MFPlay_NewInstanceForWindow(HWND Window, PMFPLAY_DEVICE* Devi
 }
 
 
-HRESULT MFPlay_CreateASFStream(const MFCAP_DEVICE* CapDevice, MFSTREAM_READ_CALLBACK* ReadCallback, void* Context, PMFPLAY_DEVICE* Streams)
+HRESULT MFPlay_CreateASFStream(const MFCAP_DEVICE* CapDevice, MFSTREAM_WRITE_CALLBACK* WriteCallback, void* Context, PMFPLAY_DEVICE* Streams)
 {
 	HRESULT ret = S_OK;
 	PMFPLAY_DEVICE tmpStream = NULL;
@@ -299,8 +299,8 @@ HRESULT MFPlay_CreateASFStream(const MFCAP_DEVICE* CapDevice, MFSTREAM_READ_CALL
 	IMFMediaSink* sink = NULL;
 
 	memset(&callbacks, 0, sizeof(callbacks));
-	callbacks.Read = ReadCallback;
-	callbacks.ReadContext = Context;
+	callbacks.Write = WriteCallback;
+	callbacks.WriteContext = Context;
 	ret = MFGen_RefMemAlloc(sizeof(MFPLAY_DEVICE), (void **)&tmpStream);
 	if (SUCCEEDED(ret))
 		ret = MFStream_NewInstance(&callbacks, &byteStream);
@@ -323,6 +323,8 @@ HRESULT MFPlay_CreateASFStream(const MFCAP_DEVICE* CapDevice, MFSTREAM_READ_CALL
 	if (SUCCEEDED(ret)) {
 		sink->AddRef();
 		tmpStream->Sink = sink;
+		MFGen_RefMemAddRef(tmpStream);
+		*Streams = tmpStream;
 	}
 
 	MFGen_SafeRelease(contentInfo);
