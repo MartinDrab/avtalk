@@ -8,3 +8,4 @@ EXPORTS
 	MFPlay_FreeInstance
 	MFPlay_CreateStreamNodes
 	MFPlay_QueryCharacteristics
+	MFPlay_CreateASFStream
