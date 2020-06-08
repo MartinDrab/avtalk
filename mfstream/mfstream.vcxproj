@@ -25,6 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mfstream-impl.cpp" />
+    <ClCompile Include="mfstream.cpp" />
     <ClCompile Include="mfstreamop-impl.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

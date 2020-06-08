@@ -38,6 +38,7 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE Flush(void);
 	virtual HRESULT STDMETHODCALLTYPE Close(void);
 
+	HRESULT getError(void) const { return errorCode_; }
 	CMFRWStream(const MFSTREAM_CALLBACKS & Callbacks);
 	~CMFRWStream(void);
 private:

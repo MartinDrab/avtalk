@@ -23,10 +23,16 @@ typedef struct _MFSTREAM_CALLBACKS {
 	void* BytesAvailableContext;
 } MFSTREAM_CALLBACKS, *PMFSTREAM_CALLBACKS;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 HRESULT MFStream_NewInstance(const MFSTREAM_CALLBACKS* Callbacks, IMFByteStream** Stream);
 void MFStream_FreeInstance(IMFByteStream* Stream);
 
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
