@@ -8,7 +8,7 @@
 #include <mfidl.h>
 #include <mfobjects.h>
 #include "mfcap.h"
-
+#include "mfstream.h"
 
 
 typedef struct _MFPLAY_DEVICE_INFO {
@@ -49,6 +49,7 @@ HRESULT MFPlay_EnumFormats(PMFPLAY_DEVICE Device, PMFGEN_FORMAT* Formats, DWORD*
 
 HRESULT MFPlay_NewInstance(const MFPLAY_DEVICE_INFO * DeviceInfo, PMFPLAY_DEVICE * Device);
 HRESULT MFPlay_NewInstanceForWindow(HWND Window, PMFPLAY_DEVICE* Device);
+HRESULT MFPlay_CreateASFStream(const MFCAP_DEVICE* CapDevice, MFSTREAM_READ_CALLBACK* ReadCallback, void* Context, PMFPLAY_DEVICE* Streams);
 void MFPlay_FreeInstance(PMFPLAY_DEVICE Device);
 HRESULT MFPlay_CreateStreamNodes(PMFPLAY_DEVICE Device, PMFGEN_STREAM_INFO * Nodes, DWORD * Count);
 HRESULT MFPlay_QueryCharacteristics(PMFPLAY_DEVICE Device, PDWORD Characteristics);

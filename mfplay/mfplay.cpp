@@ -7,6 +7,7 @@
 #include <mmdeviceapi.h>
 #include <mfapi.h>
 #include <propvarutil.h>
+#include <wmcontainer.h>
 #include <Functiondiscoverykeys_devpkey.h>
 #include "mfcap.h"
 #include "mfplay.h"
@@ -282,6 +283,53 @@ extern "C" HRESULT MFPlay_NewInstanceForWindow(HWND Window, PMFPLAY_DEVICE* Devi
 	MFGen_SafeRelease(s);
 	MFGen_SafeRelease(a);
 	MFGen_RefMemRelease(d);
+
+	return ret;
+}
+
+
+HRESULT MFPlay_CreateASFStream(const MFCAP_DEVICE* CapDevice, MFSTREAM_READ_CALLBACK* ReadCallback, void* Context, PMFPLAY_DEVICE* Streams)
+{
+	HRESULT ret = S_OK;
+	PMFPLAY_DEVICE tmpStream = NULL;
+	IMFByteStream* byteStream = NULL;
+	MFSTREAM_CALLBACKS callbacks;
+	IMFASFProfile* profile = NULL;
+	IMFASFContentInfo* contentInfo = NULL;
+	IMFMediaSink* sink = NULL;
+
+	memset(&callbacks, 0, sizeof(callbacks));
+	callbacks.Read = ReadCallback;
+	callbacks.ReadContext = Context;
+	ret = MFGen_RefMemAlloc(sizeof(MFPLAY_DEVICE), (void **)&tmpStream);
+	if (SUCCEEDED(ret))
+		ret = MFStream_NewInstance(&callbacks, &byteStream);
+
+	if (SUCCEEDED(ret))
+		ret = MFCreateASFProfileFromPresentationDescriptor(CapDevice->PresentationDescriptor, &profile);
+
+	if (SUCCEEDED(ret))
+		ret = MFCreateASFStreamingMediaSink(byteStream, &sink);
+
+	if (SUCCEEDED(ret))
+		ret = sink->QueryInterface(IID_PPV_ARGS(&contentInfo));
+
+	if (SUCCEEDED(ret))
+		ret = contentInfo->SetProfile(profile);
+
+	if (SUCCEEDED(ret))
+		ret = sink->GetCharacteristics(&tmpStream->Characteristics);
+
+	if (SUCCEEDED(ret)) {
+		sink->AddRef();
+		tmpStream->Sink = sink;
+	}
+
+	MFGen_SafeRelease(contentInfo);
+	MFGen_SafeRelease(sink);
+	MFGen_SafeRelease(profile);
+	MFGen_SafeRelease(byteStream);
+	MFGen_RefMemRelease(tmpStream);
 
 	return ret;
 }

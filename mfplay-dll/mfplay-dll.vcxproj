@@ -25,6 +25,9 @@
     <ProjectReference Include="..\mfplay\mfplay.vcxproj">
       <Project>{efd7c2c9-b637-45ea-bfa4-114d38990a93}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\mfstream-dll\mfstream-dll.vcxproj">
+      <Project>{3abe0dc0-7d40-4b37-bc81-592cd8dfe45c}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="mfplay.def" />
