@@ -140,6 +140,7 @@
         <DCCReference Include="MFPlayDevices.pas"/>
         <DCCReference Include="MFDevice.pas"/>
         <DCCReference Include="MFSession.pas"/>
+        <DCCReference Include="WindowVideoDevice.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -172,14 +173,14 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="Win32\Debug\MFDemo.exe" Configuration="Debug" Class="ProjectOutput">
-                    <Platform Name="Win32">
+                <DeployFile LocalName="..\bin\x64\Debug\MFDemo.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win64">
                         <RemoteName>MFDemo.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="..\bin\x64\Debug\MFDemo.exe" Configuration="Debug" Class="ProjectOutput">
-                    <Platform Name="Win64">
+                <DeployFile LocalName="Win32\Debug\MFDemo.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
                         <RemoteName>MFDemo.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>

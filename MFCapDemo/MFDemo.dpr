@@ -9,7 +9,8 @@ uses
   Utils in 'Utils.pas',
   MFPlayDevices in 'MFPlayDevices.pas',
   MFDevice in 'MFDevice.pas',
-  MFSession in 'MFSession.pas';
+  MFSession in 'MFSession.pas',
+  WindowVideoDevice in 'WindowVideoDevice.pas';
 
 {$R *.res}
 

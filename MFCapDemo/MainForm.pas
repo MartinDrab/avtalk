@@ -49,7 +49,7 @@ Var
 Implementation
 
 Uses
-  Utils, MFCapDll;
+  Utils, MFCapDll, WindowVideoDevice;
 
 {$R *.DFM}
 
@@ -226,8 +226,7 @@ Var
   b : TButton;
   err : Cardinal;
   s : TMFSession;
-  o : TMFPlayDevice;
-  sl : TObjectList<TMFGenStream>;
+  o : TWindowVideoDevice;
 begin
 b := Sender As TButton;
 s := TMFSession(Pointer(b.Tag));
@@ -240,7 +239,7 @@ If Not Assigned(s) Then
     Exit;
     end;
 
-  err := TMFPlayDevice.NewInstanceForWindow(VideoTestOutputPanel.Handle, o);
+  err := TWindowVideoDevice.NewInstance(VideoTestOutputPanel.Handle, o);
   If err <> 0 Then
     begin
     s.Free;
@@ -248,19 +247,8 @@ If Not Assigned(s) Then
     Exit;
     end;
 
-  sl := TObjectList<TMFGenStream>.Create;
-  err := o.EnumStreams(sl);
-  If err <> 0 Then
+  If Not Assigned(o.VideoStream) Then
     begin
-    sl.Free;
-    s.Free;
-    Win32ErrorMessage('Unable to enumerate video output streams', err);
-    Exit;
-    end;
-
-  If sl.Count = 0 Then
-    begin
-    sl.Free;
     s.Free;
     ErrorMessage('No video output streams');
     Exit;
@@ -268,16 +256,14 @@ If Not Assigned(s) Then
 
   If Not Assigned(VideoInputListView.Selected) Then
     begin
-    sl.Free;
     s.Free;
     ErrorMessage('No video input device selected');
     Exit;
     end;
 
-  err := s.AddEdge(FVideoInStreamList[VideoInputListView.Selected.Index], sl[0]);
+  err := s.AddEdge(FVideoInStreamList[VideoInputListView.Selected.Index], o.VideoStream);
   If err <> 0 Then
     begin
-    sl.Free;
     s.Free;
     Win32ErrorMessage('Unable to add streams into the session', err);
     Exit;
@@ -286,13 +272,11 @@ If Not Assigned(s) Then
   err := s.Start;
   If err <> 0 Then
     begin
-    sl.Free;
     s.Free;
     Win32ErrorMessage('Unable to start the session', err);
     Exit;
     end;
 
-  sl.Free;
   b.Tag := NativeUInt(s);
   b.Caption := 'Stop';
   end

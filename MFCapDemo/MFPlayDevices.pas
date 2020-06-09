@@ -9,22 +9,20 @@ Uses
 Type
   TMFPlayDevice = Class (TMFDevice)
   Private
-    FName : WideString;
     FDescription : WideString;
     FState : Cardinal;
     FCharacteristics : Cardinal;
     FDeviceType : EMFCapFormatType;
+  Protected
     Constructor Create(Var ARecord:MFPLAY_DEVICE_INFO); Reintroduce;
   Public
     Class Function CreateInstance(ARecord:Pointer):TMFDevice; Override;
     Class Function Enumerate(ADeviceType:EMFCapFormatType; AList:TObjectList<TMFDevice>; AOptions:TMFDeviceEnumerateOptions = []):Cardinal; Override;
-    Class Function NewInstanceForWindow(AWindow:HWND; Var ADevice:TMFPlayDevice):Cardinal;
 
     Function Open:Cardinal; Override;
     Procedure Close; Override;
     Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Override;
 
-    Property Name : WideString Read FName;
     Property Description : WideString Read FDescription;
     Property State : Cardinal Read FState;
     Property Characteristics : Cardinal Read FCharacteristics;
@@ -48,24 +46,6 @@ If Result = 0 Then
   begin
   Result := _Enumerate<TMFPlayDevice>(d, SizeOf(MFPLAY_DEVICE_INFO), count, AList, AOptions);
   MFPlay_FreeDeviceEnum(d, count);
-  end;
-end;
-
-Class Function TMFPlayDevice.NewInstanceForWindow(AWindow:HWND; Var ADevice:TMFPlayDevice):Cardinal;
-Var
-  h : Pointer;
-  r : MFPLAY_DEVICE_INFO;
-begin
-Result := MFPlay_NewInstanceForWIndow(AWindow, h);
-If Result = 0 Then
-  begin
-  r.State := DEVICE_STATE_ACTIVE;
-  r.Name := 'Window';
-  r.Description := 'Window-based video output';
-  r.EndpointId := '0';
-  r.Characteristics := 0;
-  ADevice := TMFPlayDevice.Create(r);
-  ADevice.Handle := h;
   end;
 end;
 

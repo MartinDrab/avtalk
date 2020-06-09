@@ -4,8 +4,9 @@ object MainFrm: TMainFrm
   BorderIcons = [biSystemMenu]
   Caption = 'MFRaptor'
   ClientHeight = 388
-  ClientWidth = 610
+  ClientWidth = 637
   Color = clBtnFace
+  CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -20,21 +21,24 @@ object MainFrm: TMainFrm
   object MainPageControl: TPageControl
     Left = 0
     Top = 0
-    Width = 610
+    Width = 637
     Height = 388
     ActivePage = DevicesTabSheet
     Align = alClient
     TabOrder = 0
+    ExplicitWidth = 610
     object DevicesTabSheet: TTabSheet
       Caption = 'Devices'
+      ExplicitWidth = 602
       object AudioInputGroupBox: TGroupBox
         Left = 0
         Top = 0
-        Width = 602
+        Width = 629
         Height = 97
         Align = alTop
         Caption = 'Audio input'
         TabOrder = 0
+        ExplicitWidth = 602
         object AUdioInputPanel: TPanel
           Left = 2
           Top = 15
@@ -42,7 +46,6 @@ object MainFrm: TMainFrm
           Height = 80
           Align = alLeft
           TabOrder = 0
-          ExplicitHeight = 105
           object TestAudioInputButton: TButton
             Left = 0
             Top = 0
@@ -64,7 +67,7 @@ object MainFrm: TMainFrm
         object AudioInputListView: TListView
           Left = 122
           Top = 15
-          Width = 478
+          Width = 505
           Height = 80
           Align = alClient
           Checkboxes = True
@@ -92,19 +95,18 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
-          ExplicitLeft = 128
-          ExplicitTop = 14
-          ExplicitHeight = 105
+          ExplicitWidth = 478
         end
       end
       object AudioOutputGroupBox: TGroupBox
         Left = 0
         Top = 97
-        Width = 602
+        Width = 629
         Height = 96
         Align = alTop
         Caption = 'AUdio output'
         TabOrder = 1
+        ExplicitWidth = 602
         object AudioOutputPanel: TPanel
           Left = 2
           Top = 15
@@ -112,7 +114,6 @@ object MainFrm: TMainFrm
           Height = 79
           Align = alLeft
           TabOrder = 0
-          ExplicitHeight = 56
           object TestAudioOutputButton: TButton
             Left = -2
             Top = -9
@@ -134,7 +135,7 @@ object MainFrm: TMainFrm
         object AudioOutputListView: TListView
           Left = 122
           Top = 15
-          Width = 478
+          Width = 505
           Height = 79
           Align = alClient
           Checkboxes = True
@@ -162,39 +163,37 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
-          ExplicitHeight = 56
+          ExplicitWidth = 478
         end
       end
       object VideoInputGroupBox: TGroupBox
         Left = 0
         Top = 193
-        Width = 602
+        Width = 629
         Height = 167
         Align = alClient
         Caption = 'Video input'
         TabOrder = 2
         OnClick = RefreshAudioInputButtonClick
-        ExplicitTop = 195
-        ExplicitHeight = 165
+        ExplicitWidth = 602
         object VideoTestOutputPanel: TPanel
           Left = 2
           Top = 15
-          Width = 120
+          Width = 151
           Height = 150
           Align = alLeft
           Color = clBlack
           ParentBackground = False
           TabOrder = 0
-          ExplicitHeight = 148
         end
         object Panel1: TPanel
-          Left = 122
+          Left = 153
           Top = 15
           Width = 79
           Height = 150
           Align = alLeft
           TabOrder = 1
-          ExplicitHeight = 148
+          ExplicitLeft = 122
           object RefreshVideoButton: TButton
             Left = 6
             Top = -9
@@ -215,9 +214,9 @@ object MainFrm: TMainFrm
           end
         end
         object VideoInputListView: TListView
-          Left = 201
+          Left = 232
           Top = 15
-          Width = 399
+          Width = 395
           Height = 150
           Align = alClient
           Checkboxes = True
@@ -245,7 +244,8 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
-          ExplicitHeight = 148
+          ExplicitLeft = 201
+          ExplicitWidth = 399
         end
       end
     end
