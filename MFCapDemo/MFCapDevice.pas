@@ -4,7 +4,7 @@ Interface
 
 Uses
   Windows, MFCapDll, Generics.Collections,
-  MFGenStream, MFDevice;
+  MFGenStream, MFDevice, MFPlayDevices;
 
 Type
   TMFCapDevice = Class (TMFDevice)
@@ -23,6 +23,7 @@ Type
     Function Open:Cardinal; Override;
     Procedure Close; Override;
     Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Override;
+    Function CreateASFDevice(ACallback:MFSTREAM_WRITE_CALLBACK; AContext:Pointer; Var ADevice:TMFPlayDevice):Cardinal;
 
     Property Index : Cardinal Read FIndex;
     Property DeviceType : EMFCapFormatType Read FDeviceType;
@@ -111,6 +112,25 @@ end;
 Class Function TMFCapDevice.CreateInstance(ARecord:Pointer):TMFDevice;
 begin
 Result := TMFCapDevice.Create(PMFCAP_DEVICE_INFO(ARecord)^);
+end;
+
+Function TMFCapDevice.CreateASFDevice(ACallback:MFSTREAM_WRITE_CALLBACK; AContext:Pointer; Var ADevice:TMFPlayDevice):Cardinal;
+Var
+  h : Pointer;
+  r : MFPLAY_DEVICE_INFO;
+begin
+Result := MFPlay_CreateASFStream(FHandle, ACallback, AContext, h);
+If Result = 0 Then
+  begin
+  FillChar(r, SizeOf(r), 0);
+  r.Name := 'ASF Stream';
+  r.Description := 'ASF stream';
+  r.EndpointId := 'ASF stream';
+  r.State := DEVICE_STATE_ACTIVE;
+  r.Characteristics := 0;
+  ADevice := TMFPlayDevice.CreateInstance(@r) As TMFPlayDevice;
+  ADevice.Handle := h;
+  end;
 end;
 
 
