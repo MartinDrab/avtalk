@@ -35,6 +35,7 @@ Type
       Function Open:Cardinal; Virtual; Abstract;
       Procedure Close; Virtual; Abstract;
       Function EnumStreams(AList:TObjectList<TMFGenStream>):Cardinal; Virtual; Abstract;
+      Function EnumStreamsCreateList(Var AList:TObjectList<TMFGenStream>):Cardinal;
       Function SelectStream(AIndex:Cardinal; ASelect:Boolean):Cardinal; Virtual; Abstract;
 
       Property Handle : Pointer Read FHandle Write FHandle;
@@ -119,6 +120,18 @@ For p In prevailing.Values Do
 prevailing.Free;
 end;
 
+Function TMFDevice.EnumStreamsCreateList(Var AList:TObjectList<TMFGenStream>):Cardinal;
+Var
+  l : TObjectList<TMFGenStream>;
+begin
+l := TObjectList<TMFGenStream>.Create;
+Result := EnumStreams(l);
+If Result = 0 Then
+  AList := l;
+
+If Result <> 0 Then
+  l.Free;
+end;
 
 
 End.

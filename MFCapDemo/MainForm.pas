@@ -28,12 +28,14 @@ Type
     VideoInputListView: TListView;
     TestVideoOutputButton: TButton;
     AudioOutputListView: TListView;
+    RecordVideoButton: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure AudioInputListViewData(Sender: TObject; Item: TListItem);
     procedure RefreshAudioInputButtonClick(Sender: TObject);
     procedure AudioInputListViewItemChecked(Sender: TObject; Item: TListItem);
     procedure TestVideoOutputButtonClick(Sender: TObject);
+    procedure RecordVideoButtonClick(Sender: TObject);
   Private
     FAudioInList : TObjectList<TMFDevice>;
     FAudioInStreamList : TObjectList<TMFGenStream>;
@@ -145,6 +147,112 @@ FVideoInList := TObjectList<TMFDevice>.Create;
 FAudioInStreamList := TObjectList<TMFGenStream>.Create;
 FAudioOutStreamList := TObjectList<TMFGenStream>.Create;
 FVideoInStreamList := TObjectList<TMFGenStream>.Create;
+end;
+
+
+Function _WriteCallback(APosition:UInt64; ABuffer:Pointer; ALength:Cardinal; Var AWritten:Cardinal; AContext:Pointer):Cardinal; Cdecl;
+begin
+AWritten := ALength;
+Result := 0;
+end;
+
+Procedure TMainFrm.RecordVideoButtonClick(Sender: TObject);
+Var
+  b : TButton;
+  d : TMFCapDevice;
+  l : TListView;
+  err : Cardinal;
+  s : TMFSession;
+  I : Integer;
+  asfDevice : TMFPlayDevice;
+  streamList : TObjectList<TMFGenStream>;
+  inList : TObjectList<TMFGenStream>;
+  outList : TObjectList<TMFGenStream>;
+begin
+b := Sender As TButton;
+If Sender = RecordVideoButton Then
+  begin
+  l := Self.VideoInputListView;
+  streamList := FVideoInStreamList;
+  end;
+
+If b.Tag = 0 Then
+  begin
+  If Assigned(l.Selected) Then
+    begin
+    d := streamList[l.Selected.Index].MFDevice;
+    err := d.CreateASFDevice(_WriteCallback, Nil, asfDevice);
+    If err <> 0 Then
+      begin
+      Win32ErrorMessage('Failed to create ASF device', err);
+      Exit;
+      end;
+
+    err := d.EnumStreamsCreateList(inList);
+    If err <> 0 Then
+      begin
+      Win32ErrorMessage('Unable to enumerate input streams', err);
+      asfDevice.Free;
+      Exit;
+      end;
+
+    err := asfDevice.EnumStreamsCreateList(outList);
+    If err <> 0 Then
+      begin
+      Win32ErrorMessage('Unable to enumerate output streams', err);
+      inList.Free;
+      asfDevice.Free;
+      Exit;
+      end;
+
+    err := TMFSession.NewSession(s);
+    If err <> 0 Then
+      begin
+      Win32ErrorMessage('Unable to create session', err);
+      outList.Free;
+      inList.Free;
+      asfDevice.Free;
+      Exit;
+      end;
+
+    For I := 0 To inList.Count - 1 Do
+      begin
+      err := s.AddEdge(outList[I], inList[I]);
+      If err <> 0 Then
+        Break;
+      end;
+
+    If err <> 0 Then
+      begin
+      Win32ErrorMessage('Unable to add edges', err);
+      s.Free;
+      outList.Free;
+      inList.Free;
+      asfDevice.Free;
+      Exit;
+      end;
+
+    err := s.Start;
+    If err <> 0 Then
+      begin
+      Win32ErrorMessage('Unable start the session', err);
+      s.Free;
+      outList.Free;
+      inList.Free;
+      asfDevice.Free;
+      Exit;
+      end;
+
+    b.Tag := NativeUInt(s);
+    end
+  Else WarningMessage('No device selected');
+  end
+Else begin
+  s := TMFSession(Pointer(b.Tag));
+  b.Tag := 0;
+  s.Stoop;
+  s.Free;
+  end;
 end;
 
 Procedure TMainFrm.RefreshAudioInputButtonClick(Sender: TObject);

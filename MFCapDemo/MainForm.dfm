@@ -212,6 +212,15 @@ object MainFrm: TMainFrm
             TabOrder = 1
             OnClick = TestVideoOutputButtonClick
           end
+          object RecordVideoButton: TButton
+            Left = 6
+            Top = 59
+            Width = 59
+            Height = 30
+            Caption = 'Record'
+            TabOrder = 2
+            OnClick = RecordVideoButtonClick
+          end
         end
         object VideoInputListView: TListView
           Left = 232
