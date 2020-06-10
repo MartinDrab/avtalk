@@ -19,8 +19,10 @@ extern "C" HRESULT MFStream_NewInstance(const MFSTREAM_CALLBACKS* Callbacks, IMF
 	s = new CMFRWStream(*Callbacks);
 	if (s != NULL) {
 		ret = s->getError();
-		if (SUCCEEDED(ret))
+		if (SUCCEEDED(ret)) {
 			s->AddRef();
+			*Stream = s;
+		}
 
 		s->Release();
 	} else ret = E_OUTOFMEMORY;
