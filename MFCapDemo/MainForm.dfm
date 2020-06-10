@@ -26,10 +26,8 @@ object MainFrm: TMainFrm
     ActivePage = DevicesTabSheet
     Align = alClient
     TabOrder = 0
-    ExplicitWidth = 610
     object DevicesTabSheet: TTabSheet
       Caption = 'Devices'
-      ExplicitWidth = 602
       object AudioInputGroupBox: TGroupBox
         Left = 0
         Top = 0
@@ -38,11 +36,10 @@ object MainFrm: TMainFrm
         Align = alTop
         Caption = 'Audio input'
         TabOrder = 0
-        ExplicitWidth = 602
         object AUdioInputPanel: TPanel
           Left = 2
           Top = 15
-          Width = 120
+          Width = 135
           Height = 80
           Align = alLeft
           TabOrder = 0
@@ -63,11 +60,20 @@ object MainFrm: TMainFrm
             TabOrder = 1
             OnClick = RefreshAudioInputButtonClick
           end
+          object RecordAudioButton: TButton
+            Left = 63
+            Top = 0
+            Width = 59
+            Height = 30
+            Caption = 'Record'
+            TabOrder = 2
+            OnClick = RecordVideoButtonClick
+          end
         end
         object AudioInputListView: TListView
-          Left = 122
+          Left = 137
           Top = 15
-          Width = 505
+          Width = 490
           Height = 80
           Align = alClient
           Checkboxes = True
@@ -95,7 +101,8 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
-          ExplicitWidth = 478
+          ExplicitLeft = 122
+          ExplicitWidth = 505
         end
       end
       object AudioOutputGroupBox: TGroupBox
@@ -106,7 +113,6 @@ object MainFrm: TMainFrm
         Align = alTop
         Caption = 'AUdio output'
         TabOrder = 1
-        ExplicitWidth = 602
         object AudioOutputPanel: TPanel
           Left = 2
           Top = 15
@@ -163,7 +169,6 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
-          ExplicitWidth = 478
         end
       end
       object VideoInputGroupBox: TGroupBox
@@ -175,7 +180,6 @@ object MainFrm: TMainFrm
         Caption = 'Video input'
         TabOrder = 2
         OnClick = RefreshAudioInputButtonClick
-        ExplicitWidth = 602
         object VideoTestOutputPanel: TPanel
           Left = 2
           Top = 15
@@ -193,7 +197,6 @@ object MainFrm: TMainFrm
           Height = 150
           Align = alLeft
           TabOrder = 1
-          ExplicitLeft = 122
           object RefreshVideoButton: TButton
             Left = 6
             Top = -9
@@ -253,8 +256,6 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
-          ExplicitLeft = 201
-          ExplicitWidth = 399
         end
       end
     end

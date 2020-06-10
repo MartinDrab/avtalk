@@ -29,6 +29,7 @@ Type
     TestVideoOutputButton: TButton;
     AudioOutputListView: TListView;
     RecordVideoButton: TButton;
+    RecordAudioButton: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure AudioInputListViewData(Sender: TObject; Item: TListItem);
@@ -172,8 +173,13 @@ begin
 b := Sender As TButton;
 If Sender = RecordVideoButton Then
   begin
-  l := Self.VideoInputListView;
+  l := VideoInputListView;
   streamList := FVideoInStreamList;
+  end
+Else If Sender = RecordAudioButton Then
+  begin
+  l := AudioInputListView;
+  streamList := FAudioInStreamList;
   end;
 
 If b.Tag = 0 Then
@@ -217,7 +223,7 @@ If b.Tag = 0 Then
 
     For I := 0 To inList.Count - 1 Do
       begin
-      err := s.AddEdge(outList[I], inList[I]);
+      err := s.AddEdge(inList[I], outList[I]);
       If err <> 0 Then
         Break;
       end;
@@ -243,6 +249,7 @@ If b.Tag = 0 Then
       Exit;
       end;
 
+    b.Caption := 'Stop';
     b.Tag := NativeUInt(s);
     end
   Else WarningMessage('No device selected');
@@ -250,6 +257,7 @@ If b.Tag = 0 Then
 Else begin
   s := TMFSession(Pointer(b.Tag));
   b.Tag := 0;
+  b.Caption := 'Record';
   s.Stoop;
   s.Free;
   end;
