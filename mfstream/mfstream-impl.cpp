@@ -286,6 +286,7 @@ CMFRWStream::~CMFRWStream(void)
 {
 	if (opThread_ != NULL) {
 		closed_ = true;
+		ReleaseSemaphore(opListSemaphore_, 1, NULL);
 		WaitForSingleObject(opThread_, INFINITE);
 		CloseHandle(opThread_);
 	}
