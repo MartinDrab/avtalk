@@ -283,11 +283,12 @@ extern "C" HRESULT MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer)
 	void* tmpBuffer = NULL;
 	volatile LONG* refCount = NULL;
 
-	tmpBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, NumberOfBytes + sizeof(size_t));
+	tmpBuffer = CoTaskMemAlloc(NumberOfBytes + 0x10);
 	if (tmpBuffer != NULL) {
+		memset(tmpBuffer, 0, NumberOfBytes + 0x10);
 		refCount = (LONG*)tmpBuffer;
 		InterlockedExchange(refCount, 1);
-		*Buffer = (size_t *)tmpBuffer + 1;
+		*Buffer = (unsigned char *)tmpBuffer + 0x10;
 	} else ret = E_OUTOFMEMORY;
 
 	return ret;
@@ -298,7 +299,7 @@ extern "C" void MFGen_RefMemAddRef(void* Buffer)
 {
 	volatile LONG* refCount = NULL;
 
-	refCount = (LONG*)((size_t*)Buffer - 1);
+	refCount = (LONG*)((unsigned char*)Buffer - 0x10);
 	InterlockedIncrement(refCount);
 
 	return;
@@ -310,9 +311,9 @@ extern "C" void MFGen_RefMemRelease(void* Buffer)
 	volatile LONG* refCount = NULL;
 
 	if (Buffer != NULL) {
-		refCount = (LONG*)((size_t*)Buffer - 1);
+		refCount = (LONG*)((unsigned char *)Buffer - 0x10);
 		if (InterlockedDecrement(refCount) == 0)
-			HeapFree(GetProcessHeap(), 0, (void*)refCount);
+			CoTaskMemFree((void*)refCount);
 	}
 
 	return;
