@@ -364,6 +364,7 @@ extern "C" HRESULT MFPlay_CreateStreamNodes(PMFPLAY_DEVICE Device, PMFGEN_STREAM
 			for (DWORD i = 0; i < tmpCount; ++i) {
 				s = NULL;
 				mth = NULL;
+				node->Node = NULL;
 				ret = Device->Sink->GetStreamSinkByIndex(i, &s);
 				if (SUCCEEDED(ret))
 					ret = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node->Node);
