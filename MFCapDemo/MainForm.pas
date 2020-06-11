@@ -88,7 +88,7 @@ With Item  Do
     end;
 
   SubItems.Add(streamTypeStr);
-  SubItems.Add(Format('%d', [s.Index]));
+  SubItems.Add(Format('%d:%d', [s.Id, s.Index]));
   tmp := l.OnItemChecked;
   l.OnItemChecked := Nil;
   Checked := s.Selected;
@@ -169,6 +169,7 @@ Var
   streamList : TObjectList<TMFGenStream>;
   inList : TObjectList<TMFGenStream>;
   outList : TObjectList<TMFGenStream>;
+  outIndex : Integer;
 begin
 b := Sender As TButton;
 If Sender = RecordVideoButton Then
@@ -221,9 +222,15 @@ If b.Tag = 0 Then
       Exit;
       end;
 
+    outIndex := 0;
     For I := 0 To inList.Count - 1 Do
       begin
-      err := s.AddEdge(inList[I], outList[I]);
+      If inList[I].Selected Then
+        begin
+        err := s.AddEdge(inList[I], outList[outIndex]);
+        Inc(outIndex);
+        end;
+
       If err <> 0 Then
         Break;
       end;
@@ -302,7 +309,7 @@ Else If Sender = RefreshAudioOutputButton Then
 
 tmp := l.OnItemChecked;
 l.OnItemChecked := Nil;
-l.Items.Clear;
+l.Clear;
 streamList.Clear;
 If err = 0 Then
   begin

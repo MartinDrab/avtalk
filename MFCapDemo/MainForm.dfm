@@ -6,7 +6,6 @@ object MainFrm: TMainFrm
   ClientHeight = 388
   ClientWidth = 637
   Color = clBtnFace
-  CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -91,7 +90,7 @@ object MainFrm: TMainFrm
               Width = 60
             end
             item
-              Caption = 'Steram index'
+              Caption = 'ID:Index'
               Width = 75
             end>
           ReadOnly = True
@@ -101,8 +100,6 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
-          ExplicitLeft = 122
-          ExplicitWidth = 505
         end
       end
       object AudioOutputGroupBox: TGroupBox
@@ -159,7 +156,7 @@ object MainFrm: TMainFrm
               Width = 60
             end
             item
-              Caption = 'Steram index'
+              Caption = 'ID:Index'
               Width = 75
             end>
           ReadOnly = True
@@ -246,7 +243,7 @@ object MainFrm: TMainFrm
               Width = 60
             end
             item
-              Caption = 'Steram index'
+              Caption = 'ID:Index'
               Width = 75
             end>
           ReadOnly = True
