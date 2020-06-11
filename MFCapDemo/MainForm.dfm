@@ -98,7 +98,6 @@ object MainFrm: TMainFrm
           ShowWorkAreas = True
           TabOrder = 1
           ViewStyle = vsReport
-          OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
         end
       end
@@ -164,7 +163,6 @@ object MainFrm: TMainFrm
           ShowWorkAreas = True
           TabOrder = 1
           ViewStyle = vsReport
-          OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
         end
       end
@@ -251,7 +249,6 @@ object MainFrm: TMainFrm
           ShowWorkAreas = True
           TabOrder = 2
           ViewStyle = vsReport
-          OnData = AudioInputListViewData
           OnItemChecked = AudioInputListViewItemChecked
         end
       end

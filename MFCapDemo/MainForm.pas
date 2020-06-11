@@ -32,7 +32,6 @@ Type
     RecordAudioButton: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure AudioInputListViewData(Sender: TObject; Item: TListItem);
     procedure RefreshAudioInputButtonClick(Sender: TObject);
     procedure AudioInputListViewItemChecked(Sender: TObject; Item: TListItem);
     procedure TestVideoOutputButtonClick(Sender: TObject);
@@ -44,6 +43,7 @@ Type
     FVideoInStreamList : TObjectList<TMFGenStream>;
     FAudioOutList : TObjectList<TMFDevice>;
     FAudioOutStreamList : TObjectList<TMFGenStream>;
+    Procedure ListViewProcessItem(Sender: TObject; Item: TListItem);
   end;
 
 Var
@@ -56,7 +56,7 @@ Uses
 
 {$R *.DFM}
 
-Procedure TMainFrm.AudioInputListViewData(Sender: TObject; Item: TListItem);
+Procedure TMainFrm.ListViewProcessItem(Sender: TObject; Item: TListItem);
 Var
   s : TMFGenStream;
   d : TMFDevice;
@@ -328,7 +328,7 @@ If err = 0 Then
     For s In streamList Do
       begin
       li := l.Items.Add;
-      AudioInputListViewData(l, li);
+      ListViewProcessItem(l, li);
       end;
     end;
 
