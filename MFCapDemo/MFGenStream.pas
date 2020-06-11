@@ -46,6 +46,7 @@ FSelected := ARecord.Selected;
 FNode := ARecord.Node;
 FNode._AddRef;
 FInfo := ARecord;
+FId := ARecord.Id;
 End;
 
 Destructor TMFGenStream.Destroy;
