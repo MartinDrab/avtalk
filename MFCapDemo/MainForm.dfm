@@ -22,7 +22,7 @@ object MainFrm: TMainFrm
     Top = 0
     Width = 637
     Height = 388
-    ActivePage = DevicesTabSheet
+    ActivePage = InputSelectionTabSheet
     Align = alClient
     TabOrder = 0
     object DevicesTabSheet: TTabSheet
@@ -251,6 +251,60 @@ object MainFrm: TMainFrm
           ViewStyle = vsReport
           OnItemChecked = AudioInputListViewItemChecked
         end
+      end
+    end
+    object InputSelectionTabSheet: TTabSheet
+      Caption = 'Input Selection'
+      ImageIndex = 1
+      ExplicitLeft = 8
+      ExplicitTop = 28
+      object InputUpperPanel: TPanel
+        Left = 0
+        Top = 0
+        Width = 629
+        Height = 49
+        Align = alTop
+        TabOrder = 0
+        object RefreshInputSelectionButton: TButton
+          Left = 0
+          Top = 0
+          Width = 57
+          Height = 33
+          Caption = 'Refresh'
+          TabOrder = 0
+          OnClick = RefreshInputSelectionButtonClick
+        end
+      end
+      object InputSelectionListView: TListView
+        Left = 0
+        Top = 49
+        Width = 629
+        Height = 311
+        Align = alClient
+        Checkboxes = True
+        Columns = <
+          item
+            AutoSize = True
+            Caption = 'Name'
+          end
+          item
+            AutoSize = True
+            Caption = 'Link'
+          end
+          item
+            Caption = 'Type'
+            Width = 60
+          end
+          item
+            Caption = 'ID:Index'
+            Width = 75
+          end>
+        ReadOnly = True
+        RowSelect = True
+        TabOrder = 1
+        ViewStyle = vsReport
+        OnItemChecked = AudioInputListViewItemChecked
+        ExplicitTop = 55
       end
     end
   end

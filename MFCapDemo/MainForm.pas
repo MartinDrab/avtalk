@@ -30,12 +30,17 @@ Type
     AudioOutputListView: TListView;
     RecordVideoButton: TButton;
     RecordAudioButton: TButton;
+    InputSelectionTabSheet: TTabSheet;
+    InputUpperPanel: TPanel;
+    InputSelectionListView: TListView;
+    RefreshInputSelectionButton: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure RefreshAudioInputButtonClick(Sender: TObject);
     procedure AudioInputListViewItemChecked(Sender: TObject; Item: TListItem);
     procedure TestVideoOutputButtonClick(Sender: TObject);
     procedure RecordVideoButtonClick(Sender: TObject);
+    procedure RefreshInputSelectionButtonClick(Sender: TObject);
   Private
     FAudioInList : TObjectList<TMFDevice>;
     FAudioInStreamList : TObjectList<TMFGenStream>;
@@ -43,7 +48,8 @@ Type
     FVideoInStreamList : TObjectList<TMFGenStream>;
     FAudioOutList : TObjectList<TMFDevice>;
     FAudioOutStreamList : TObjectList<TMFGenStream>;
-    Procedure ListViewProcessItem(Sender: TObject; Item: TListItem);
+    FInputDevices : TObjectList<TMFDevice>;
+    Procedure ListViewProcessItem(AListView:TListView; AStream:TMFGenStream);
   end;
 
 Var
@@ -56,44 +62,31 @@ Uses
 
 {$R *.DFM}
 
-Procedure TMainFrm.ListViewProcessItem(Sender: TObject; Item: TListItem);
+Procedure TMainFrm.ListViewProcessItem(AListView:TListView; AStream:TMFGenStream);
 Var
-  s : TMFGenStream;
   d : TMFDevice;
-  l : TListView;
-  streamList : TObjectList<TMFGenStream>;
   streamTypeStr : WideString;
   tmp : TLVCheckedItemEvent;
 begin
-l := Sender As TListView;
-s := Nil;
-d := Nil;
-If Sender = AudioInputListView Then
-  streamList := FAudioInStreamList
-Else If Sender = VideoInputListView Then
-  streamList := FVideoInStreamList
-Else If Sender = AudioOutputListView Then
-  streamList := FAudioOutStreamList;
-
-s := streamList[Item.Index];
-d := s.MFDevice;
-With Item  Do
+tmp := AListView.OnItemChecked;
+AListView.OnItemChecked := Nil;
+d := AStream.MFDevice;
+With AListView.Items.Add  Do
   begin
   Caption := d.Name;
   SubItems.Add(d.UniqueName);
   streamTypeStr := '';
-  Case s.StreamType Of
+  Case AStream.StreamType Of
     mcftVideo: streamTypeStr := 'Video';
     mcftAudio: streamTypeStr := 'Audio';
     end;
 
   SubItems.Add(streamTypeStr);
-  SubItems.Add(Format('%d:%d', [s.Id, s.Index]));
-  tmp := l.OnItemChecked;
-  l.OnItemChecked := Nil;
-  Checked := s.Selected;
-  l.OnItemChecked := tmp;
+  SubItems.Add(Format('%d:%d', [AStream.Id, AStream.Index]));
+  Checked := AStream.Selected;
   end;
+
+AListView.OnItemChecked := tmp;
 end;
 
 Procedure TMainFrm.AudioInputListViewItemChecked(Sender: TObject;
@@ -119,6 +112,11 @@ Else If Sender = AudioOutputListView Then
   begin
   streamList := FAudioOutStreamList;
   b := RefreshAudioOutputButton;
+  end
+Else If Sender = InputSelectionListView Then
+  begin
+  streamList := TObjectList<TMFGenStream>(InputSelectionListView.Tag);
+  b := RefreshInputSelectionButton;
   end;
 
 s := streamList[Item.Index];
@@ -127,7 +125,7 @@ err := d.SelectStream(s.Index, Item.Checked);
 If err <> 0 Then
   Win32ErrorMessage('Failed to (de)select stream', err);
 
-Self.RefreshAudioInputButtonClick(b);
+b.OnClick(b);
 end;
 
 Procedure TMainFrm.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -138,10 +136,12 @@ FAudioInStreamList.Free;
 FVideoInList.Free;
 FAudioOutList.Free;
 FAudioInList.Free;
+FInputDevices.Free;
 end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
 begin
+FInputDevices := TObjectList<TMFDevice>.Create;
 FAudioInList := TObjectList<TMFDevice>.Create;
 FAudioOutList := TObjectList<TMFDevice>.Create;
 FVideoInList := TObjectList<TMFDevice>.Create;
@@ -326,10 +326,7 @@ If err = 0 Then
   If err = 0 Then
     begin
     For s In streamList Do
-      begin
-      li := l.Items.Add;
-      ListViewProcessItem(l, li);
-      end;
+      ListViewProcessItem(l, s);
     end;
 
   If err <> 0 Then
@@ -342,6 +339,90 @@ If err = 0 Then
 Else Win32ErrorMessage('Unable to enumerate audio input devices', err);
 
 l.OnItemChecked := tmp;
+end;
+
+Procedure TMainFrm.RefreshInputSelectionButtonClick(Sender: TObject);
+Var
+  I : Integer;
+  s : TMFGenStream;
+  err : Cardinal;
+  genD : TMFDevice;
+  sl : TObjectList<TMFGenStream>;
+  devRefs : TDictionary<TMFDevice, Cardinal>;
+  p : TPair<TMFDevice, Cardinal>;
+begin
+If InputSelectionListView.Tag <> 0 Then
+  begin
+  sl := TObjectList<TMFGenStream>(InputSelectionListView.Tag);
+  InputSelectionListView.Tag := 0;
+  sl.Free;
+  end;
+
+devRefs := TDictionary<TMFDevice, Cardinal>.Create;
+InputSelectionListView.Clear;
+err := TMFCapDevice.Enumerate(mcftVideo, FInputDevices, [mdeoOpen, mdeoCompare]);
+If err = 0 Then
+  begin
+  err := TMFCapDevice.Enumerate(mcftAudio, FInputDevices, [mdeoOpen]);
+  If err = 0 THen
+    begin
+    sl := TObjectList<TMFGenStream>.Create;
+    For genD In FInputDevices Do
+      begin
+      devRefs.Add(genD, 0);
+      err := genD.EnumStreams(sl);
+      If err <> 0 Then
+        begin
+        Win32ErrorMessage('Failed to enumerate streams for' + genD.Name, err);
+        Break;
+        end;
+      end;
+
+    If err = 0 Then
+      begin
+      I := 0;
+      While I < sl.Count Do
+        begin
+        If (sl[I].Id < 1) Or (sl[I].Id > 127) THen
+          begin
+          sl.Delete(I);
+          Continue;
+          end;
+
+        Inc(I);
+        end;
+      end;
+
+    If err = 0 Then
+      begin
+      For s In sl Do
+        begin
+        p.Key := s.MFDevice;
+        If Not devRefs.TryGetValue(p.Key, p.Value) Then
+          begin
+          err := $FFFFFFFF;
+          ErrorMessage('Unknown device');
+          Break;
+          end;
+
+        Inc(p.Value);
+        devRefs.AddOrSetValue(p.Key, p.Value);
+        ListViewProcessItem(InputSelectionListView, s);
+        end;
+
+      InputSelectionListView.Tag := NativeUInt(sl);
+      For p In devRefs Do
+        begin
+        If p.Value = 0 Then
+          FInputDevices.Delete(FInputDevices.IndexOf(p.Key));
+        end;
+      end;
+    end
+  Else Win32ErrorMessage('Failed to enumerate audio devices', err);
+  end
+Else Win32ErrorMessage('Failed to enumerate video devices', err);
+
+devRefs.Free;
 end;
 
 Procedure TMainFrm.TestVideoOutputButtonClick(Sender: TObject);
