@@ -22,19 +22,56 @@
 
 ### Input
 
-* *Header signature* = <zeroes>
+* *Header signature* = **zeroed**
 * *Message type* = 1
-* *Sender GUID* = `GUID_NULL
+* *Sender GUID* = `GUID_NULL`
 * *Recipient GUID* = `GUID_NULL`
 * No extra data
 
 ### Output
 
-* *Header Signature* = <signed by the server>
+* *Header Signature* = **signed by the server**
 * *Message type* = 1
-* *Sender GUID* = <server GUID>
+* *Sender GUID* = server GUID
 * *Flags* = 1
 * Server public key (64 bytes)
 * Server name (256 characters)
 * Visible users (GUID, name) (128 bytes)
 * Visible sessions (GUID, name, user count) (128 bytes)
+
+## New user
+
+### Input
+
+* *Header signature* = **Signed by the user**
+* *Message type* = 2
+* *Sender GUID* = `GUID_NULL`
+* *Recipient GUID* = server GUID
+* *Flags* = 3
+* Data signed by the user, encrypted for the server
+* user public key
+* user visible server-wide
+* user expiration date
+* possibly other user attributes
+
+### Output
+
+* *Header signature* = **signed by the server**
+* *Message type* = 2
+* *Sender GUID* = server GUID
+* *Recipient GUID* = user GUID provided by the server
+* *Flags* = 0
+
+## Remove user
+
+### Input
+
+* *Header signature* = **Signed by the user**
+* *Message type* = 3
+* *Sender GUID* = user GUID
+* *Recipient GUID* = server GUID
+* *Flags* = 0
+
+### Output
+
+None
