@@ -1,0 +1,8 @@
+LIBRARY mfcrypto-dll
+EXPORTS
+	MFCrypto_KeyGen
+	MFCrypto_KeyGenSeed
+	MFCrypto_Encrypt
+	MFCrypto_Decrypt
+	MFCrypto_Sign
+	MFCrypto_Verify

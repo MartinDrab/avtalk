@@ -29,6 +29,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sodium", "libsodium\sodium.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sodium-dll", "libsodium\sodium-dll.vcxproj", "{DA722EF1-3618-46A4-A076-BCC672B64587}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfcrypto", "mfcrypto\mfcrypto.vcxproj", "{A419AB9C-D320-440A-B4D9-94A4AB549E1E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfcrypto-dll", "mfcrypto-dll\mfcrypto-dll.vcxproj", "{88928E27-72C4-4E5E-8A32-CB8B39202E34}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -141,6 +145,22 @@ Global
 		{DA722EF1-3618-46A4-A076-BCC672B64587}.Release|x64.Build.0 = Release|x64
 		{DA722EF1-3618-46A4-A076-BCC672B64587}.Release|x86.ActiveCfg = Release|Win32
 		{DA722EF1-3618-46A4-A076-BCC672B64587}.Release|x86.Build.0 = Release|Win32
+		{A419AB9C-D320-440A-B4D9-94A4AB549E1E}.Debug|x64.ActiveCfg = Debug|x64
+		{A419AB9C-D320-440A-B4D9-94A4AB549E1E}.Debug|x64.Build.0 = Debug|x64
+		{A419AB9C-D320-440A-B4D9-94A4AB549E1E}.Debug|x86.ActiveCfg = Debug|Win32
+		{A419AB9C-D320-440A-B4D9-94A4AB549E1E}.Debug|x86.Build.0 = Debug|Win32
+		{A419AB9C-D320-440A-B4D9-94A4AB549E1E}.Release|x64.ActiveCfg = Release|x64
+		{A419AB9C-D320-440A-B4D9-94A4AB549E1E}.Release|x64.Build.0 = Release|x64
+		{A419AB9C-D320-440A-B4D9-94A4AB549E1E}.Release|x86.ActiveCfg = Release|Win32
+		{A419AB9C-D320-440A-B4D9-94A4AB549E1E}.Release|x86.Build.0 = Release|Win32
+		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Debug|x64.ActiveCfg = Debug|x64
+		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Debug|x64.Build.0 = Debug|x64
+		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Debug|x86.ActiveCfg = Debug|Win32
+		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Debug|x86.Build.0 = Debug|Win32
+		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Release|x64.ActiveCfg = Release|x64
+		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Release|x64.Build.0 = Release|x64
+		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Release|x86.ActiveCfg = Release|Win32
+		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
