@@ -4,21 +4,23 @@
 
 | Offset | Size | Description |
 |--------|------|-------------|
-| 0 | 4    | Header size |
-| 4 | 4 | Flags |
-| 8 | 32   | Header signature |
-| 40 | 32 | Header encryption |
-| 72 | 4    | Message type |
-| 76 | 4 | Data size |
-| 80 | 8 | Packet counter |
-| 88 | 16 | Sender GUID |
-| 104 | 16 | Recipient GUID |
+| 0 | 4    | Message size |
+| 4 | 2 | Version |
+| 6 | 2 | Flags |
+| 8 | 64   | Message signature |
+| 72 | 48 | Header encryption |
+| 120 | 4    | Message type |
+| 124 | 4 | Data size |
+| 128 | 8 | Packet counter |
+| 136 | 16 | Sender GUID |
+| 152 | 16 | Recipient GUID |
+| 200 | 48 | Data encryption |
 
 * *Header Signature* must be done with sender's public key.
 * *Header encryption* must be done with recipient's (or server's) public key.
 * *Packet counter* protects against replay attack. Each packet must contain unique value of this counter coupled with the *Source GUID* one.
 * *Source GUID* and *Destination GUID* identify a server, user, session or an AV stream.
-* *Flags* indicate whether the data are signed (**1**), data are encrypted (**2**), header is signed (**4**), header is encrypted (**8**).
+* *Flags* indicate whether the data are signed (**1**), data are encrypted (**2**), header is signed (**4**), header is encrypted (**8**), data are compressed (**16**).
 
 ## Get Server Information
 
