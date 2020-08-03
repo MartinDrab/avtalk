@@ -33,6 +33,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfcrypto", "mfcrypto\mfcryp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfcrypto-dll", "mfcrypto-dll\mfcrypto-dll.vcxproj", "{88928E27-72C4-4E5E-8A32-CB8B39202E34}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfmessages", "mfmessages\mfmessages.vcxproj", "{1A90823F-1371-46B1-9ABF-1BE4B821DF4F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -161,6 +163,14 @@ Global
 		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Release|x64.Build.0 = Release|x64
 		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Release|x86.ActiveCfg = Release|Win32
 		{88928E27-72C4-4E5E-8A32-CB8B39202E34}.Release|x86.Build.0 = Release|Win32
+		{1A90823F-1371-46B1-9ABF-1BE4B821DF4F}.Debug|x64.ActiveCfg = Debug|x64
+		{1A90823F-1371-46B1-9ABF-1BE4B821DF4F}.Debug|x64.Build.0 = Debug|x64
+		{1A90823F-1371-46B1-9ABF-1BE4B821DF4F}.Debug|x86.ActiveCfg = Debug|Win32
+		{1A90823F-1371-46B1-9ABF-1BE4B821DF4F}.Debug|x86.Build.0 = Debug|Win32
+		{1A90823F-1371-46B1-9ABF-1BE4B821DF4F}.Release|x64.ActiveCfg = Release|x64
+		{1A90823F-1371-46B1-9ABF-1BE4B821DF4F}.Release|x64.Build.0 = Release|x64
+		{1A90823F-1371-46B1-9ABF-1BE4B821DF4F}.Release|x86.ActiveCfg = Release|Win32
+		{1A90823F-1371-46B1-9ABF-1BE4B821DF4F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
