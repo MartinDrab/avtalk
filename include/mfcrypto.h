@@ -59,6 +59,7 @@ void MFCrypto_SymKeyGenSeed(const MFCRYPTO_SEED* Seed, PMFCRYPTO_SYMKEY Key);
 void MFCrypto_SymEncrypt(const MFCRYPTO_SYMKEY* Key, const void* Buffer, size_t Length, PMFCRYPTO_SYMENC_HEADER Ct);
 int MFCrypto_SymDecrypt(const MFCRYPTO_SYMKEY* Key, const MFCRYPTO_SYMENC_HEADER *Buffer, size_t Length, void *Pt);
 
+void MFCrypto_Hash(const void* Buffer, size_t Length, PMFCRYPTO_HASH_DIGEST Digest);
 
 
 #ifdef __cplusplus

@@ -101,3 +101,12 @@ int MFCrypto_SymDecrypt(const MFCRYPTO_SYMKEY* Key, const MFCRYPTO_SYMENC_HEADER
 {
 	return crypto_secretbox_open_easy(Pt, Buffer->MAC, Length - sizeof(Buffer->Nonce), Buffer->Nonce, Key->Key);
 }
+
+
+void MFCrypto_Hash(const void* Buffer, size_t Length, PMFCRYPTO_HASH_DIGEST Digest)
+{
+	memset(Digest, 0, sizeof(Digest));
+	crypto_hash_sha256(Digest->Hash, Buffer, Length);
+
+	return;
+}
