@@ -6,3 +6,8 @@ EXPORTS
 	MFCrypto_Decrypt
 	MFCrypto_Sign
 	MFCrypto_Verify
+
+	MFCrypto_SymKeyGen
+	MFCrypto_SymKeyGenSeed
+	MFCrypto_SymEncrypt
+	MFCrypto_SymDecrypt

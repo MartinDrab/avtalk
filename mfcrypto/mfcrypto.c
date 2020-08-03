@@ -70,3 +70,34 @@ int MFCrypto_Verify(const MFCRYPTO_PUBLIC_KEY *PK, const MFCRYPTO_SIGNATURE *Sig
 
 	return ret;
 }
+
+
+void MFCrypto_SymKeyGen(PMFCRYPTO_SYMKEY Key)
+{
+	crypto_secretbox_keygen(Key->Key);
+
+	return;
+}
+
+
+void MFCrypto_SymKeyGenSeed(const MFCRYPTO_SEED* Seed, PMFCRYPTO_SYMKEY Key)
+{
+	randombytes_buf_deterministic(Key->Key, sizeof(Key->Key), Seed->Seed);
+
+	return;
+}
+
+
+void MFCrypto_SymEncrypt(const MFCRYPTO_SYMKEY* Key, const void* Buffer, size_t Length, PMFCRYPTO_SYMENC_HEADER Ct)
+{
+	randombytes_buf(Ct->Nonce, sizeof(Ct->Nonce));
+	crypto_secretbox_easy(Ct->MAC, Buffer, Length, Ct->Nonce, Key->Key);
+
+	return;
+}
+
+
+int MFCrypto_SymDecrypt(const MFCRYPTO_SYMKEY* Key, const MFCRYPTO_SYMENC_HEADER* Buffer, size_t Length, void* Pt)
+{
+	return crypto_secretbox_open_easy(Pt, Buffer->MAC, Length - sizeof(Buffer->Nonce), Buffer->Nonce, Key->Key);
+}

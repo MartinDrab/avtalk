@@ -30,6 +30,18 @@ typedef struct _MFCRYPTO_SEED {
 	unsigned char Seed[crypto_box_SEEDBYTES];
 } MFCRYPTO_SEED, *PMFCRYPTO_SEED;
 
+typedef struct _MFCRYPTO_HASH_DIGEST {
+	unsigned char Hash[crypto_hash_sha256_BYTES];
+} MFCRYPTO_HASH_DIGEST, *PMFCRYPTO_HASH_DIGEST;
+
+typedef struct _MFCRYPTO_SYMKEY {
+	unsigned char Key[crypto_secretbox_KEYBYTES];
+} MFCRYPTO_SYMKEY, *PMFCRYPTO_SYMKEY;
+
+typedef struct _MFCRYPTO_SYMENC_HEADER {
+	unsigned char Nonce[crypto_secretbox_NONCEBYTES];
+	unsigned char MAC[crypto_secretbox_MACBYTES];
+} MFCRYPTO_SYMENC_HEADER, *PMFCRYPTO_SYMENC_HEADER;
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +53,13 @@ void MFCrypto_Encrypt(const MFCRYPTO_PUBLIC_KEY* PK, PMFCRYPTO_ENC_HEADER Ct, co
 int MFCrypto_Decrypt(const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SECRET_KEY* SK, void* Pt, const MFCRYPTO_ENC_HEADER* Ct, size_t Len);
 void MFCrypto_Sign(const MFCRYPTO_SECRET_KEY* SK, PMFCRYPTO_SIGNATURE Signature, const void* Buffer, size_t Len);
 int MFCrypto_Verify(const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SIGNATURE* Signature, const void* Buffer, size_t Len);
+
+void MFCrypto_SymKeyGen(PMFCRYPTO_SYMKEY Key);
+void MFCrypto_SymKeyGenSeed(const MFCRYPTO_SEED* Seed, PMFCRYPTO_SYMKEY Key);
+void MFCrypto_SymEncrypt(const MFCRYPTO_SYMKEY* Key, const void* Buffer, size_t Length, PMFCRYPTO_SYMENC_HEADER Ct);
+int MFCrypto_SymDecrypt(const MFCRYPTO_SYMKEY* Key, const MFCRYPTO_SYMENC_HEADER *Buffer, size_t Length, void *Pt);
+
+
 
 #ifdef __cplusplus
 }
