@@ -110,3 +110,11 @@ void MFCrypto_Hash(const void* Buffer, size_t Length, PMFCRYPTO_HASH_DIGEST Dige
 
 	return;
 }
+
+
+void MFCrypto_RandomBuffer(void* Buffer, size_t Length)
+{
+	randombytes_buf(Buffer, Length);
+
+	return;
+}

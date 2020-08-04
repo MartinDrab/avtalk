@@ -11,4 +11,7 @@ EXPORTS
 	MFCrypto_SymKeyGenSeed
 	MFCrypto_SymEncrypt
 	MFCrypto_SymDecrypt
+	
 	MFCrypto_Hash
+	
+	MFCrypto_RandomBuffer

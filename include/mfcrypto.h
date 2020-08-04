@@ -61,6 +61,8 @@ int MFCrypto_SymDecrypt(const MFCRYPTO_SYMKEY* Key, const MFCRYPTO_SYMENC_HEADER
 
 void MFCrypto_Hash(const void* Buffer, size_t Length, PMFCRYPTO_HASH_DIGEST Digest);
 
+void MFCrypto_RandomBuffer(void* Buffer, size_t Length);
+
 
 #ifdef __cplusplus
 }
