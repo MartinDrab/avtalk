@@ -8,6 +8,8 @@
 #include "mfcrypto.h"
 
 
+#define MF_PROTOCOL_VERSION					1
+
 #define MF_MESSAGE_SIGNED					1
 #define MF_MESSAGE_HEADER_ENCRYPTED			2
 #define MF_MESSAGE_DATA_ENCRYPTED			4
@@ -32,13 +34,13 @@ typedef struct _MF_MESSAGE_HEADER {
 	uint16_t Flags;
 	MFCRYPTO_SIGNATURE MessageSignature;
 	MFCRYPTO_ENC_HEADER HeaderEncryption;
-	uint32_t MessageType;
+	EMFMessageType MessageType;
 	uint32_t DataSize;
 	uint64_t PacketCounter;
 	GUID Source;
 	GUID Dest;
 	MFCRYPTO_ENC_HEADER DataEncryption;
-} _MF_MESSAGE_HEADER, *PMF_MESSAGE_HEADER;
+} MF_MESSAGE_HEADER, *PMF_MESSAGE_HEADER;
 
 typedef struct _MF_MESSAGE_SERVER_INFO_IN {
 	MFCRYPTO_SEED ServerKeyChallenge;
@@ -122,6 +124,24 @@ typedef struct _MF_MESSAGE_ENTER_CHANNEL_RESPONSE_IN {
 	MFCRYPTO_SEED EncryptedChallenge;
 } MF_MESSAGE_ENTER_CHANNEL_RESPONSEL_IN, * PMF_MESSAGE_ENTER_CHANNEL_RESPONSE_IN;
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int MFMessageAlloc(EMFMessageType Type, const GUID* Source, const GUID* Dest, const void* Data, size_t Length, PMF_MESSAGE_HEADER *Message);
+void MFMessageFree(PMF_MESSAGE_HEADER Msg);
+void MFMessageDataEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key);
+int MFMessageDataDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SECRET_KEY* SK);
+void MFMessageHeaderEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key);
+int MFMessageHeaderDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SECRET_KEY* SK);
+void MFMessageSign(PMF_MESSAGE_HEADER Header, const MFCRYPTO_SECRET_KEY* SecretKey);
+int MFMessageVerify(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
