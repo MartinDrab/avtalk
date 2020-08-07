@@ -1,0 +1,13 @@
+LIBRARY mfmessages-dll.dll
+EXPORTS
+	MFMessage_Alloc
+	MFMessage_Free
+	MFMessage_DataEncrypt
+	MFMessage_DataDecrypt
+	MFMessage_HeaderEncrypt
+	MFMessage_HeaderDecrypt
+	MFMessage_Sign
+	MFMessage_Verify
+	MFMessage_SetContext
+	MFMessage_SetCounter
+

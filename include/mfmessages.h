@@ -25,6 +25,7 @@ typedef enum _EMFMessageType {
 	mfmtEnterChannel,
 	mfmtEnterChannelResponse,
 	mfmtLeaveChannel,
+	mfmtError,
 	mfmtMax,
 } EMFMessageType, *PEMFMessageType;
 
@@ -37,6 +38,7 @@ typedef struct _MF_MESSAGE_HEADER {
 	EMFMessageType MessageType;
 	uint32_t DataSize;
 	uint64_t PacketCounter;
+	uint64_t Context;
 	GUID Source;
 	GUID Dest;
 	MFCRYPTO_ENC_HEADER DataEncryption;
@@ -54,7 +56,6 @@ typedef struct _MF_MESSAGE_USER_INFO {
 
 typedef struct _MF_MESSAGE_CHANNEL_INFO {
 	GUID Id;
-	MFCRYPTO_PUBLIC_KEY Key;
 	char Name[64];
 	uint32_t SeedCount;
 	uint32_t Flags;
@@ -124,19 +125,27 @@ typedef struct _MF_MESSAGE_ENTER_CHANNEL_RESPONSE_IN {
 	MFCRYPTO_SEED EncryptedChallenge;
 } MF_MESSAGE_ENTER_CHANNEL_RESPONSEL_IN, * PMF_MESSAGE_ENTER_CHANNEL_RESPONSE_IN;
 
+typedef struct _MF_MESSAGE_ERROR {
+	uint32_t ErrorCode;
+	uint32_t StringLen;
+	// ANSI String
+} MF_MESSAGE_ERROR, *PMF_MESSAGE_ERROR;
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int MFMessageAlloc(EMFMessageType Type, const GUID* Source, const GUID* Dest, const void* Data, size_t Length, PMF_MESSAGE_HEADER *Message);
-void MFMessageFree(PMF_MESSAGE_HEADER Msg);
-void MFMessageDataEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key);
-int MFMessageDataDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SECRET_KEY* SK);
-void MFMessageHeaderEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key);
-int MFMessageHeaderDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SECRET_KEY* SK);
-void MFMessageSign(PMF_MESSAGE_HEADER Header, const MFCRYPTO_SECRET_KEY* SecretKey);
-int MFMessageVerify(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key);
+int MFMessage_Alloc(EMFMessageType Type, const GUID* Source, const GUID* Dest, const void* Data, size_t Length, PMF_MESSAGE_HEADER *Message);
+void MFMessage_Free(PMF_MESSAGE_HEADER Msg);
+void MFMessage_DataEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key);
+int MFMessage_DataDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SECRET_KEY* SK);
+void MFMessage_HeaderEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key);
+int MFMessage_HeaderDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SECRET_KEY* SK);
+void MFMessage_Sign(PMF_MESSAGE_HEADER Header, const MFCRYPTO_SECRET_KEY* SecretKey);
+int MFMessage_Verify(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key);
+void MFMessage_SetContext(PMF_MESSAGE_HEADER Header, uint64_t Context);
+void MFMessage_SetCounter(PMF_MESSAGE_HEADER Header, uint64_t Counter);
 
 
 #ifdef __cplusplus
