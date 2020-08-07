@@ -21,14 +21,22 @@ typedef struct _MF_LISTED_MESSAGE {
 } MF_LISTED_MESSAGE, *PMF_LISTED_MESSAGE;
 
 
+typedef enum _EMFConnectionState {
+	mcsFree,
+	mcsHandshake,
+	mcfEstablished,
+} EMFConnectionState, *PEMFConnectionState;
+
 struct _MF_BROKER;
 
 typedef struct _MF_CONNECTION {
 	MFCRYPTO_PUBLIC_KEY Key;
 	SOCKET Socket;
+	EMFConnectionState State;
 	void *Context;
 	struct _MF_BROKER* Broker;
 	MF_LIST_ENTRY MessagesToSend;
+	CRITICAL_SECTION SendLock;
 } MF_CONNECTION, *PMF_CONNECTION;
 
 typedef enum _EBrokerErrorType {
@@ -38,6 +46,9 @@ typedef enum _EBrokerErrorType {
 	betMessageFailedDecryption,
 	betFailedPoll,
 	betSocketError,
+	betMemoryAllocation,
+	betAcceptFailed,
+	betTooManyConnections,
 } EBrokerErrorType, *PEBrokerErrorType;
 
 typedef enum _EBrokerMessageEventType {

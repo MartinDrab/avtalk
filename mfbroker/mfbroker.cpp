@@ -9,6 +9,11 @@
 
 
 
+static int _maxConnections = 64;
+
+
+
+
 static int _sendData(SOCKET Socket, const void* Data, size_t Length)
 {
 	int ret = 0;
@@ -84,6 +89,79 @@ static int _MFMessage_Send(SOCKET Socket, const MF_LISTED_MESSAGE *Message)
 }
 
 
+static int _MFConn_Init(PMF_CONNECTION Conn, PMF_BROKER Broker, SOCKET Socket, void *Context)
+{
+	int ret = 0;
+
+	memset(Conn, 0, sizeof(MF_CONNECTION));
+	if (InitializeCriticalSectionAndSpinCount(&Conn->SendLock, 0x1000)) {
+		MFList_Init(&Conn->MessagesToSend);
+		Conn->Socket = Socket;
+		Conn->Context = Context;
+		Conn->Broker = Broker;
+		Conn->State = mcsHandshake;
+	} else ret = GetLastError();
+
+	return ret;
+}
+
+
+static void _MFConn_Finit(PMF_CONNECTION Conn)
+{
+	PMF_LISTED_MESSAGE msg = NULL;
+	PMF_LISTED_MESSAGE old = NULL;
+
+	msg = CONTAINING_RECORD(Conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
+	while (&msg->Entry != &Conn->MessagesToSend) {
+		old = msg;
+		msg = CONTAINING_RECORD(msg->Entry.Next, MF_LISTED_MESSAGE, Entry);
+		MFGen_RefMemRelease(msg);
+	}
+
+	DeleteCriticalSection(&Conn->SendLock);
+	Conn->State = mcsFree;
+
+	return;
+}
+
+
+PMF_CONNECTION _MFConn_Next(PMF_CONNECTION Start, PMF_CONNECTION Current, int Max)
+{
+	PMF_CONNECTION ret = NULL;
+
+	ret = Current;
+	while (ret - Start < Max && ret->State == mcsFree)
+		++ret;
+
+	if (ret - Start == Max)
+		ret = NULL;
+
+	return ret;
+}
+
+
+PMF_CONNECTION _MFConn_First(PMF_CONNECTION Start, int Max)
+{
+	return _MFConn_Next(Start, Start, Max);
+}
+
+
+static PMF_CONNECTION _MFConn_FindFree(PMF_CONNECTION Start, int Max)
+{
+	PMF_CONNECTION ret = NULL;
+
+	ret = Start;
+	while (ret - Start < Max && ret->State != mcsFree)
+		++ret;
+
+	if (ret - Start == Max)
+		ret = NULL;
+
+	return ret;
+}
+
+
+
 static DWORD WINAPI _MFBrokerThread(PVOID Context)
 {
 	DWORD ret = 0;
@@ -96,6 +174,7 @@ static DWORD WINAPI _MFBrokerThread(PVOID Context)
 	PMF_LISTED_MESSAGE old = NULL;
 	PMF_CONNECTION conn = NULL;
 	MF_LIST_ENTRY recvList;
+	SOCKET newSocket = INVALID_SOCKET;
 
 	MFList_Init(&recvList);
 	while (!broker->Terminated) {
@@ -104,16 +183,21 @@ static DWORD WINAPI _MFBrokerThread(PVOID Context)
 				MFGen_RefMemRelease(fds);
 
 			fds = NULL;
-			ret = MFGen_RefMemAlloc(broker->ConnectionCount*sizeof(fds), (void **)&fds);
-			if (ret != 0)
+			ret = MFGen_RefMemAlloc((broker->ConnectionCount + 1)*sizeof(fds), (void **)&fds);
+			if (ret != 0) {
+				ret = broker->ErrorCallback(betMemoryAllocation, ret, NULL, broker->ErrorCallbackContext);
+				if (ret == 0)
+					continue;
+				
 				break;
+			}
 
 			fdCount = broker->ConnectionCount;
 		}
 		
 		tmp = fds;
-		conn = broker->Connections;
-		for (int i = 0; i < fdCount; ++i) {
+		conn = _MFConn_First(broker->Connections, _maxConnections);
+		for (int i = 0; i < fdCount; ++i) {			
 			tmp->fd = conn->Socket;
 			tmp->revents = 0;
 			tmp->events = POLLIN;
@@ -121,18 +205,26 @@ static DWORD WINAPI _MFBrokerThread(PVOID Context)
 				tmp->events |= POLLOUT;
 			
 			++tmp;
-			++conn;
+			conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
 		}
 
-		waitRes = WSAPoll(fds, fdCount, 1000);
+		if (broker->ListenSocket != INVALID_SOCKET) {
+			tmp->fd = broker->ListenSocket;
+			tmp->events = POLLIN;
+			tmp->revents = 0;
+		}
+
+		waitRes = WSAPoll(fds, fdCount + (broker->ListenSocket != INVALID_SOCKET ? 1 : 0), 1000);
 		if (waitRes > 0) {
 			tmp = fds;
-			conn = broker->Connections;
-			while (conn - broker->Connections < fdCount) {
+			conn = _MFConn_First(broker->Connections, _maxConnections);
+			while (tmp - fds < fdCount) {
 				if (tmp->revents & POLLERR) {
 					broker->ErrorCallback(betSocketError, ret, conn, broker->ErrorCallbackContext);
+					_MFConn_Finit(conn);
+					--broker->ConnectionCount;
 					++tmp;
-					++conn;
+					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
 					continue;
 				}
 				
@@ -162,35 +254,78 @@ static DWORD WINAPI _MFBrokerThread(PVOID Context)
 				}
 
 				if (tmp->revents & POLLHUP) {
-
+					_MFConn_Finit(conn);
+					--broker->ConnectionCount;
 					++tmp;
-					++conn;
+					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
 					continue;
 				}
 
 				if (tmp->revents & POLLOUT) {
+					EnterCriticalSection(&conn->SendLock);
 					while (ret == 0 && !MFList_Empty(&conn->MessagesToSend)) {
 						msg = CONTAINING_RECORD(conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
-						if (broker->MessageCallback(bmetAboutToEncrypt, &msg->Header, &msg->Header + 1, msg->Header.DataSize, msg->OriginalFlags, broker->MessageCallbackContext))
+						MFList_Remove(&msg->Entry);
+						LeaveCriticalSection(&conn->SendLock);
+						if ((msg->Header.Flags & MF_MESSAGE_HEADER_ENCRYPTED) == 0 && broker->MessageCallback(bmetAboutToEncrypt, &msg->Header, &msg->Header + 1, msg->Header.DataSize, msg->OriginalFlags, broker->MessageCallbackContext))
 							MFMessage_HeaderEncrypt(&msg->Header, &conn->Key);
 
-						if (broker->MessageCallback(bmetAboutToSign, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext))
+						if ((msg->Header.Flags & MF_MESSAGE_SIGNED) == 0 && broker->MessageCallback(bmetAboutToSign, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext))
 							MFMessage_Sign(&msg->Header, &broker->SecretKey);
 						
 						ret = _MFMessage_Send(conn->Socket, msg);
-						if (ret == 0) {
-							MFList_Remove(&msg->Entry);
-							MFGen_RefMemRelease(msg);
-						} else broker->ErrorCallback(betMessageFailedSend, ret, conn, broker->ErrorCallbackContext);
+						if (ret == 0)
+							broker->MessageCallback(bmetSent, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext);
+						
+						if (ret != 0)
+							broker->ErrorCallback(betMessageFailedSend, ret, conn, broker->ErrorCallbackContext);
+
+						MFGen_RefMemRelease(msg);
+						EnterCriticalSection(&conn->SendLock);
 					}
 
-					++tmp;
-					++conn;
-					continue;
+					LeaveCriticalSection(&conn->SendLock);
 				}
 
 				++tmp;
-				++conn;
+				conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
+			}
+
+			if (ret == 0 && broker->ListenSocket != INVALID_SOCKET) {
+				if (tmp->revents & POLLERR) {
+					broker->ErrorCallback(betSocketError, ret, NULL, broker->ErrorCallbackContext);
+					ret = -1;
+				}
+
+				if (ret == 0 && tmp->revents & POLLIN) {
+					newSocket = accept(broker->ListenSocket, NULL, NULL);
+					if (newSocket == INVALID_SOCKET) {
+						ret = WSAGetLastError();
+						broker->ErrorCallback(betAcceptFailed, ret, NULL, broker->ErrorCallbackContext);
+					}
+
+					if (ret == 0) {
+						conn = _MFConn_FindFree(broker->Connections, _maxConnections);
+						if (conn == NULL) {
+							ret = -1;
+							broker->ErrorCallback(betTooManyConnections, ret, NULL, broker->ErrorCallbackContext);
+						}
+
+						if (ret == 0) {
+							ret = _MFConn_Init(conn, broker, newSocket, NULL);
+							if (ret != 0)
+								broker->ErrorCallback(betMemoryAllocation, ret, NULL, broker->ErrorCallbackContext);
+						}
+
+						if (ret == 0)
+							++broker->ConnectionCount;
+
+						if (ret != 0) {
+							// TODO: Send error message
+							closesocket(newSocket);
+						}
+					}
+				}
 			}
 		} else if (waitRes == SOCKET_ERROR) {
 			ret = WSAGetLastError();
