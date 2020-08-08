@@ -1,6 +1,7 @@
 
 #include <winsock2.h>
 #include <windows.h>
+#include <ws2tcpip.h>
 #include "mfgen.h"
 #include "mfcrypto.h"
 #include "mfmessages.h"
@@ -111,6 +112,7 @@ static void _MFConn_Finit(PMF_CONNECTION Conn)
 	PMF_LISTED_MESSAGE msg = NULL;
 	PMF_LISTED_MESSAGE old = NULL;
 
+	closesocket(Conn->Socket);
 	msg = CONTAINING_RECORD(Conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
 	while (&msg->Entry != &Conn->MessagesToSend) {
 		old = msg;
@@ -161,8 +163,7 @@ static PMF_CONNECTION _MFConn_FindFree(PMF_CONNECTION Start, int Max)
 }
 
 
-
-static DWORD WINAPI _MFBrokerThread(PVOID Context)
+static DWORD WINAPI _MFBrokerThreadRoutine(PVOID Context)
 {
 	DWORD ret = 0;
 	int waitRes = 0;
@@ -208,7 +209,7 @@ static DWORD WINAPI _MFBrokerThread(PVOID Context)
 			conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
 		}
 
-		if (broker->ListenSocket != INVALID_SOCKET) {
+		if (broker->Mode == bmServer) {
 			tmp->fd = broker->ListenSocket;
 			tmp->events = POLLIN;
 			tmp->revents = 0;
@@ -291,7 +292,7 @@ static DWORD WINAPI _MFBrokerThread(PVOID Context)
 				conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
 			}
 
-			if (ret == 0 && broker->ListenSocket != INVALID_SOCKET) {
+			if (ret == 0 && broker->Mode == bmServer) {
 				if (tmp->revents & POLLERR) {
 					broker->ErrorCallback(betSocketError, ret, NULL, broker->ErrorCallbackContext);
 					ret = -1;
@@ -345,5 +346,127 @@ static DWORD WINAPI _MFBrokerThread(PVOID Context)
 	if (fds != NULL)
 		MFGen_RefMemRelease(fds);
 
+	if (broker->Mode == bmServer)
+		closesocket(broker->ListenSocket);
+
 	return ret;
+}
+
+
+int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC_KEY* PublicKey, const MFCRYPTO_SECRET_KEY* SecretKey, MF_BROKER_MESSAGE_CALLBACK* MessageCallback, void* MessageCallbackContext, MF_BROKER_ERROR_CALLBACK* ErrorCallback, void* ErrorCallbackContext, PMF_BROKER* Broker)
+{
+	int ret = 0;
+	SOCKET sock = NULL;
+	struct addrinfo hints;
+	struct addrinfo *addrs = NULL;
+	struct addrinfo *tmp = NULL;
+	PMF_BROKER tmpBroker = NULL;
+
+	ret = MFGen_RefMemAlloc(sizeof(MF_BROKER) + _maxConnections*sizeof(MF_CONNECTION), (void **)&tmpBroker);
+	if (ret == 0) {
+		memset(tmpBroker, 0, sizeof(MF_BROKER));
+		tmpBroker->Mode = Mode;
+		tmpBroker->MessageCallback = MessageCallback;
+		tmpBroker->MessageCallbackContext = ErrorCallbackContext;
+		tmpBroker->ErrorCallback = ErrorCallback;
+		tmpBroker->ErrorCallbackContext = ErrorCallbackContext;
+		tmpBroker->Connections = (PMF_CONNECTION)(tmpBroker + 1);
+		tmpBroker->ListenSocket = INVALID_SOCKET;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+		ret = getaddrinfo(HostPort, NULL, &hints, &addrs);
+		if (ret == 0) {
+			tmp = addrs;
+			while (tmp != NULL) {
+				sock = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
+				if (sock != INVALID_SOCKET) {
+					switch (tmpBroker->Mode) {
+						case bmClient:
+							ret = connect(sock, tmp->ai_addr, (int)tmp->ai_addrlen);
+							if (ret == SOCKET_ERROR)
+								ret = WSAGetLastError();
+
+							if (ret == 0)
+								ret = _MFConn_Init(tmpBroker->Connections, tmpBroker, sock, NULL);
+							
+							if (ret == 0)
+								++tmpBroker->ConnectionCount;
+							break;
+						case bmServer:
+							ret = bind(sock, tmp->ai_addr, (int)tmp->ai_addrlen);
+							if (ret == SOCKET_ERROR)
+								ret = WSAGetLastError();
+
+							if (ret == 0) {
+								ret = listen(sock, SOMAXCONN);
+								if (ret == SOCKET_ERROR)
+									ret = WSAGetLastError();
+							}
+
+							if (ret == 0)
+								tmpBroker->ListenSocket = sock;
+							break;
+					}
+
+					if (ret != 0)
+						closesocket(sock);
+				}
+
+				if (ret == 0)
+					break;
+
+				tmp = tmp->ai_next;
+			}
+
+			freeaddrinfo(addrs);
+		}
+
+		if (ret == 0) {
+			tmpBroker->ThreadHandle = CreateThread(NULL, 0, _MFBrokerThreadRoutine, tmpBroker, 0, &tmpBroker->ThreadId);
+			if (tmpBroker->ThreadHandle == NULL)
+				ret = GetLastError();
+
+			if (ret != 0) {
+				switch (tmpBroker->Mode) {
+					case bmClient:
+						_MFConn_Finit(tmpBroker->Connections);
+						--tmpBroker->ConnectionCount;
+						break;
+					case bmServer:
+						closesocket(sock);
+						break;
+				}
+			}
+		}
+
+		if (ret == 0) {
+			MFGen_RefMemAddRef(tmpBroker);
+			*Broker = tmpBroker;
+		}
+
+		MFGen_RefMemRelease(tmpBroker);
+	}
+
+	return ret;
+}
+
+
+void MFBroker_Free(PMF_BROKER Broker)
+{
+	PMF_CONNECTION conn = NULL;
+
+	Broker->Terminated;
+	WaitForSingleObject(Broker->ThreadHandle, INFINITE);
+	CloseHandle(Broker->ThreadHandle);
+	conn = _MFConn_First(Broker->Connections, _maxConnections);
+	while (conn != NULL) {
+		_MFConn_Finit(conn);
+		conn = _MFConn_Next(Broker->Connections, conn + 1, _maxConnections);
+	}
+	
+	MFGen_RefMemRelease(Broker);
+
+	return;
 }

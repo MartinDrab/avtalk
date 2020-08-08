@@ -61,23 +61,31 @@ typedef enum _EBrokerMessageEventType {
 typedef int (MF_BROKER_ERROR_CALLBACK)(EBrokerErrorType Type, int Code, void *Data, void *Context);
 typedef int (MF_BROKER_MESSAGE_CALLBACK)(EBrokerMessageEventType Type, const MF_MESSAGE_HEADER* Header, const void* Data, size_t DataLength, uint32_t OriginalFlags, void* Context);;
 
+typedef enum _EBrokerMode {
+	bmClient,
+	bmServer,
+} EBrokerMode, *PEBrokerMode;
+
 typedef struct _MF_BROKER {
 	MFCRYPTO_PUBLIC_KEY PublicKey;
 	MFCRYPTO_SECRET_KEY SecretKey;
-	SOCKET ListenSocket;
 	PMF_CONNECTION Connections;
 	int ConnectionCount;
 	volatile BOOL Terminated;
-	HANDLE ThreadHandle;
-	DWORD ThreadId;
+	EBrokerMode Mode;
 	MF_BROKER_ERROR_CALLBACK *ErrorCallback;
 	void* ErrorCallbackContext;
 	MF_BROKER_MESSAGE_CALLBACK *MessageCallback;
 	void* MessageCallbackContext;
+	HANDLE ThreadHandle;
+	DWORD ThreadId;
+	SOCKET ListenSocket;
 } MF_BROKER, *PMF_BROKER;
 
 
 
+int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC_KEY* PublicKey, const MFCRYPTO_SECRET_KEY* SecretKey, MF_BROKER_MESSAGE_CALLBACK *MessageCallback, void *MessageCallbackContext, MF_BROKER_ERROR_CALLBACK *ErrorCallback, void *ErrorCallbackContext, PMF_BROKER *Broker);
+void MFBroker_Free(PMF_BROKER Broker);
 
 
 
