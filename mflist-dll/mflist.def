@@ -1,0 +1,7 @@
+LIBRARY mflist-dll
+EXPORTS
+	MFList_Init
+	MFList_Empty
+	MFList_InsertTail
+	MFList_InsertHead
+	MFList_Remove

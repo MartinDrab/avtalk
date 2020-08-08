@@ -2,6 +2,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
+#include "mflist.h"
 #include "mfgen.h"
 #include "mfcrypto.h"
 #include "mfmessages.h"

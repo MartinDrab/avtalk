@@ -52,11 +52,6 @@ typedef struct _MFGEN_STREAM_INFO {
 	IMFTopologyNode* Node;
 } MFGEN_STREAM_INFO, *PMFGEN_STREAM_INFO;
 
-typedef struct _MF_LIST_ENTRY {
-	struct _MF_LIST_ENTRY *Next;
-	struct _MF_LIST_ENTRY *Prev;
-} MF_LIST_ENTRY, *PMF_LIST_ENTRY;
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,12 +70,6 @@ void MFGen_FreeStreamNodes(PMFGEN_STREAM_INFO Nodes, UINT32 Count);
 HRESULT MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer);
 void MFGen_RefMemAddRef(void* Buffer);
 void MFGen_RefMemRelease(void* Buffer);
-
-void MFList_Init(PMF_LIST_ENTRY ListHead);
-int MFList_Empty(const MF_LIST_ENTRY *ListHead);
-void MFList_InsertTail(PMF_LIST_ENTRY ListHead, PMF_LIST_ENTRY Entry);
-void MFList_InsertHead(PMF_LIST_ENTRY ListHead, PMF_LIST_ENTRY Entry);
-void MFList_Remove(PMF_LIST_ENTRY Entry);
 
 HRESULT MFGen_Init(void);
 void MFGen_Finit(void);

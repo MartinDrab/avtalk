@@ -12,11 +12,6 @@ EXPORTS
 	MFGen_RefMemAddRef
 	MFGen_RefMemRelease
 	MFGen_FreeStreamNodes
-	MFList_Init
-	MFList_Empty
-	MFList_InsertTail
-	MFList_InsertHead
-	MFList_Remove
 	MFGen_Init
 	MFGen_Finit
 
