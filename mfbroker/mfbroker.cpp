@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 #include "mflist.h"
+#include "mflock.h"
 #include "mfmemory.h"
 #include "mfcrypto.h"
 #include "mfmessages.h"
@@ -96,7 +97,8 @@ static int _MFConn_Init(PMF_CONNECTION Conn, PMF_BROKER Broker, SOCKET Socket, v
 	int ret = 0;
 
 	memset(Conn, 0, sizeof(MF_CONNECTION));
-	if (InitializeCriticalSectionAndSpinCount(&Conn->SendLock, 0x1000)) {
+	ret = MFLock_Init(&Conn->SendLock);
+	if (ret == 0) {
 		MFList_Init(&Conn->MessagesToSend);
 		Conn->Socket = Socket;
 		Conn->Context = Context;
@@ -121,7 +123,7 @@ static void _MFConn_Finit(PMF_CONNECTION Conn)
 		MFGen_RefMemRelease(msg);
 	}
 
-	DeleteCriticalSection(&Conn->SendLock);
+	MFLock_Finit(&Conn->SendLock);
 	Conn->State = mcsFree;
 
 	return;
@@ -264,11 +266,11 @@ static DWORD WINAPI _MFBrokerThreadRoutine(PVOID Context)
 				}
 
 				if (tmp->revents & POLLOUT) {
-					EnterCriticalSection(&conn->SendLock);
+					MFLock_Enter(&conn->SendLock);
 					while (ret == 0 && !MFList_Empty(&conn->MessagesToSend)) {
 						msg = CONTAINING_RECORD(conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
 						MFList_Remove(&msg->Entry);
-						LeaveCriticalSection(&conn->SendLock);
+						MFLock_Leave(&conn->SendLock);
 						if ((msg->Header.Flags & MF_MESSAGE_HEADER_ENCRYPTED) == 0 && broker->MessageCallback(bmetAboutToEncrypt, &msg->Header, &msg->Header + 1, msg->Header.DataSize, msg->OriginalFlags, broker->MessageCallbackContext))
 							MFMessage_HeaderEncrypt(&msg->Header, &conn->Key);
 
@@ -283,10 +285,10 @@ static DWORD WINAPI _MFBrokerThreadRoutine(PVOID Context)
 							broker->ErrorCallback(betMessageFailedSend, ret, conn, broker->ErrorCallbackContext);
 
 						MFGen_RefMemRelease(msg);
-						EnterCriticalSection(&conn->SendLock);
+						MFLock_Enter(&conn->SendLock);
 					}
 
-					LeaveCriticalSection(&conn->SendLock);
+					MFLock_Leave(&conn->SendLock);
 				}
 
 				++tmp;

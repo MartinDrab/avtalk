@@ -1,0 +1,6 @@
+LIBRARY mflock-dll
+EXPORTS
+	MFLock_Init
+	MFLock_Enter
+	MFLock_Leave
+	MFLock_Finit

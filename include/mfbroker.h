@@ -7,6 +7,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include "mflist.h"
+#include "mflock.h"
 #include "mfcrypto.h"
 #include "mfmessages.h"
 
@@ -36,7 +37,7 @@ typedef struct _MF_CONNECTION {
 	void *Context;
 	struct _MF_BROKER* Broker;
 	MF_LIST_ENTRY MessagesToSend;
-	CRITICAL_SECTION SendLock;
+	MF_LOCK SendLock;
 } MF_CONNECTION, *PMF_CONNECTION;
 
 typedef enum _EBrokerErrorType {
