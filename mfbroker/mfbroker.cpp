@@ -14,7 +14,7 @@
 
 
 static int _maxConnections = 64;
-
+static int _workerThreadCount = 8;
 
 
 
@@ -131,24 +131,24 @@ static void _MFConn_Finit(PMF_CONNECTION Conn)
 }
 
 
-PMF_CONNECTION _MFConn_Next(PMF_CONNECTION Start, PMF_CONNECTION Current, int Max)
+PMF_CONNECTION _MFConn_Next(PMF_CONNECTION Start, PMF_CONNECTION Current, int Max, size_t Step)
 {
 	PMF_CONNECTION ret = NULL;
 
 	ret = Current;
 	while (ret - Start < Max && ret->State == mcsFree)
-		++ret;
+		ret += Step;
 
-	if (ret - Start == Max)
+	if (ret - Start >= Max)
 		ret = NULL;
 
 	return ret;
 }
 
 
-PMF_CONNECTION _MFConn_First(PMF_CONNECTION Start, int Max)
+PMF_CONNECTION _MFConn_First(PMF_CONNECTION Start, int Max, size_t Step)
 {
-	return _MFConn_Next(Start, Start, Max);
+	return _MFConn_Next(Start, Start, Max, Step);
 }
 
 
@@ -179,16 +179,15 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 	PMF_LISTED_MESSAGE old = NULL;
 	PMF_CONNECTION conn = NULL;
 	MF_LIST_ENTRY recvList;
-	SOCKET newSocket = INVALID_SOCKET;
 
 	MFList_Init(&recvList);
-	while (!broker->Terminated) {
+	while (!MFThread_Terminated(Thread)) {
 		if (fdCount != broker->ConnectionCount) {
 			if (fds != NULL)
 				MFGen_RefMemRelease(fds);
 
 			fds = NULL;
-			ret = MFGen_RefMemAlloc((broker->ConnectionCount + 1)*sizeof(fds), (void **)&fds);
+			ret = MFGen_RefMemAlloc(broker->ConnectionCount*sizeof(fds), (void **)&fds);
 			if (ret != 0) {
 				ret = broker->ErrorCallback(betMemoryAllocation, ret, NULL, broker->ErrorCallbackContext);
 				if (ret == 0)
@@ -201,7 +200,7 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 		}
 		
 		tmp = fds;
-		conn = _MFConn_First(broker->Connections, _maxConnections);
+		conn = _MFConn_First(broker->Connections, _maxConnections, broker->ThreadCount);
 		for (int i = 0; i < fdCount; ++i) {			
 			tmp->fd = conn->Socket;
 			tmp->revents = 0;
@@ -210,26 +209,20 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 				tmp->events |= POLLOUT;
 			
 			++tmp;
-			conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
+			conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections, broker->ThreadCount);
 		}
 
-		if (broker->Mode == bmServer) {
-			tmp->fd = broker->ListenSocket;
-			tmp->events = POLLIN;
-			tmp->revents = 0;
-		}
-
-		waitRes = WSAPoll(fds, fdCount + (broker->ListenSocket != INVALID_SOCKET ? 1 : 0), 1000);
+		waitRes = WSAPoll(fds, fdCount, 1000);
 		if (waitRes > 0) {
 			tmp = fds;
-			conn = _MFConn_First(broker->Connections, _maxConnections);
+			conn = _MFConn_First(broker->Connections, _maxConnections, broker->ThreadCount);
 			while (tmp - fds < fdCount) {
 				if (tmp->revents & POLLERR) {
 					broker->ErrorCallback(betSocketError, ret, conn, broker->ErrorCallbackContext);
 					_MFConn_Finit(conn);
 					--broker->ConnectionCount;
 					++tmp;
-					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
+					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections, broker->ThreadCount);
 					continue;
 				}
 				
@@ -262,7 +255,7 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 					_MFConn_Finit(conn);
 					--broker->ConnectionCount;
 					++tmp;
-					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
+					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections, broker->ThreadCount);
 					continue;
 				}
 
@@ -293,48 +286,11 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 				}
 
 				++tmp;
-				conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections);
-			}
-
-			if (ret == 0 && broker->Mode == bmServer) {
-				if (tmp->revents & POLLERR) {
-					broker->ErrorCallback(betSocketError, ret, NULL, broker->ErrorCallbackContext);
-					ret = -1;
-				}
-
-				if (ret == 0 && tmp->revents & POLLIN) {
-					newSocket = accept(broker->ListenSocket, NULL, NULL);
-					if (newSocket == INVALID_SOCKET) {
-						ret = WSAGetLastError();
-						broker->ErrorCallback(betAcceptFailed, ret, NULL, broker->ErrorCallbackContext);
-					}
-
-					if (ret == 0) {
-						conn = _MFConn_FindFree(broker->Connections, _maxConnections);
-						if (conn == NULL) {
-							ret = -1;
-							broker->ErrorCallback(betTooManyConnections, ret, NULL, broker->ErrorCallbackContext);
-						}
-
-						if (ret == 0) {
-							ret = _MFConn_Init(conn, broker, newSocket, NULL);
-							if (ret != 0)
-								broker->ErrorCallback(betMemoryAllocation, ret, NULL, broker->ErrorCallbackContext);
-						}
-
-						if (ret == 0)
-							++broker->ConnectionCount;
-
-						if (ret != 0) {
-							// TODO: Send error message
-							closesocket(newSocket);
-						}
-					}
-				}
+				conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections, broker->ThreadCount);
 			}
 		} else if (waitRes == SOCKET_ERROR) {
 			ret = WSAGetLastError();
-			broker->Terminated = TRUE;
+			MFThread_Terminate(Thread);
 			broker->ErrorCallback(betFailedPoll, ret, NULL, broker->ErrorCallbackContext);
 		}
 
@@ -357,6 +313,68 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 }
 
 
+static int _MFBrokerServerThread(PMF_THREAD Thread)
+{
+	int ret = 0;
+	int waitRes = 0;
+	struct pollfd fds[1];
+	SOCKET newSocket = NULL;
+	PMF_CONNECTION conn = NULL;
+	PMF_BROKER broker = (PMF_BROKER)MFThread_Context(Thread);
+
+	memset(fds, 0, sizeof(fds));
+	while (!MFThread_Terminated(Thread)) {
+		fds[0].fd = broker->ListenSocket;
+		fds[0].events = POLLIN;
+		fds[0].revents = 0;
+		waitRes = WSAPoll(fds, sizeof(fds) / sizeof(fds[0]), 2000);
+		if (waitRes > 0) {
+			if (fds[0].revents & POLLERR) {
+				broker->ErrorCallback(betSocketError, ret, NULL, broker->ErrorCallbackContext);
+				ret = -1;
+			}
+
+			if (ret == 0 && fds[0].revents & POLLIN) {
+				newSocket = accept(broker->ListenSocket, NULL, NULL);
+				if (newSocket == INVALID_SOCKET) {
+					ret = WSAGetLastError();
+					broker->ErrorCallback(betAcceptFailed, ret, NULL, broker->ErrorCallbackContext);
+				}
+
+				if (ret == 0) {
+					conn = _MFConn_FindFree(broker->Connections, _maxConnections);
+					if (conn == NULL) {
+						ret = -1;
+						broker->ErrorCallback(betTooManyConnections, ret, NULL, broker->ErrorCallbackContext);
+					}
+
+					if (ret == 0) {
+						ret = _MFConn_Init(conn, broker, newSocket, NULL);
+						if (ret != 0)
+							broker->ErrorCallback(betMemoryAllocation, ret, NULL, broker->ErrorCallbackContext);
+					}
+
+					if (ret == 0)
+						++broker->ConnectionCount;
+
+					if (ret != 0) {
+						// TODO: Send error message
+						closesocket(newSocket);
+					}
+				}
+			}
+		} else if (waitRes == SOCKET_ERROR) {
+			ret = WSAGetLastError();
+			MFThread_Terminate(Thread);
+			broker->ErrorCallback(betFailedPoll, ret, NULL, broker->ErrorCallbackContext);
+		}
+	}
+
+	return ret;
+}
+
+
+
 int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC_KEY* PublicKey, const MFCRYPTO_SECRET_KEY* SecretKey, MF_BROKER_MESSAGE_CALLBACK* MessageCallback, void* MessageCallbackContext, MF_BROKER_ERROR_CALLBACK* ErrorCallback, void* ErrorCallbackContext, PMF_BROKER* Broker)
 {
 	int ret = 0;
@@ -366,7 +384,7 @@ int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC
 	struct addrinfo *tmp = NULL;
 	PMF_BROKER tmpBroker = NULL;
 
-	ret = MFGen_RefMemAlloc(sizeof(MF_BROKER) + _maxConnections*sizeof(MF_CONNECTION), (void **)&tmpBroker);
+	ret = MFGen_RefMemAlloc(sizeof(MF_BROKER) + _maxConnections*sizeof(MF_CONNECTION) + _workerThreadCount*sizeof(PMF_THREAD), (void **)&tmpBroker);
 	if (ret == 0) {
 		memset(tmpBroker, 0, sizeof(MF_BROKER));
 		tmpBroker->Mode = Mode;
@@ -375,6 +393,7 @@ int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC
 		tmpBroker->ErrorCallback = ErrorCallback;
 		tmpBroker->ErrorCallbackContext = ErrorCallbackContext;
 		tmpBroker->Connections = (PMF_CONNECTION)(tmpBroker + 1);
+		tmpBroker->Threads = (PMF_THREAD*)(tmpBroker->Connections + _maxConnections);
 		tmpBroker->ListenSocket = INVALID_SOCKET;
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
@@ -428,7 +447,39 @@ int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC
 		}
 
 		if (ret == 0) {
-			ret = MFThread_Create(_MFBrokerThreadRoutine, tmpBroker, &tmpBroker->Thread);
+			switch (Mode) {
+				case bmClient:
+					tmpBroker->ThreadCount = 1;
+					ret = MFThread_Create(_MFBrokerThreadRoutine, tmpBroker, tmpBroker->Threads);
+					break;
+				case bmServer:
+					ret = MFThread_Create(_MFBrokerServerThread, tmpBroker, &tmpBroker->ListenThread);
+					if (ret == 0) {
+						tmpBroker->ThreadCount = _workerThreadCount;
+						for (size_t i = 0; i < tmpBroker->ThreadCount; ++i) {
+							ret = MFThread_Create(_MFBrokerThreadRoutine, tmpBroker, tmpBroker->Threads + i);
+							if (ret != 0) {
+								for (size_t j = 0; j < i; ++j)
+									MFThread_Terminate(tmpBroker->Threads[j]);
+
+								for (size_t j = 0; j < i; ++j) {
+									MFThread_WaitFor(tmpBroker->Threads[j]);
+									MFThread_Close(tmpBroker->Threads[j]);
+								}
+
+								break;
+							}
+						}
+
+						if (ret != 0) {
+							MFThread_Terminate(tmpBroker->ListenThread);
+							MFThread_WaitFor(tmpBroker->ListenThread);
+							MFThread_Close(tmpBroker->ListenThread);
+						}
+					}
+					break;
+			}
+
 			if (ret != 0) {
 				switch (tmpBroker->Mode) {
 					case bmClient:
@@ -458,13 +509,25 @@ void MFBroker_Free(PMF_BROKER Broker)
 {
 	PMF_CONNECTION conn = NULL;
 
-	MFThread_Terminate(Broker->Thread);
-	MFThread_WaitFor(Broker->Thread);
-	MFThread_Close(Broker->Thread);
-	conn = _MFConn_First(Broker->Connections, _maxConnections);
+	for (size_t i = 0; i < Broker->ThreadCount; ++i)
+		MFThread_Terminate(Broker->Threads[i]);
+
+	for (size_t i = 0; i < Broker->ThreadCount; ++i) {
+		MFThread_WaitFor(Broker->Threads[i]);
+		MFThread_Close(Broker->Threads[i]);
+	}
+	
+	if (Broker->Mode == bmServer) {
+		MFThread_Terminate(Broker->ListenThread);
+		MFThread_WaitFor(Broker->ListenThread);
+		MFThread_Close(Broker->ListenThread);
+		closesocket(Broker->ListenSocket);
+	}
+
+	conn = _MFConn_First(Broker->Connections, _maxConnections, 1);
 	while (conn != NULL) {
 		_MFConn_Finit(conn);
-		conn = _MFConn_Next(Broker->Connections, conn + 1, _maxConnections);
+		conn = _MFConn_Next(Broker->Connections, conn + 1, _maxConnections, 1);
 	}
 	
 	MFGen_RefMemRelease(Broker);

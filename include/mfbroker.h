@@ -34,9 +34,9 @@ struct _MF_BROKER;
 typedef struct _MF_CONNECTION {
 	MFCRYPTO_PUBLIC_KEY Key;
 	SOCKET Socket;
-	EMFConnectionState State;
+	volatile EMFConnectionState State;
 	void *Context;
-	struct _MF_BROKER* Broker;
+	struct _MF_BROKER *Broker;
 	MF_LIST_ENTRY MessagesToSend;
 	MF_LOCK SendLock;
 } MF_CONNECTION, *PMF_CONNECTION;
@@ -73,14 +73,15 @@ typedef struct _MF_BROKER {
 	MFCRYPTO_SECRET_KEY SecretKey;
 	PMF_CONNECTION Connections;
 	int ConnectionCount;
-	volatile BOOL Terminated;
 	EBrokerMode Mode;
 	MF_BROKER_ERROR_CALLBACK *ErrorCallback;
 	void* ErrorCallbackContext;
 	MF_BROKER_MESSAGE_CALLBACK *MessageCallback;
 	void *MessageCallbackContext;
-	PMF_THREAD Thread;
+	PMF_THREAD *Threads;
+	size_t ThreadCount;
 	SOCKET ListenSocket;
+	PMF_THREAD ListenThread;
 } MF_BROKER, *PMF_BROKER;
 
 
