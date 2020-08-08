@@ -10,6 +10,7 @@
 #include "mflock.h"
 #include "mfcrypto.h"
 #include "mfmessages.h"
+#include "mfthread.h"
 
 
 
@@ -77,9 +78,8 @@ typedef struct _MF_BROKER {
 	MF_BROKER_ERROR_CALLBACK *ErrorCallback;
 	void* ErrorCallbackContext;
 	MF_BROKER_MESSAGE_CALLBACK *MessageCallback;
-	void* MessageCallbackContext;
-	HANDLE ThreadHandle;
-	DWORD ThreadId;
+	void *MessageCallbackContext;
+	PMF_THREAD Thread;
 	SOCKET ListenSocket;
 } MF_BROKER, *PMF_BROKER;
 

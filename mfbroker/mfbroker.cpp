@@ -7,6 +7,7 @@
 #include "mfmemory.h"
 #include "mfcrypto.h"
 #include "mfmessages.h"
+#include "mfthread.h"
 #include "mfbroker.h"
 
 
@@ -166,11 +167,11 @@ static PMF_CONNECTION _MFConn_FindFree(PMF_CONNECTION Start, int Max)
 }
 
 
-static DWORD WINAPI _MFBrokerThreadRoutine(PVOID Context)
+static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 {
-	DWORD ret = 0;
+	int ret = 0;
 	int waitRes = 0;
-	PMF_BROKER broker = (PMF_BROKER)Context;
+	PMF_BROKER broker = (PMF_BROKER)MFThread_Context(Thread);
 	struct pollfd *fds = NULL;
 	int fdCount = 0;
 	struct pollfd *tmp = NULL;
@@ -427,10 +428,7 @@ int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC
 		}
 
 		if (ret == 0) {
-			tmpBroker->ThreadHandle = CreateThread(NULL, 0, _MFBrokerThreadRoutine, tmpBroker, 0, &tmpBroker->ThreadId);
-			if (tmpBroker->ThreadHandle == NULL)
-				ret = GetLastError();
-
+			ret = MFThread_Create(_MFBrokerThreadRoutine, tmpBroker, &tmpBroker->Thread);
 			if (ret != 0) {
 				switch (tmpBroker->Mode) {
 					case bmClient:
@@ -460,9 +458,9 @@ void MFBroker_Free(PMF_BROKER Broker)
 {
 	PMF_CONNECTION conn = NULL;
 
-	Broker->Terminated;
-	WaitForSingleObject(Broker->ThreadHandle, INFINITE);
-	CloseHandle(Broker->ThreadHandle);
+	MFThread_Terminate(Broker->Thread);
+	MFThread_WaitFor(Broker->Thread);
+	MFThread_Close(Broker->Thread);
 	conn = _MFConn_First(Broker->Connections, _maxConnections);
 	while (conn != NULL) {
 		_MFConn_Finit(conn);

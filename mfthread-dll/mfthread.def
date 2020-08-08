@@ -1,0 +1,9 @@
+LIBRARY mfthread-dll
+EXPORTS
+	MFThread_Create
+	MFThread_Terminate
+	MFThread_WaitFor
+	MFThread_Close
+	MFThread_Terminated
+	MFThread_ExitCode
+	MFThread_Context
