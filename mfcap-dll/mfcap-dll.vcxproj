@@ -25,6 +25,9 @@
     <ProjectReference Include="..\mfgen-dll\mfgen-dll.vcxproj">
       <Project>{d4311828-5b43-4ace-bf44-7a485dd8f7d3}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\mfmemory-dll\mfmemory-dll.vcxproj">
+      <Project>{fea2099c-7779-47ba-a220-0c67d9736a92}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="mfcap.def" />

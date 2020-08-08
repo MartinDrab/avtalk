@@ -12,6 +12,7 @@
 #include <dshow.h>
 #include <math.h>
 #include "mfgen.h"
+#include "mfmemory.h"
 #include "mfcap.h"
 
 #pragma comment(lib, "strmiids")

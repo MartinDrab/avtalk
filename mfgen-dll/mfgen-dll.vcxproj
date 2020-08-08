@@ -22,6 +22,9 @@
     <ProjectReference Include="..\mfgen\mfgen.vcxproj">
       <Project>{24335e6b-6e52-4f24-ba1e-cf61effa6692}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\mfmemory-dll\mfmemory-dll.vcxproj">
+      <Project>{fea2099c-7779-47ba-a220-0c67d9736a92}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="mfgen.def" />

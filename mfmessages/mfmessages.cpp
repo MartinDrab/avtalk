@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <windows.h>
 #include "mfcrypto.h"
-#include "mfgen.h"
+#include "mfmemory.h"
 #include "mfmessages.h"
 
 

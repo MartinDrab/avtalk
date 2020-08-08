@@ -1,6 +1,7 @@
 
 #include <windows.h>
 #include "mfgen.h"
+#include "mfmemory.h"
 #include "mfcap.h"
 #include "mfplay.h"
 #include "mfsession.h"

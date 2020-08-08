@@ -9,6 +9,7 @@
 #include <propvarutil.h>
 #include <wmcontainer.h>
 #include <Functiondiscoverykeys_devpkey.h>
+#include "mfmemory.h"
 #include "mfcap.h"
 #include "mfplay.h"
 

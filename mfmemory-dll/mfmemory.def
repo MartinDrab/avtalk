@@ -1,0 +1,6 @@
+LIBRARY mfmemory-dll
+EXPORTS
+	MFGen_RefMemAlloc
+	MFGen_RefMemAddRef
+	MFGen_RefMemRelease
+
