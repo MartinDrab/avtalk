@@ -216,9 +216,11 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 					if (ret == 0) {
 						msg->OriginalFlags = msg->Header.Flags;
 						if (msg->Header.Flags & MF_MESSAGE_SIGNED) {
-							ret = MFMessage_Verify(&msg->Header, &conn->Key);
-							if (ret != 0)
-								broker->ErrorCallback(betMessageInvalidSignature, ret, msg, broker->ErrorCallbackContext);
+							if (conn->State == mcfEstablished) {
+								ret = MFMessage_Verify(&msg->Header, &conn->Key);
+								if (ret != 0)
+									broker->ErrorCallback(betMessageInvalidSignature, ret, msg, broker->ErrorCallbackContext);
+							} else ret = broker->MessageCallback(bmetCannotVerify, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext);
 						}
 
 						if (ret == 0 && msg->Header.Flags & MF_MESSAGE_HEADER_ENCRYPTED) {
@@ -253,20 +255,25 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 						msg = CONTAINING_RECORD(conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
 						MFList_Remove(&msg->Entry);
 						MFLock_Leave(&conn->SendLock);
-						if ((msg->Header.Flags & MF_MESSAGE_HEADER_ENCRYPTED) == 0 && broker->MessageCallback(bmetAboutToEncrypt, conn, &msg->Header, &msg->Header + 1, msg->Header.DataSize, msg->OriginalFlags, broker->MessageCallbackContext))
-							MFMessage_HeaderEncrypt(&msg->Header, &conn->Key);
+						if ((msg->Header.Flags & MF_MESSAGE_HEADER_ENCRYPTED) == 0 && broker->MessageCallback(bmetAboutToEncrypt, conn, &msg->Header, &msg->Header + 1, msg->Header.DataSize, msg->OriginalFlags, broker->MessageCallbackContext)) {
+							if (conn->State == mcfEstablished)
+								MFMessage_HeaderEncrypt(&msg->Header, &conn->Key);
+							else ret = broker->MessageCallback(bmetCannotEncrypt, conn, &msg->Header, &msg->Header + 1, msg->Header.DataSize, msg->OriginalFlags, broker->MessageCallbackContext);
+						}
 
-						if ((msg->Header.Flags & MF_MESSAGE_SIGNED) == 0 && broker->MessageCallback(bmetAboutToSign, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext))
+						if (ret == 0 && (msg->Header.Flags & MF_MESSAGE_SIGNED) == 0 && broker->MessageCallback(bmetAboutToSign, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext))
 							MFMessage_Sign(&msg->Header, &broker->SecretKey);
 						
-						if (!conn->Disconnected) {
-							ret = _MFMessage_Send(conn->Socket, msg);
-							if (ret == 0)
-								broker->MessageCallback(bmetSent, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext);
-						} else ret = ENOENT;
+						if (ret == 0) {
+							if (!conn->Disconnected) {
+								ret = _MFMessage_Send(conn->Socket, msg);
+								if (ret == 0)
+									broker->MessageCallback(bmetSent, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext);
+							} else ret = ENOENT;
 
-						if (ret != 0)
-							broker->ErrorCallback(betMessageFailedSend, ret, conn, broker->ErrorCallbackContext);
+							if (ret != 0)
+								broker->ErrorCallback(betMessageFailedSend, ret, conn, broker->ErrorCallbackContext);
+						}
 
 						MFConnection_Release(msg->Connection);
 						MFGen_RefMemRelease(msg);
@@ -600,6 +607,15 @@ void MFConnection_Release(PMF_CONNECTION Conn)
 		MFLock_Finit(&Conn->SendLock);
 		Conn->State = mcsFree;
 	}
+
+	return;
+}
+
+
+void MFConnection_SetKey(PMF_CONNECTION Conn, const MFCRYPTO_PUBLIC_KEY* Key)
+{
+	Conn->Key = *Key;
+	Conn->State = mcfEstablished;
 
 	return;
 }

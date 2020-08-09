@@ -63,6 +63,8 @@ typedef enum _EBrokerMessageEventType {
 	bmetAboutToEncrypt,
 	bmetAboutToSign,
 	bmetSent,
+	bmetCannotVerify,
+	bmetCannotEncrypt,
 } EBrokerMessageEventType, *PEBrokerMessageEventType;
 
 typedef int (MF_BROKER_ERROR_CALLBACK)(EBrokerErrorType Type, int Code, void *Data, void *Context);
@@ -99,6 +101,7 @@ void MFConnection_AddRef(PMF_CONNECTION Conn);
 void MFConnection_Disconnect(PMF_CONNECTION Conn);
 void MFConnection_Clear(PMF_CONNECTION Conn);
 void MFConnection_Release(PMF_CONNECTION Conn);
+void MFConnection_SetKey(PMF_CONNECTION Conn, const MFCRYPTO_PUBLIC_KEY* Key);
 
 
 
