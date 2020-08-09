@@ -1,0 +1,10 @@
+LIBRARY mfbroker-dll
+EXPORTS
+	MFBroker_Alloc
+	MFBroker_Free
+	MFConnection_SendAsync
+	MFConnection_AddRef
+	MFConnection_Disconnect
+	MFConnection_Clear
+	MFConnection_Release
+	MFConnection_SetKey

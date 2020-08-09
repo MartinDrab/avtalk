@@ -55,6 +55,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfthread", "mfthread\mfthre
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfthread-dll", "mfthread-dll\mfthread-dll.vcxproj", "{0CF2A788-15F9-408A-A970-E7FDE9F2B6D0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mfbroker-dll", "mfbroker-dll\mfbroker-dll.vcxproj", "{3D7DAA21-1384-416E-86D9-F72B9D52B3F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -271,6 +273,14 @@ Global
 		{0CF2A788-15F9-408A-A970-E7FDE9F2B6D0}.Release|x64.Build.0 = Release|x64
 		{0CF2A788-15F9-408A-A970-E7FDE9F2B6D0}.Release|x86.ActiveCfg = Release|Win32
 		{0CF2A788-15F9-408A-A970-E7FDE9F2B6D0}.Release|x86.Build.0 = Release|Win32
+		{3D7DAA21-1384-416E-86D9-F72B9D52B3F5}.Debug|x64.ActiveCfg = Debug|x64
+		{3D7DAA21-1384-416E-86D9-F72B9D52B3F5}.Debug|x64.Build.0 = Debug|x64
+		{3D7DAA21-1384-416E-86D9-F72B9D52B3F5}.Debug|x86.ActiveCfg = Debug|Win32
+		{3D7DAA21-1384-416E-86D9-F72B9D52B3F5}.Debug|x86.Build.0 = Debug|Win32
+		{3D7DAA21-1384-416E-86D9-F72B9D52B3F5}.Release|x64.ActiveCfg = Release|x64
+		{3D7DAA21-1384-416E-86D9-F72B9D52B3F5}.Release|x64.Build.0 = Release|x64
+		{3D7DAA21-1384-416E-86D9-F72B9D52B3F5}.Release|x86.ActiveCfg = Release|Win32
+		{3D7DAA21-1384-416E-86D9-F72B9D52B3F5}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -91,6 +91,9 @@ typedef struct _MF_BROKER {
 } MF_BROKER, *PMF_BROKER;
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC_KEY* PublicKey, const MFCRYPTO_SECRET_KEY* SecretKey, MF_BROKER_MESSAGE_CALLBACK *MessageCallback, void *MessageCallbackContext, MF_BROKER_ERROR_CALLBACK *ErrorCallback, void *ErrorCallbackContext, PMF_BROKER *Broker);
 void MFBroker_Free(PMF_BROKER Broker);
@@ -101,6 +104,10 @@ void MFConnection_Disconnect(PMF_CONNECTION Conn);
 void MFConnection_Clear(PMF_CONNECTION Conn);
 void MFConnection_Release(PMF_CONNECTION Conn);
 void MFConnection_SetKey(PMF_CONNECTION Conn, const MFCRYPTO_PUBLIC_KEY* Key);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 
