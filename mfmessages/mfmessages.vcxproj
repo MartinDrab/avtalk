@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mfmessages.cpp" />
+    <ClInclude Include="..\include\mfmessages.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\mfmessages.h" />
+    <ClCompile Include="mfmessages.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

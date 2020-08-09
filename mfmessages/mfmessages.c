@@ -9,7 +9,7 @@
 
 
 
-extern "C" int MFMessage_Alloc(EMFMessageType Type, const GUID *Source, const GUID *Dest, const void* Data, size_t Length, PMF_MESSAGE_HEADER* Message)
+int MFMessage_Alloc(uint32_t Type, const GUID *Source, const GUID *Dest, const void* Data, size_t Length, PMF_MESSAGE_HEADER* Message)
 {
 	int ret = 0;
 	uint32_t totalSize = 0;
@@ -37,7 +37,7 @@ extern "C" int MFMessage_Alloc(EMFMessageType Type, const GUID *Source, const GU
 }
 
 
-extern "C" void MFMessage_Free(PMF_MESSAGE_HEADER Msg)
+void MFMessage_Free(PMF_MESSAGE_HEADER Msg)
 {
 	MFGen_RefMemRelease(Msg);
 
@@ -45,7 +45,7 @@ extern "C" void MFMessage_Free(PMF_MESSAGE_HEADER Msg)
 }
 
 
-extern "C" void MFMessage_DataEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key)
+void MFMessage_DataEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key)
 {
 	size_t remaining = 0;
 
@@ -61,7 +61,7 @@ extern "C" void MFMessage_DataEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_
 }
 
 
-extern "C" int MFMessage_DataDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY *PK, const MFCRYPTO_SECRET_KEY *SK)
+int MFMessage_DataDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY *PK, const MFCRYPTO_SECRET_KEY *SK)
 {
 	int ret = 0;
 
@@ -77,7 +77,7 @@ extern "C" int MFMessage_DataDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_P
 }
 
 
-extern "C" void MFMessage_Sign(PMF_MESSAGE_HEADER Header, const MFCRYPTO_SECRET_KEY* SecretKey)
+void MFMessage_Sign(PMF_MESSAGE_HEADER Header, const MFCRYPTO_SECRET_KEY* SecretKey)
 {
 	MFCRYPTO_SIGNATURE s;
 
@@ -90,7 +90,7 @@ extern "C" void MFMessage_Sign(PMF_MESSAGE_HEADER Header, const MFCRYPTO_SECRET_
 }
 
 
-extern "C" int MFMessage_Verify(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key)
+int MFMessage_Verify(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key)
 {
 	int ret = 0;
 	MFCRYPTO_SIGNATURE s;
@@ -105,7 +105,7 @@ extern "C" int MFMessage_Verify(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC
 }
 
 
-extern "C" void MFMessage_HeaderEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key)
+void MFMessage_HeaderEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* Key)
 {
 	assert((Header->Flags & MF_MESSAGE_HEADER_ENCRYPTED) == 0);
 	MFCrypto_Encrypt(Key, &Header->HeaderEncryption, &Header->HeaderEncryption + 1, (unsigned char *)(Header + 1) - (unsigned char *)(&Header->HeaderEncryption + 1));
@@ -116,7 +116,7 @@ extern "C" void MFMessage_HeaderEncrypt(PMF_MESSAGE_HEADER Header, const MFCRYPT
 }
 
 
-extern "C" int MFMessage_HeaderDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SECRET_KEY* SK)
+int MFMessage_HeaderDecrypt(PMF_MESSAGE_HEADER Header, const MFCRYPTO_PUBLIC_KEY* PK, const MFCRYPTO_SECRET_KEY* SK)
 {
 	int ret = 0;
 
@@ -144,4 +144,16 @@ void MFMessage_SetCounter(PMF_MESSAGE_HEADER Header, uint64_t Counter)
 	Header->PacketCounter = Counter;
 
 	return;
+}
+
+
+uint64_t MFMessage_GetContext(const MF_MESSAGE_HEADER* Header)
+{
+	return Header->Context;
+}
+
+
+uint64_t MFMessage_GetCounter(const MF_MESSAGE_HEADER* Header)
+{
+	return Header->PacketCounter;
 }

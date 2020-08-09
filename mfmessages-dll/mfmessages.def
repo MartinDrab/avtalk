@@ -10,4 +10,5 @@ EXPORTS
 	MFMessage_Verify
 	MFMessage_SetContext
 	MFMessage_SetCounter
-
+	MFMessage_GetContext
+	MFMessage_GetCounter

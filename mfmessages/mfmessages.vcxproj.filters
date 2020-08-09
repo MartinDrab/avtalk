@@ -20,7 +20,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mfmessages.cpp">
+    <ClCompile Include="mfmessages.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
