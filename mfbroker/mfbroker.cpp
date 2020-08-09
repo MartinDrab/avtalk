@@ -112,49 +112,6 @@ static int _MFConn_Init(PMF_CONNECTION Conn, PMF_BROKER Broker, SOCKET Socket, v
 }
 
 
-static void _MFConn_AddRef(PMF_CONNECTION Conn)
-{
-	InterlockedIncrement(&Conn->ReferenceCount);
-
-	return;
-}
-
-
-static void _MFConn_Disconnect(PMF_CONNECTION Conn)
-{
-	if (Conn->Socket != INVALID_SOCKET) {
-		shutdown(Conn->Socket, SD_BOTH);
-		closesocket(Conn->Socket);
-	}
-
-	Conn->Socket = INVALID_SOCKET;
-	Conn->Disconnected = 1;
-
-	return;
-}
-
-static void _MFConn_Release(PMF_CONNECTION Conn)
-{
-	PMF_LISTED_MESSAGE msg = NULL;
-	PMF_LISTED_MESSAGE old = NULL;
-
-	if (InterlockedDecrement(&Conn->ReferenceCount) == 0) {
-		_MFConn_Disconnect(Conn);
-		msg = CONTAINING_RECORD(Conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
-		while (&msg->Entry != &Conn->MessagesToSend) {
-			old = msg;
-			msg = CONTAINING_RECORD(msg->Entry.Next, MF_LISTED_MESSAGE, Entry);
-			MFGen_RefMemRelease(msg);
-		}
-
-		MFLock_Finit(&Conn->SendLock);
-		Conn->State = mcsFree;
-	}
-
-	return;
-}
-
-
 PMF_CONNECTION _MFConn_Next(PMF_CONNECTION Start, PMF_CONNECTION Current, int Max, size_t Step)
 {
 	PMF_CONNECTION ret = NULL;
@@ -246,8 +203,8 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 			while (tmp - fds < fdCount) {
 				if (tmp->revents & POLLERR) {
 					broker->ErrorCallback(betSocketError, ret, conn, broker->ErrorCallbackContext);
-					_MFConn_Disconnect(conn);
-					_MFConn_Release(conn);
+					MFConnection_Disconnect(conn);
+					MFConnection_Release(conn);
 					--broker->ConnectionCount;
 					++tmp;
 					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections, broker->ThreadCount);
@@ -273,7 +230,7 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 						if (ret == 0) {
 							MFGen_RefMemAddRef(msg);
 							MFList_InsertTail(&recvList, &msg->Entry);
-							_MFConn_AddRef(conn);
+							MFConnection_AddRef(conn);
 							msg->Connection = conn;
 						}
 
@@ -282,8 +239,8 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 				}
 
 				if (tmp->revents & POLLHUP) {
-					_MFConn_Disconnect(conn);
-					_MFConn_Release(conn);
+					MFConnection_Disconnect(conn);
+					MFConnection_Release(conn);
 					--broker->ConnectionCount;
 					++tmp;
 					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections, broker->ThreadCount);
@@ -302,13 +259,16 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 						if ((msg->Header.Flags & MF_MESSAGE_SIGNED) == 0 && broker->MessageCallback(bmetAboutToSign, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext))
 							MFMessage_Sign(&msg->Header, &broker->SecretKey);
 						
-						ret = _MFMessage_Send(conn->Socket, msg);
-						if (ret == 0)
-							broker->MessageCallback(bmetSent, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext);
-						
+						if (!conn->Disconnected) {
+							ret = _MFMessage_Send(conn->Socket, msg);
+							if (ret == 0)
+								broker->MessageCallback(bmetSent, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext);
+						} else ret = ENOENT;
+
 						if (ret != 0)
 							broker->ErrorCallback(betMessageFailedSend, ret, conn, broker->ErrorCallbackContext);
 
+						MFConnection_Release(msg->Connection);
 						MFGen_RefMemRelease(msg);
 						MFLock_Enter(&conn->SendLock);
 					}
@@ -330,7 +290,7 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 			old = msg;
 			msg = CONTAINING_RECORD(msg->Entry.Next, MF_LISTED_MESSAGE, Entry);
 			broker->MessageCallback(bmetReady, old->Connection, &old->Header, &old->Header + 1, old->Header.DataSize, old->OriginalFlags, broker->MessageCallbackContext);
-			_MFConn_Release(old->Connection);
+			MFConnection_Release(old->Connection);
 			MFGen_RefMemRelease(old);
 		}
 	}
@@ -515,7 +475,7 @@ int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC
 			if (ret != 0) {
 				switch (tmpBroker->Mode) {
 					case bmClient:
-						_MFConn_Release(tmpBroker->Connections);
+						MFConnection_Release(tmpBroker->Connections);
 						--tmpBroker->ConnectionCount;
 						break;
 					case bmServer:
@@ -558,11 +518,88 @@ void MFBroker_Free(PMF_BROKER Broker)
 
 	conn = _MFConn_First(Broker->Connections, _maxConnections, 1);
 	while (conn != NULL) {
-		_MFConn_Release(conn);
+		MFConnection_Clear(conn);
+		MFConnection_Release(conn);
 		conn = _MFConn_Next(Broker->Connections, conn + 1, _maxConnections, 1);
 	}
 	
 	MFGen_RefMemRelease(Broker);
+
+	return;
+}
+
+
+int MFConnection_SendAsync(PMF_CONNECTION Connection, const MF_MESSAGE_HEADER *Header)
+{
+	int ret = 0;
+	PMF_LISTED_MESSAGE l = NULL;
+
+	ret = MFGen_RefMemAlloc(sizeof(MF_LISTED_MESSAGE) - sizeof(l->Header) + Header->MessageSize, (void **)&l);
+	if (ret == 0) {
+		MFConnection_AddRef(Connection);
+		l->Connection = Connection;
+		memcpy(&l->Header, Header, Header->MessageSize);
+		l->OriginalFlags = l->Header.Flags;
+		MFLock_Enter(&Connection->SendLock);
+		MFList_InsertTail(&Connection->MessagesToSend, &l->Entry);
+		MFLock_Leave(&Connection->SendLock);
+	}
+
+	return ret;
+}
+
+
+void MFConnection_AddRef(PMF_CONNECTION Conn)
+{
+	InterlockedIncrement(&Conn->ReferenceCount);
+
+	return;
+}
+
+
+void MFConnection_Disconnect(PMF_CONNECTION Conn)
+{
+	if (Conn->Socket != INVALID_SOCKET) {
+		shutdown(Conn->Socket, SD_BOTH);
+		closesocket(Conn->Socket);
+	}
+
+	Conn->Socket = INVALID_SOCKET;
+	Conn->Disconnected = 1;
+
+	return;
+}
+
+
+void MFConnection_Clear(PMF_CONNECTION Conn)
+{
+	PMF_LISTED_MESSAGE msg = NULL;
+	PMF_LISTED_MESSAGE old = NULL;
+
+	MFLock_Enter(&Conn->SendLock);
+	msg = CONTAINING_RECORD(Conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
+	while (&msg->Entry != &Conn->MessagesToSend) {
+		old = msg;
+		msg = CONTAINING_RECORD(msg->Entry.Next, MF_LISTED_MESSAGE, Entry);
+		MFConnection_Release(old->Connection);
+		MFGen_RefMemRelease(old);
+	}
+
+	MFList_Init(&Conn->MessagesToSend);
+	MFLock_Leave(&Conn->SendLock);
+
+	return;
+}
+
+
+void MFConnection_Release(PMF_CONNECTION Conn)
+{
+	if (InterlockedDecrement(&Conn->ReferenceCount) == 0) {
+		MFConnection_Disconnect(Conn);
+		MFConnection_Clear(Conn);
+		MFLock_Finit(&Conn->SendLock);
+		Conn->State = mcsFree;
+	}
 
 	return;
 }
