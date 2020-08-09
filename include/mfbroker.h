@@ -3,7 +3,6 @@
 #define __MF_BROKER_H__
 
 
-#include <list>
 #include <winsock2.h>
 #include <windows.h>
 #include "mflist.h"

@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mfbroker.cpp" />
+    <ClInclude Include="..\include\mfbroker.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\mfbroker.h" />
+    <ClCompile Include="mfbroker.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

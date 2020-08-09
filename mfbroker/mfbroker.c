@@ -317,8 +317,8 @@ static int _MFBrokerServerThread(PMF_THREAD Thread)
 	int ret = 0;
 	int waitRes = 0;
 	struct pollfd fds[1];
-	SOCKET newSocket = NULL;
 	PMF_CONNECTION conn = NULL;
+	SOCKET newSocket = INVALID_SOCKET;
 	PMF_BROKER broker = (PMF_BROKER)MFThread_Context(Thread);
 
 	memset(fds, 0, sizeof(fds));
@@ -377,7 +377,7 @@ static int _MFBrokerServerThread(PMF_THREAD Thread)
 int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC_KEY* PublicKey, const MFCRYPTO_SECRET_KEY* SecretKey, MF_BROKER_MESSAGE_CALLBACK* MessageCallback, void* MessageCallbackContext, MF_BROKER_ERROR_CALLBACK* ErrorCallback, void* ErrorCallbackContext, PMF_BROKER* Broker)
 {
 	int ret = 0;
-	SOCKET sock = NULL;
+	SOCKET sock = INVALID_SOCKET;
 	struct addrinfo hints;
 	struct addrinfo *addrs = NULL;
 	struct addrinfo *tmp = NULL;
