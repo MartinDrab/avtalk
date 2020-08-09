@@ -7,3 +7,4 @@ EXPORTS
 	MFThread_Terminated
 	MFThread_ExitCode
 	MFThread_Context
+	MFTHread_Index

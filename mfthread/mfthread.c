@@ -5,6 +5,11 @@
 
 
 
+
+
+static long _lastThreadIndex = -1;
+
+
 static DWORD WINAPI _MFThreadWrapperRoutine(void* Context)
 {
 	DWORD ret = 0;
@@ -31,6 +36,7 @@ int MFThread_Create(MF_THREAD_ROUTINE* Routine, void* Context, PMF_THREAD* Threa
 		tmpThread->Routine = Routine;
 		tmpThread->Context = Context;
 		MFGen_RefMemAddRef(tmpThread);
+		tmpThread->Index = (uint32_t)InterlockedIncrement(&_lastThreadIndex);
 		tmpThread->ThreadHandle = CreateThread(NULL, 0, _MFThreadWrapperRoutine, tmpThread, 0, &tmpThread->ThreadId);
 		if (tmpThread->ThreadHandle == NULL) {
 			ret = GetLastError();
@@ -96,4 +102,10 @@ int MFThread_ExitCode(const MF_THREAD *Thread, int* ExitCode)
 void* MFThread_Context(const MF_THREAD *Thread)
 {
 	return Thread->Context;
+}
+
+
+uint32_t MFTHread_Index(const MF_THREAD *Thread)
+{
+	return Thread->Index;
 }

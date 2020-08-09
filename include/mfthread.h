@@ -3,6 +3,7 @@
 #define __MF_THREAD_H__
 
 
+#include <stdint.h>
 #include <windows.h>
 
 
@@ -18,6 +19,7 @@ typedef struct _MF_THREAD {
 	int ExitCode;
 	volatile int Terminated;
 	volatile int Finished;
+	uint32_t Index;
 	HANDLE ThreadHandle;
 	DWORD ThreadId;
 } MF_THREAD, *PMF_THREAD;
@@ -34,6 +36,7 @@ void MFThread_Close(PMF_THREAD Thread);
 int MFThread_Terminated(const MF_THREAD *Thread);
 int MFThread_ExitCode(const MF_THREAD *Thread, int* ExitCode);
 void* MFThread_Context(const MF_THREAD *Thread);
+uint32_t MFTHread_Index(const MF_THREAD *Thread);
 
 
 #ifdef __cplusplus
