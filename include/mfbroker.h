@@ -14,8 +14,11 @@
 
 
 
+struct _MF_CONNECTION;
+
 typedef struct _MF_LISTED_MESSAGE {
 	MF_LIST_ENTRY Entry;
+	struct _MF_CONNECTION *Connection;
 	uint32_t OriginalFlags;
 	uint32_t Padding;
 	MF_MESSAGE_HEADER Header;
@@ -33,12 +36,14 @@ struct _MF_BROKER;
 
 typedef struct _MF_CONNECTION {
 	MFCRYPTO_PUBLIC_KEY Key;
+	volatile long ReferenceCount;
 	SOCKET Socket;
 	volatile EMFConnectionState State;
 	void *Context;
 	struct _MF_BROKER *Broker;
 	MF_LIST_ENTRY MessagesToSend;
 	MF_LOCK SendLock;
+	volatile int Disconnected;
 } MF_CONNECTION, *PMF_CONNECTION;
 
 typedef enum _EBrokerErrorType {
@@ -61,7 +66,7 @@ typedef enum _EBrokerMessageEventType {
 } EBrokerMessageEventType, *PEBrokerMessageEventType;
 
 typedef int (MF_BROKER_ERROR_CALLBACK)(EBrokerErrorType Type, int Code, void *Data, void *Context);
-typedef int (MF_BROKER_MESSAGE_CALLBACK)(EBrokerMessageEventType Type, const MF_MESSAGE_HEADER* Header, const void* Data, size_t DataLength, uint32_t OriginalFlags, void* Context);;
+typedef int (MF_BROKER_MESSAGE_CALLBACK)(EBrokerMessageEventType Type, PMF_CONNECTION Connection, const MF_MESSAGE_HEADER *Header, const void* Data, size_t DataLength, uint32_t OriginalFlags, void* Context);;
 
 typedef enum _EBrokerMode {
 	bmClient,

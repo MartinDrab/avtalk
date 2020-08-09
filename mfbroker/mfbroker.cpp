@@ -104,6 +104,7 @@ static int _MFConn_Init(PMF_CONNECTION Conn, PMF_BROKER Broker, SOCKET Socket, v
 		Conn->Socket = Socket;
 		Conn->Context = Context;
 		Conn->Broker = Broker;
+		Conn->ReferenceCount = 1;
 		Conn->State = mcsHandshake;
 	} else ret = GetLastError();
 
@@ -111,21 +112,44 @@ static int _MFConn_Init(PMF_CONNECTION Conn, PMF_BROKER Broker, SOCKET Socket, v
 }
 
 
-static void _MFConn_Finit(PMF_CONNECTION Conn)
+static void _MFConn_AddRef(PMF_CONNECTION Conn)
+{
+	InterlockedIncrement(&Conn->ReferenceCount);
+
+	return;
+}
+
+
+static void _MFConn_Disconnect(PMF_CONNECTION Conn)
+{
+	if (Conn->Socket != INVALID_SOCKET) {
+		shutdown(Conn->Socket, SD_BOTH);
+		closesocket(Conn->Socket);
+	}
+
+	Conn->Socket = INVALID_SOCKET;
+	Conn->Disconnected = 1;
+
+	return;
+}
+
+static void _MFConn_Release(PMF_CONNECTION Conn)
 {
 	PMF_LISTED_MESSAGE msg = NULL;
 	PMF_LISTED_MESSAGE old = NULL;
 
-	closesocket(Conn->Socket);
-	msg = CONTAINING_RECORD(Conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
-	while (&msg->Entry != &Conn->MessagesToSend) {
-		old = msg;
-		msg = CONTAINING_RECORD(msg->Entry.Next, MF_LISTED_MESSAGE, Entry);
-		MFGen_RefMemRelease(msg);
-	}
+	if (InterlockedDecrement(&Conn->ReferenceCount) == 0) {
+		_MFConn_Disconnect(Conn);
+		msg = CONTAINING_RECORD(Conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
+		while (&msg->Entry != &Conn->MessagesToSend) {
+			old = msg;
+			msg = CONTAINING_RECORD(msg->Entry.Next, MF_LISTED_MESSAGE, Entry);
+			MFGen_RefMemRelease(msg);
+		}
 
-	MFLock_Finit(&Conn->SendLock);
-	Conn->State = mcsFree;
+		MFLock_Finit(&Conn->SendLock);
+		Conn->State = mcsFree;
+	}
 
 	return;
 }
@@ -171,15 +195,18 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 {
 	int ret = 0;
 	int waitRes = 0;
-	PMF_BROKER broker = (PMF_BROKER)MFThread_Context(Thread);
-	struct pollfd *fds = NULL;
 	int fdCount = 0;
+	MF_LIST_ENTRY recvList;
+	PMF_BROKER broker = NULL;
+	uint32_t threadIndex = 0;
+	struct pollfd *fds = NULL;
 	struct pollfd *tmp = NULL;
+	PMF_CONNECTION conn = NULL;
 	PMF_LISTED_MESSAGE msg = NULL;
 	PMF_LISTED_MESSAGE old = NULL;
-	PMF_CONNECTION conn = NULL;
-	MF_LIST_ENTRY recvList;
 
+	broker = (PMF_BROKER)MFThread_Context(Thread);
+	threadIndex = MFTHread_Index(Thread) % broker->ThreadCount;
 	MFList_Init(&recvList);
 	while (!MFThread_Terminated(Thread)) {
 		if (fdCount != broker->ConnectionCount) {
@@ -200,7 +227,7 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 		}
 		
 		tmp = fds;
-		conn = _MFConn_First(broker->Connections, _maxConnections, broker->ThreadCount);
+		conn = _MFConn_First(broker->Connections + threadIndex, _maxConnections - threadIndex, broker->ThreadCount);
 		for (int i = 0; i < fdCount; ++i) {			
 			tmp->fd = conn->Socket;
 			tmp->revents = 0;
@@ -215,11 +242,12 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 		waitRes = WSAPoll(fds, fdCount, 1000);
 		if (waitRes > 0) {
 			tmp = fds;
-			conn = _MFConn_First(broker->Connections, _maxConnections, broker->ThreadCount);
+			conn = _MFConn_First(broker->Connections + threadIndex, _maxConnections - threadIndex, broker->ThreadCount);
 			while (tmp - fds < fdCount) {
 				if (tmp->revents & POLLERR) {
 					broker->ErrorCallback(betSocketError, ret, conn, broker->ErrorCallbackContext);
-					_MFConn_Finit(conn);
+					_MFConn_Disconnect(conn);
+					_MFConn_Release(conn);
 					--broker->ConnectionCount;
 					++tmp;
 					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections, broker->ThreadCount);
@@ -243,8 +271,10 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 						}
 
 						if (ret == 0) {
-							MFList_InsertTail(&recvList, &msg->Entry);
 							MFGen_RefMemAddRef(msg);
+							MFList_InsertTail(&recvList, &msg->Entry);
+							_MFConn_AddRef(conn);
+							msg->Connection = conn;
 						}
 
 						MFGen_RefMemRelease(msg);
@@ -252,7 +282,8 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 				}
 
 				if (tmp->revents & POLLHUP) {
-					_MFConn_Finit(conn);
+					_MFConn_Disconnect(conn);
+					_MFConn_Release(conn);
 					--broker->ConnectionCount;
 					++tmp;
 					conn = _MFConn_Next(broker->Connections, conn + 1, _maxConnections, broker->ThreadCount);
@@ -265,15 +296,15 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 						msg = CONTAINING_RECORD(conn->MessagesToSend.Next, MF_LISTED_MESSAGE, Entry);
 						MFList_Remove(&msg->Entry);
 						MFLock_Leave(&conn->SendLock);
-						if ((msg->Header.Flags & MF_MESSAGE_HEADER_ENCRYPTED) == 0 && broker->MessageCallback(bmetAboutToEncrypt, &msg->Header, &msg->Header + 1, msg->Header.DataSize, msg->OriginalFlags, broker->MessageCallbackContext))
+						if ((msg->Header.Flags & MF_MESSAGE_HEADER_ENCRYPTED) == 0 && broker->MessageCallback(bmetAboutToEncrypt, conn, &msg->Header, &msg->Header + 1, msg->Header.DataSize, msg->OriginalFlags, broker->MessageCallbackContext))
 							MFMessage_HeaderEncrypt(&msg->Header, &conn->Key);
 
-						if ((msg->Header.Flags & MF_MESSAGE_SIGNED) == 0 && broker->MessageCallback(bmetAboutToSign, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext))
+						if ((msg->Header.Flags & MF_MESSAGE_SIGNED) == 0 && broker->MessageCallback(bmetAboutToSign, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext))
 							MFMessage_Sign(&msg->Header, &broker->SecretKey);
 						
 						ret = _MFMessage_Send(conn->Socket, msg);
 						if (ret == 0)
-							broker->MessageCallback(bmetSent, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext);
+							broker->MessageCallback(bmetSent, conn, &msg->Header, &msg->Header + 1, msg->Header.MessageSize - sizeof(msg->Header), msg->OriginalFlags, broker->MessageCallbackContext);
 						
 						if (ret != 0)
 							broker->ErrorCallback(betMessageFailedSend, ret, conn, broker->ErrorCallbackContext);
@@ -298,7 +329,8 @@ static int _MFBrokerThreadRoutine(PMF_THREAD Thread)
 		while (&msg->Entry != &recvList) {
 			old = msg;
 			msg = CONTAINING_RECORD(msg->Entry.Next, MF_LISTED_MESSAGE, Entry);
-			broker->MessageCallback(bmetReady, &old->Header, &old->Header + 1, old->Header.DataSize, old->OriginalFlags, broker->MessageCallbackContext);
+			broker->MessageCallback(bmetReady, old->Connection, &old->Header, &old->Header + 1, old->Header.DataSize, old->OriginalFlags, broker->MessageCallbackContext);
+			_MFConn_Release(old->Connection);
 			MFGen_RefMemRelease(old);
 		}
 	}
@@ -483,7 +515,7 @@ int MFBroker_Alloc(EBrokerMode Mode, const char* HostPort, const MFCRYPTO_PUBLIC
 			if (ret != 0) {
 				switch (tmpBroker->Mode) {
 					case bmClient:
-						_MFConn_Finit(tmpBroker->Connections);
+						_MFConn_Release(tmpBroker->Connections);
 						--tmpBroker->ConnectionCount;
 						break;
 					case bmServer:
@@ -526,7 +558,7 @@ void MFBroker_Free(PMF_BROKER Broker)
 
 	conn = _MFConn_First(Broker->Connections, _maxConnections, 1);
 	while (conn != NULL) {
-		_MFConn_Finit(conn);
+		_MFConn_Release(conn);
 		conn = _MFConn_Next(Broker->Connections, conn + 1, _maxConnections, 1);
 	}
 	
