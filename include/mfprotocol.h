@@ -59,6 +59,7 @@ typedef struct _MF_MESSAGE_NEW_USER_IN {
 	MFCRYPTO_PUBLIC_KEY PublicKey;
 	uint64_t ExpirationDate;
 	uint32_t Flags; // Visible server-wide, ...
+	uint32_t Padding;
 } MF_MESSAGE_NEW_USER_IN, * PMF_MESSAGE_NEW_USER_IN;
 
 typedef struct _MF_MESSAGE_NEW_USER_OUT {
@@ -111,6 +112,10 @@ typedef struct _MF_MESSAGE_ERROR {
 } MF_MESSAGE_ERROR, * PMF_MESSAGE_ERROR;
 
 
+
+int MFProtocol_ServerInfoIn(const MFCRYPTO_SEED *ServerKeyChallenge, PMF_MESSAGE_HEADER* Message);
+int MFProtocol_ServerInfoOut(const char *ServerName, const MFCRYPTO_PUBLIC_KEY *ServerPublicKey, const MFCRYPTO_SIGNATURE *ServerKeyResponse, size_t UserCount, const MF_MESSAGE_USER_INFO *Users, size_t ChannelCount, const MF_MESSAGE_CHANNEL_INFO *Channels, PMF_MESSAGE_HEADER *Message);
+int MFProtocol_ErrorMessage(uint32_t ErrorCode, const char* ErrorMessage, PMF_MESSAGE_HEADER* Message);
 
 
 
