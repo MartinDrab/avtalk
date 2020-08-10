@@ -4,7 +4,7 @@
 
 
 
-HRESULT MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer)
+int MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer)
 {
 	HRESULT ret = S_OK;
 	void* tmpBuffer = NULL;
@@ -16,8 +16,7 @@ HRESULT MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer)
 		refCount = (LONG*)tmpBuffer;
 		InterlockedExchange(refCount, 1);
 		*Buffer = (unsigned char*)tmpBuffer + 0x10;
-	}
-	else ret = E_OUTOFMEMORY;
+	} else ret = E_OUTOFMEMORY;
 
 	return ret;
 }

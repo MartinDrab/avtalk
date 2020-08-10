@@ -4,11 +4,12 @@
 
 
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-HRESULT MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer);
+int MFGen_RefMemAlloc(size_t NumberOfBytes, void** Buffer);
 void MFGen_RefMemAddRef(void* Buffer);
 void MFGen_RefMemRelease(void* Buffer);
 
