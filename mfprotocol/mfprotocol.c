@@ -82,3 +82,51 @@ int MFProtocol_ErrorMessage(uint32_t ErrorCode, const char* ErrorMessage, PMF_ME
 
 	return ret;
 }
+
+
+int MFProtocol_NewUserIn(const char *Name, const MFCRYPTO_PUBLIC_KEY *PublicKey, uint64_t ExpirationTime, uint32_t Flags, PMF_MESSAGE_HEADER *Message)
+{
+	int ret = 0;
+	MF_MESSAGE_NEW_USER_IN data;
+
+	memset(&data, 0, sizeof(data));
+	data.ExpirationDate = ExpirationTime;
+	data.PublicKey = *PublicKey;
+	data.Flags = Flags;
+	MFCrypto_RandomBuffer(&data.Padding, sizeof(data.Padding));
+	memcpy(data.Name, Name, strlen(Name) * sizeof(char));
+	ret = MFMessage_Alloc(mfmtNewUser, NULL, NULL, &data, sizeof(data), Message);
+
+	return ret;
+}
+
+
+int MFProtocol_NewUserOut(const GUID *Guid, const MFCRYPTO_SEED *UserKeyChallenge, PMF_MESSAGE_HEADER *Message)
+{
+	int ret = 0;
+	MF_MESSAGE_NEW_USER_OUT data;
+
+	memset(&data, 0, sizeof(data));
+	data.Id = *Guid;
+	if (UserKeyChallenge != NULL)
+		data.UserKeyChallenge = *UserKeyChallenge;
+	else MFCrypto_RandomBuffer(data.UserKeyChallenge.Seed, sizeof(data.UserKeyChallenge.Seed));
+
+	ret = MFMessage_Alloc(mfmtNewUser, NULL, NULL, &data, sizeof(data), Message);
+
+	return ret;
+}
+
+
+int MFProtocol_UserKeyProofIn(const GUID *UserId, const MFCRYPTO_SIGNATURE *UserKeyResponse, PMF_MESSAGE_HEADER *Message)
+{
+	int ret = 0;
+	MF_MESSAGE_USER_KEY_PROOF_IN data;
+
+	memset(&data, 0, sizeof(data));
+	data.Id = *UserId;
+	data.UserKeyChallengeSignature = *UserKeyResponse;
+	ret = MFMessage_Alloc(mfmtNewUserKeyProof, &data.Id, NULL, &data, sizeof(data), Message);
+
+	return ret;
+}
